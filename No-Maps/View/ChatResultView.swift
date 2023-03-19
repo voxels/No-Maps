@@ -9,6 +9,9 @@ import SwiftUI
 
 
 struct ChatResultView : View {
+    
+    @EnvironmentObject var placeSearchSession:PlaceSearchSession
+    
     @Binding public var messagesViewHeight:CGFloat
     @State private var interitemDistance:CGFloat = 8.0
     @State private var scrollViewPadding:CGFloat = 20.0
@@ -22,8 +25,6 @@ struct ChatResultView : View {
         ChatResult(title: "Place 4", backgroundColor: Color.red, backgroundImage: nil),
         ChatResult(title: "Place 5", backgroundColor: Color.red, backgroundImage: nil)
     ]
-    
-    
     
     var body: some View {
         VStack{
@@ -67,6 +68,16 @@ struct ChatResultView : View {
                         }.padding(scrollViewPadding)
                     }
                 }.frame(height:messagesViewHeight)
+            }
+        }.onAppear {
+            let task = Task.init {
+                do {
+                    let request = PlaceSearchRequest(query: "Big Ed's Pizza", ll: "", categories: nil, fields: nil, openNow: true, nearLocation: nil)
+                    try await placeSearchSession.query(request:request)
+                }
+                catch {
+                    
+                }
             }
         }
     }

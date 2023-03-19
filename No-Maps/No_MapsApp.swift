@@ -9,9 +9,10 @@ import SwiftUI
 
 @main
 struct No_MapsApp: App {
+    @StateObject var placeSearchSession:PlaceSearchSession = PlaceSearchSession()
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView().environmentObject(placeSearchSession)
         }
     }
 }
