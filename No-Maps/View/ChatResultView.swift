@@ -80,11 +80,25 @@ struct ChatResultView : View {
                         print("Fetching places with location string: \(locationString)")
                     }
                     let request = PlaceSearchRequest(query: "", ll: locationString, categories: nil, fields: nil, openNow: true, nearLocation: nil)
-                    let placeSearchResponse = try await placeSearchSession.query(request:request)
-                    
+                    let placeSearchResponses = try await placeSearchSession.query(request:request)
+                    for index in 0..<min(placeSearchResponses.count, 1) {
+                        
+                        let response = placeSearchResponses[index]
+                        print("Fetching photos for \(response.name)")
+                        let placePhotosResponse = try await placeSearchSession.photos(for: response.fsqID)
+                        print(placePhotosResponse)
+                        
+                        /*
+                        let placeDetailsResponse = try await placeSearchSession.details(for: response.fsqID)
+                        print(placeDetailsResponse)
+                         */
+                        
+                        let placeTipsResponse = try await placeSearchSession.tips(for: response.fsqID)
+                        print(placeTipsResponse)
+                    }
                 }
                 catch {
-                    
+                    print(error.localizedDescription)
                 }
             }
         }

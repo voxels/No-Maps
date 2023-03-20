@@ -59,8 +59,6 @@ open class PlaceSearchSession : ObservableObject {
             return [PlaceSearchResponse]()
         }
         
-        print(response)
-        
         if let results = response["results"] as? [NSDictionary] {
             var formattedResults = [PlaceSearchResponse]()
             
@@ -120,7 +118,7 @@ open class PlaceSearchSession : ObservableObject {
             searchSession = try await session()
         }
         
-        var components = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.placeDetailsAPIUrl)\(fsqID)/\(PlaceSearchSession.placePhotosAPIUrl)")
+        var components = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.placeDetailsAPIUrl)\(fsqID)\(PlaceSearchSession.placePhotosAPIUrl)")
         
         guard let url = components?.url else {
             throw PlaceSearchSessionError.UnsupportedRequest
@@ -134,7 +132,7 @@ open class PlaceSearchSession : ObservableObject {
             searchSession = try await session()
         }
         
-        var components = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.placeDetailsAPIUrl)\(fsqID)/\(PlaceSearchSession.placeTipsAPIUrl)")
+        var components = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.placeDetailsAPIUrl)\(fsqID)\(PlaceSearchSession.placeTipsAPIUrl)")
         
         guard let url = components?.url else {
             throw PlaceSearchSessionError.UnsupportedRequest
@@ -145,6 +143,7 @@ open class PlaceSearchSession : ObservableObject {
     
     
     internal func fetch(url:URL, apiKey:String) async throws ->Any? {
+        print("Requesting URL: \(url)")
         var request = URLRequest(url:url)
         request.setValue(apiKey, forHTTPHeaderField: "Authorization")
         let responseAny:Any = try await withCheckedThrowingContinuation({checkedContinuation in
