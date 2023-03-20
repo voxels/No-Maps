@@ -7,11 +7,11 @@
 
 import SwiftUI
 
-
 struct ChatResultView : View {
     
     @EnvironmentObject var placeSearchSession:PlaceSearchSession
-    
+    @EnvironmentObject var locationProvider:LocationProvider
+
     @Binding public var messagesViewHeight:CGFloat
     @State private var interitemDistance:CGFloat = 8.0
     @State private var scrollViewPadding:CGFloat = 20.0
@@ -70,10 +70,18 @@ struct ChatResultView : View {
                 }.frame(height:messagesViewHeight)
             }
         }.onAppear {
+            locationProvider.authorize()
+            let location = locationProvider.currentLocation()
             let task = Task.init {
                 do {
-                    let request = PlaceSearchRequest(query: "Big Ed's Pizza", ll: "", categories: nil, fields: nil, openNow: true, nearLocation: nil)
-                    try await placeSearchSession.query(request:request)
+                    var locationString = ""
+                    if let l = location {
+                        locationString = "\(l.coordinate.latitude),\(l.coordinate.longitude)"
+                        print("Fetching places with location string: \(locationString)")
+                    }
+                    let request = PlaceSearchRequest(query: "", ll: locationString, categories: nil, fields: nil, openNow: true, nearLocation: nil)
+                    let placeSearchResponse = try await placeSearchSession.query(request:request)
+                    
                 }
                 catch {
                     

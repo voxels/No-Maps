@@ -10,33 +10,167 @@ import CloudKit
 
 public enum PlaceSearchSessionError : Error {
     case ServiceNotFound
+    case UnsupportedRequest
 }
 
 open class PlaceSearchSession : ObservableObject {
     private var foursquareApiKey = ""
-    private var foursquareSession:URLSession?
-    let container = CKContainer(identifier:"iCloud.com.noisederived.No-Maps.Keys")
-
+    private var searchSession:URLSession?
+    let keysContainer = CKContainer(identifier:"iCloud.com.noisederived.No-Maps.Keys")
+    static let serverUrl = "https://api.foursquare.com/"
+    static let placeSearchAPIUrl = "v3/places/search"
+    static let placeDetailsAPIUrl = "v3/places/"
+    static let placePhotosAPIUrl = "/photos"
+    static let placeTipsAPIUrl = "/tips"
+    
+    public enum PlaceSearchService : String {
+        case foursquare
+    }
+    
     init(){
         
     }
     
     init(foursquareApiKey: String = "", foursquareSession: URLSession? = nil) {
         self.foursquareApiKey = foursquareApiKey
-        self.foursquareSession = foursquareSession
-        if let containerIdentifier = container.containerIdentifier {
+        self.searchSession = foursquareSession
+        if let containerIdentifier = keysContainer.containerIdentifier {
             print(containerIdentifier)
         }
     }
     
-    public func query(request:PlaceSearchRequest) async throws {
-        if foursquareSession == nil {
-            foursquareSession = try await session()
+    public func query(request:PlaceSearchRequest) async throws ->[PlaceSearchResponse] {
+        if searchSession == nil {
+            searchSession = try await session()
         }
+        
+        var components = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.placeSearchAPIUrl)")
+        let queryItem = URLQueryItem(name: "query", value: request.query)
+        let locationQueryItem = URLQueryItem(name: "ll", value: request.ll)
+        components?.queryItems = [queryItem, locationQueryItem]
+        
+        guard let url = components?.url else {
+            throw PlaceSearchSessionError.UnsupportedRequest
+        }
+        
+        let placeSearchResponse = try await fetch(url: url, apiKey: self.foursquareApiKey)
+        
+        guard let response = placeSearchResponse as? NSDictionary else {
+            return [PlaceSearchResponse]()
+        }
+        
+        print(response)
+        
+        if let results = response["results"] as? [NSDictionary] {
+            var formattedResults = [PlaceSearchResponse]()
+            
+            for result in results {
+                var ident = ""
+                var name = ""
+                var categories = [String]()
+                var latitude:Double = 0
+                var longitude:Double = 0
+                var address = ""
+                var addressExtended = ""
+                var country = ""
+                var dma = ""
+                var formattedAddress = ""
+                var locality = ""
+                var postCode = ""
+                var region = ""
+                var chains = [String]()
+                var link = ""
+                
+                if let idString = result["fsq_id"] as? String {
+                    ident = idString
+                }
+                
+                if let nameString = result["name"] as? String {
+                    name = nameString
+                }
+                
+                if ident.count > 0 {
+                    let response = PlaceSearchResponse(fsqID: ident, name: name, categories: categories, latitude: latitude, longitude: longitude, address: address, addressExtended: addressExtended, country: country, dma: dma, formattedAddress: formattedAddress, locality: locality, postCode: postCode, region: region, chains: chains, link: link)
+                    formattedResults.append(response)
+                }
+            }
+            
+            return formattedResults
+        }
+        
+        return [PlaceSearchResponse]()
     }
     
-    public enum PlaceSearchService : String {
-        case foursquare
+    public func details(for fsqID:String) async throws -> Any? {
+        if searchSession == nil {
+            searchSession = try await session()
+        }
+        
+        var components = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.placeDetailsAPIUrl)\(fsqID)")
+        
+        guard let url = components?.url else {
+            throw PlaceSearchSessionError.UnsupportedRequest
+        }
+        
+        return try await fetch(url: url, apiKey: self.foursquareApiKey)
+    }
+    
+    public func photos(for fsqID:String) async throws -> Any? {
+        if searchSession == nil {
+            searchSession = try await session()
+        }
+        
+        var components = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.placeDetailsAPIUrl)\(fsqID)/\(PlaceSearchSession.placePhotosAPIUrl)")
+        
+        guard let url = components?.url else {
+            throw PlaceSearchSessionError.UnsupportedRequest
+        }
+        
+        return try await fetch(url: url, apiKey: self.foursquareApiKey)
+    }
+    
+    public func tips(for fsqID:String) async throws -> Any? {
+        if searchSession == nil {
+            searchSession = try await session()
+        }
+        
+        var components = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.placeDetailsAPIUrl)\(fsqID)/\(PlaceSearchSession.placeTipsAPIUrl)")
+        
+        guard let url = components?.url else {
+            throw PlaceSearchSessionError.UnsupportedRequest
+        }
+        
+        return try await fetch(url: url, apiKey: self.foursquareApiKey)
+    }
+    
+    
+    internal func fetch(url:URL, apiKey:String) async throws ->Any? {
+        var request = URLRequest(url:url)
+        request.setValue(apiKey, forHTTPHeaderField: "Authorization")
+        let responseAny:Any = try await withCheckedThrowingContinuation({checkedContinuation in
+            let dataTask = searchSession?.dataTask(with: request, completionHandler: { data, response, error in
+                if let e = error {
+                    print(e.localizedDescription)
+                    checkedContinuation.resume(throwing:e)
+                } else {
+                    if let d = data {
+                        do {
+                            let json = try JSONSerialization.jsonObject(with: d)
+                            checkedContinuation.resume(returning:json)
+                        } catch {
+                            print(error.localizedDescription)
+                            let returnedString = String(data: d, encoding: String.Encoding.utf8)
+                            print(returnedString)
+                            checkedContinuation.resume(throwing:error)
+                        }
+                    }
+                }
+            })
+            
+            dataTask?.resume()
+        })
+        
+        return responseAny
     }
     
     
@@ -62,7 +196,7 @@ open class PlaceSearchSession : ObservableObject {
                     print(error.localizedDescription)
                 }
             }
-
+            
             let success = try await withCheckedThrowingContinuation { checkedContinuation in
                 operation.queryResultBlock = { result in
                     if self.foursquareApiKey == "" {
@@ -72,7 +206,7 @@ open class PlaceSearchSession : ObservableObject {
                     }
                 }
                 
-                container.publicCloudDatabase.add(operation)
+                keysContainer.publicCloudDatabase.add(operation)
             }
             
             return success

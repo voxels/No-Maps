@@ -6,3 +6,21 @@
 //
 
 import Foundation
+
+public struct PlaceSearchResponse {
+    let fsqID:String
+    let name:String
+    let categories:[String]
+    let latitude:Double
+    let longitude:Double
+    let address:String
+    let addressExtended:String
+    let country:String
+    let dma:String
+    let formattedAddress:String
+    let locality:String
+    let postCode:String
+    let region:String
+    let chains:[String]
+    let link:String
+}

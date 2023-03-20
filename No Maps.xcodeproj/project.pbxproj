@@ -31,6 +31,8 @@
 		1ED9134329C73DCA002D9172 /* PlaceSearchResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ED9134129C73DCA002D9172 /* PlaceSearchResponse.swift */; };
 		1ED9134529C73DF1002D9172 /* PlaceSearchSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ED9134429C73DF1002D9172 /* PlaceSearchSession.swift */; };
 		1ED9134629C73DF1002D9172 /* PlaceSearchSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ED9134429C73DF1002D9172 /* PlaceSearchSession.swift */; };
+		1ED9134929C85EFD002D9172 /* LocationProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ED9134829C85EFD002D9172 /* LocationProvider.swift */; };
+		1ED9134A29C85EFD002D9172 /* LocationProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ED9134829C85EFD002D9172 /* LocationProvider.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -96,6 +98,8 @@
 		1ED9134129C73DCA002D9172 /* PlaceSearchResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceSearchResponse.swift; sourceTree = "<group>"; };
 		1ED9134429C73DF1002D9172 /* PlaceSearchSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceSearchSession.swift; sourceTree = "<group>"; };
 		1ED9134729C742F2002D9172 /* No-Maps.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "No-Maps.entitlements"; sourceTree = "<group>"; };
+		1ED9134829C85EFD002D9172 /* LocationProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationProvider.swift; sourceTree = "<group>"; };
+		1ED9134B29C8600F002D9172 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -186,6 +190,7 @@
 		1ED9130C29C716E2002D9172 /* No-Maps */ = {
 			isa = PBXGroup;
 			children = (
+				1ED9134B29C8600F002D9172 /* Info.plist */,
 				1ED9134729C742F2002D9172 /* No-Maps.entitlements */,
 				1ED9133929C72C52002D9172 /* View */,
 				1ED9133829C72C4A002D9172 /* Model */,
@@ -228,6 +233,7 @@
 				1ED9133E29C73DB3002D9172 /* PlaceSearchRequest.swift */,
 				1ED9134129C73DCA002D9172 /* PlaceSearchResponse.swift */,
 				1ED9134429C73DF1002D9172 /* PlaceSearchSession.swift */,
+				1ED9134829C85EFD002D9172 /* LocationProvider.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -432,6 +438,7 @@
 			files = (
 				1ED9134529C73DF1002D9172 /* PlaceSearchSession.swift in Sources */,
 				1E16D17229C1F56400B2559E /* MessagesViewController.swift in Sources */,
+				1ED9134929C85EFD002D9172 /* LocationProvider.swift in Sources */,
 				1ED9133629C72C1C002D9172 /* ChatResultView.swift in Sources */,
 				1ED9133C29C72C73002D9172 /* ChatResult.swift in Sources */,
 				1ED9133F29C73DB3002D9172 /* PlaceSearchRequest.swift in Sources */,
@@ -446,6 +453,7 @@
 			files = (
 				1ED9134629C73DF1002D9172 /* PlaceSearchSession.swift in Sources */,
 				1ED9131029C716E2002D9172 /* ContentView.swift in Sources */,
+				1ED9134A29C85EFD002D9172 /* LocationProvider.swift in Sources */,
 				1ED9130E29C716E2002D9172 /* No_MapsApp.swift in Sources */,
 				1ED9133D29C72C73002D9172 /* ChatResult.swift in Sources */,
 				1ED9134029C73DB3002D9172 /* PlaceSearchRequest.swift in Sources */,
@@ -723,6 +731,8 @@
 				DEVELOPMENT_TEAM = FTMC23LTVL;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "No-Maps/Info.plist";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "No Maps uses your location to search for places nearby";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -753,6 +763,8 @@
 				DEVELOPMENT_TEAM = FTMC23LTVL;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "No-Maps/Info.plist";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "No Maps uses your location to search for places nearby";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
