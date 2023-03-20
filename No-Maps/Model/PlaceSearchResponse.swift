@@ -23,4 +23,6 @@ public struct PlaceSearchResponse {
     let region:String
     let chains:[String]
     let link:String
+    let childIDs:[String]
+    let parentIDs:[String]
 }

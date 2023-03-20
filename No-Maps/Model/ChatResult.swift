@@ -7,9 +7,9 @@
 
 import SwiftUI
 
-struct ChatResult : Identifiable {
-    let id = UUID()
+public struct ChatResult : Identifiable, Equatable {
+    public let id = UUID()
     let title:String
     let backgroundColor:Color
-    let backgroundImage:Image?
+    let backgroundImageURL:URL?
 }

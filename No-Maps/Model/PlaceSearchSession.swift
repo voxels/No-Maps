@@ -39,7 +39,7 @@ open class PlaceSearchSession : ObservableObject {
         }
     }
     
-    public func query(request:PlaceSearchRequest) async throws ->[PlaceSearchResponse] {
+    public func query(request:PlaceSearchRequest) async throws ->NSDictionary {
         if searchSession == nil {
             searchSession = try await session()
         }
@@ -56,50 +56,13 @@ open class PlaceSearchSession : ObservableObject {
         let placeSearchResponse = try await fetch(url: url, apiKey: self.foursquareApiKey)
         
         guard let response = placeSearchResponse as? NSDictionary else {
-            return [PlaceSearchResponse]()
+            return NSDictionary()
         }
-        
-        if let results = response["results"] as? [NSDictionary] {
-            var formattedResults = [PlaceSearchResponse]()
-            
-            for result in results {
-                var ident = ""
-                var name = ""
-                var categories = [String]()
-                var latitude:Double = 0
-                var longitude:Double = 0
-                var address = ""
-                var addressExtended = ""
-                var country = ""
-                var dma = ""
-                var formattedAddress = ""
-                var locality = ""
-                var postCode = ""
-                var region = ""
-                var chains = [String]()
-                var link = ""
                 
-                if let idString = result["fsq_id"] as? String {
-                    ident = idString
-                }
-                
-                if let nameString = result["name"] as? String {
-                    name = nameString
-                }
-                
-                if ident.count > 0 {
-                    let response = PlaceSearchResponse(fsqID: ident, name: name, categories: categories, latitude: latitude, longitude: longitude, address: address, addressExtended: addressExtended, country: country, dma: dma, formattedAddress: formattedAddress, locality: locality, postCode: postCode, region: region, chains: chains, link: link)
-                    formattedResults.append(response)
-                }
-            }
-            
-            return formattedResults
-        }
-        
-        return [PlaceSearchResponse]()
+        return response
     }
     
-    public func details(for fsqID:String) async throws -> Any? {
+    public func details(for fsqID:String) async throws -> Any {
         if searchSession == nil {
             searchSession = try await session()
         }
@@ -113,7 +76,7 @@ open class PlaceSearchSession : ObservableObject {
         return try await fetch(url: url, apiKey: self.foursquareApiKey)
     }
     
-    public func photos(for fsqID:String) async throws -> Any? {
+    public func photos(for fsqID:String) async throws -> Any {
         if searchSession == nil {
             searchSession = try await session()
         }
@@ -127,7 +90,7 @@ open class PlaceSearchSession : ObservableObject {
         return try await fetch(url: url, apiKey: self.foursquareApiKey)
     }
     
-    public func tips(for fsqID:String) async throws -> Any? {
+    public func tips(for fsqID:String) async throws -> Any {
         if searchSession == nil {
             searchSession = try await session()
         }
@@ -142,7 +105,7 @@ open class PlaceSearchSession : ObservableObject {
     }
     
     
-    internal func fetch(url:URL, apiKey:String) async throws ->Any? {
+    internal func fetch(url:URL, apiKey:String) async throws ->Any {
         print("Requesting URL: \(url)")
         var request = URLRequest(url:url)
         request.setValue(apiKey, forHTTPHeaderField: "Authorization")
