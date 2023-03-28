@@ -215,31 +215,158 @@ open class PlaceResponseFormatter {
         return retVal
     }
     
-    public class func chatResult(for place:PlaceSearchResponse, photos:[PlacePhotoResponse], resize:CGSize? = nil)->ChatResult {
-        let result = ChatResult(title: place.name, backgroundColor: Color.red, backgroundImageURL: nil)
-        
-        var imageIdent = photos.first?.ident
-        
-        guard imageIdent != nil, var minAspectRatio = photos.first?.aspectRatio else {
-            return result
-        }
-        
-        for photo in photos {
-            if photo.aspectRatio > minAspectRatio {
-                imageIdent = photo.ident
+    public class func searchChatResult(queryIntents:[AssistiveChatHostIntent])->ChatResult {
+        if let lastIntent = queryIntents.last {
+            switch lastIntent.intent {
+            case .Search:
+                let result = ChatResult(title:"Where can I find a place", backgroundColor: Color.orange, backgroundImageURL: nil)
+                return result
+            case .Save:
+                let result = ChatResult(title:"Save a new place for later", backgroundColor: Color.orange, backgroundImageURL: nil)
+                return result
+            case .Tell:
+                let result = ChatResult(title:"Tell me about a new place", backgroundColor: Color.orange, backgroundImageURL: nil)
+                return result
+            case .Recall:
+                let result = ChatResult(title:"What did I like about a place", backgroundColor: Color.orange, backgroundImageURL: nil)
+                return result
             }
         }
         
-        let widestImage = photos.first { response in
-            return response.ident == imageIdent
-        }
-        
-        guard let widestImage = widestImage else {
-            return result
-        }
-        
-        let imageResult = ChatResult(title: result.title, backgroundColor: result.backgroundColor, backgroundImageURL:  widestImage.photoUrl(resize:resize))
-        
-        return imageResult
+        let result = ChatResult(title:"Where can I find a place", backgroundColor: Color.orange, backgroundImageURL: nil)
+        return result
     }
+    
+    public class func placeChatResult(for place:PlaceSearchResponse, photos:[PlacePhotoResponse], resize:CGSize? = nil, queryIntents:[AssistiveChatHostIntent]? = nil)->ChatResult {
+        
+        let tellChatResult:()->ChatResult = {
+            let result = ChatResult(title:"Tell me about \(place.name)", backgroundColor: Color.red, backgroundImageURL: nil)
+            
+            var imageIdent = photos.first?.ident
+            
+            guard imageIdent != nil, var minAspectRatio = photos.first?.aspectRatio else {
+                return result
+            }
+            
+            for photo in photos {
+                if photo.aspectRatio > minAspectRatio {
+                    imageIdent = photo.ident
+                }
+            }
+            
+            let widestImage = photos.first { response in
+                return response.ident == imageIdent
+            }
+            
+            guard let widestImage = widestImage else {
+                return result
+            }
+            
+            let imageResult = ChatResult(title: result.title, backgroundColor: result.backgroundColor, backgroundImageURL:  widestImage.photoUrl(resize:resize))
+            
+            return imageResult
+        }
+        
+        let saveChatResult:()->ChatResult = {
+            let result = ChatResult(title:"Save \(place.name) for later", backgroundColor: Color.red, backgroundImageURL: nil)
+            
+            var imageIdent = photos.first?.ident
+            
+            guard imageIdent != nil, var minAspectRatio = photos.first?.aspectRatio else {
+                return result
+            }
+            
+            for photo in photos {
+                if photo.aspectRatio > minAspectRatio {
+                    imageIdent = photo.ident
+                }
+            }
+            
+            let widestImage = photos.first { response in
+                return response.ident == imageIdent
+            }
+            
+            guard let widestImage = widestImage else {
+                return result
+            }
+            
+            let imageResult = ChatResult(title: result.title, backgroundColor: result.backgroundColor, backgroundImageURL:  widestImage.photoUrl(resize:resize))
+            
+            return imageResult
+        }
+        
+        let recallChatResult:()->ChatResult = {
+            let result = ChatResult(title:"What did I like about \(place.name)?", backgroundColor: Color.red, backgroundImageURL: nil)
+            
+            var imageIdent = photos.first?.ident
+            
+            guard imageIdent != nil, var minAspectRatio = photos.first?.aspectRatio else {
+                return result
+            }
+            
+            for photo in photos {
+                if photo.aspectRatio > minAspectRatio {
+                    imageIdent = photo.ident
+                }
+            }
+            
+            let widestImage = photos.first { response in
+                return response.ident == imageIdent
+            }
+            
+            guard let widestImage = widestImage else {
+                return result
+            }
+            
+            let imageResult = ChatResult(title: result.title, backgroundColor: result.backgroundColor, backgroundImageURL:  widestImage.photoUrl(resize:resize))
+            
+            return imageResult
+        }
+        
+        let searchChatResult:()->ChatResult = {
+            let result = ChatResult(title:"Where can I find \(place.name)", backgroundColor: Color.red, backgroundImageURL: nil)
+            
+            var imageIdent = photos.first?.ident
+            
+            guard imageIdent != nil, var minAspectRatio = photos.first?.aspectRatio else {
+                return result
+            }
+            
+            for photo in photos {
+                if photo.aspectRatio > minAspectRatio {
+                    imageIdent = photo.ident
+                }
+            }
+            
+            let widestImage = photos.first { response in
+                return response.ident == imageIdent
+            }
+            
+            guard let widestImage = widestImage else {
+                return result
+            }
+            
+            let imageResult = ChatResult(title: result.title, backgroundColor: result.backgroundColor, backgroundImageURL:  widestImage.photoUrl(resize:resize))
+            
+            return imageResult
+        }
+        
+        guard let queryIntents = queryIntents, queryIntents.count > 0, let lastIntent = queryIntents.last else {
+            return tellChatResult()
+        }
+        
+        switch lastIntent.intent {
+        case .Tell:
+            return tellChatResult()
+        case .Save:
+            return saveChatResult()
+        case .Recall:
+            return recallChatResult()
+        case .Search:
+            return searchChatResult()
+
+        }
+    }
+    
+    
 }

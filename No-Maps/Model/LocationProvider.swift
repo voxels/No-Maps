@@ -27,9 +27,14 @@ open class LocationProvider : NSObject, ObservableObject  {
     
     public func currentLocation()->CLLocation? {
         if lastKnownLocation == nil {
+            if locationManager.authorizationStatus != .authorizedWhenInUse {
+                authorize()
+            }
+            locationManager.delegate = self
             locationManager.requestLocation()
             return locationManager.location
         } else {
+            locationManager.delegate = self
             locationManager.requestLocation()
             return lastKnownLocation
         }
