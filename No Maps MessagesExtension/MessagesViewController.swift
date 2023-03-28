@@ -158,7 +158,8 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
             print(intent.caption)
         }
         
-        print("Update view")
-        contentView?.rootView.didUpdateIntent()
+        print("Paramaters did update, requesting new chat model")
+        chatModel.refreshModel(resultImageSize:nil,queryIntents: parameters.queryIntents )
+
     }
 }

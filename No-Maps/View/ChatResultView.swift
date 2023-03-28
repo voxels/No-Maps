@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ChatResultView : View {
+    @Environment(\.refresh) public var refreshAction: RefreshAction?
     public unowned var chatHostingDelegate:ChatHostingViewControllerDelegate
     @StateObject public var chatHost:AssistiveChatHost
     @Binding public var messagesViewHeight:CGFloat
@@ -35,9 +36,6 @@ struct ChatResultView : View {
         }
     }
     
-    public func didUpdateIntent(){
-        model.refreshModel(resultImageSize: compactSize(), queryIntents: chatHost.queryIntentParameters.queryIntents)
-    }
     
     private func compactSize()->CGSize {
         let height = 253 / 2.0 - interitemDistance - scrollViewPadding
