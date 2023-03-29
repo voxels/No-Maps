@@ -14,6 +14,7 @@ public struct AssistiveChatHostIntent : Equatable {
 }
 
 public protocol AssistiveChatHostMessagesDelegate : AnyObject {
+    func addReceivedMessage(caption:String, parameters:AssistiveChatHostQueryParameters, isLocalParticipant:Bool)
     func didUpdateQuery(with parameters:AssistiveChatHostQueryParameters)
     func send(message:String)
 }
@@ -21,10 +22,25 @@ public protocol AssistiveChatHostMessagesDelegate : AnyObject {
 open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObject {
     
     public enum Intent {
-        case Save
-        case Search
-        case Recall
-        case Tell
+        case Unsupported
+        case SaveDefault
+        case SearchDefault
+        case RecallDefault
+        case TellDefault
+        case SavePlace
+        case SearchPlace
+        case RecallPlace
+        case TellPlace
+        case PlaceDetailsDirections
+        case PlaceDetailsPhotos
+        case PlaceDetailsTips
+        case PlaceDetailsInstagram
+        case PlaceDetailsOpenHours
+        case PlaceDetailsBusyHours
+        case PlaceDetailsPopularity
+        case PlaceDetailsCost
+        case PlaceDetailsMenu
+        case PlaceDetailsPhone
     }
     
     weak private var delegate:AssistiveChatHostMessagesDelegate?
@@ -40,21 +56,50 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
     public func determineIntent(for caption:String)->Intent {
         switch caption{
         case "I like a place":
-            return .Save
+            return .SaveDefault
         case "Where can I find":
-            return .Search
+            return .SearchDefault
         case "What did I like":
-            return .Recall
+            return .RecallDefault
+        case "Tell me about":
+            return .TellDefault
         default:
             if caption.starts(with: "I like a place") {
-                return .Save
+                return .SavePlace
             } else if caption.starts(with: "Where can I find") {
-                return .Search
+                if caption.hasSuffix("a different place?") {
+                    return .SearchDefault
+                }
+                return .SearchPlace
             } else if caption.starts(with:"What did I like") {
-                return .Recall
+                return .RecallPlace
+            } else if caption.starts(with:"Tell me about") {
+                return .TellPlace
+            } else if caption.starts(with: "How do I get to") {
+                return .PlaceDetailsDirections
+            } else if caption.starts(with: "Show me the photos for") {
+                return .PlaceDetailsPhotos
+            } else if caption.starts(with: "What do people say about") {
+                return .PlaceDetailsTips
+            } else if caption.starts(with: "What is") {
+                if caption.hasSuffix("Instagram account?") {
+                    return .PlaceDetailsInstagram
+                } else if caption.hasSuffix("phone number?") {
+                    return .PlaceDetailsPhone
+                }
+            } else if caption.starts(with: "When is it busy at") {
+                return .PlaceDetailsBusyHours
+            } else if caption.starts(with: "How popular is") {
+                return .PlaceDetailsPopularity
+            } else if caption.starts(with: "How much does") {
+                return .PlaceDetailsCost
+            } else if caption.starts(with: "What does") {
+                return .PlaceDetailsMenu
+            } else if caption.starts(with: "When is") && caption.hasSuffix("open?") {
+                return .PlaceDetailsOpenHours
             }
             
-            return .Tell
+            return .Unsupported
         }
     }
     
@@ -65,5 +110,9 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
     
     public func resetIntentParameters() {
         queryIntentParameters.queryIntents = [AssistiveChatHostIntent]()
+    }
+    
+    public func receiveMessage(caption:String, isLocalParticipant:Bool ) {
+        delegate?.addReceivedMessage(caption: caption, parameters: queryIntentParameters, isLocalParticipant: isLocalParticipant)
     }
 }

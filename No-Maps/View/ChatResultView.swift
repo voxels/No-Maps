@@ -53,7 +53,7 @@ struct ChatResultViewHorizontalStack : View  {
     @ObservedObject public var model:ChatResultViewModel
 
     @State private var interitemDistance:CGFloat = 8.0
-    @State private var scrollViewPadding:CGFloat = 8.0
+    @State private var scrollViewPadding:CGFloat = 12.0
     
     var body: some View {
         LazyHStack {
@@ -66,9 +66,9 @@ struct ChatResultViewHorizontalStack : View  {
                         let showBackgroundImage = column.0.backgroundImageURL != nil
                         HStack{
                             Spacer()
-                            showBackgroundImage ?                      Text(column.0.title).multilineTextAlignment(.center).font(.system(.headline)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style:.circular)).backgroundStyle(.purple).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 2.0).onTapGesture {
+                            showBackgroundImage ?                      Text(column.0.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style:.circular)).backgroundStyle(.purple).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 2.0).onTapGesture {
                                 chatHostingDelegate.didTap(question: column.0.title)
-                            } : Text(column.0.title).multilineTextAlignment(.center).font(.system(.headline)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style: .circular)).backgroundStyle(.blue).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 2.0).onTapGesture {
+                            } : Text(column.0.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style: .circular)).backgroundStyle(.blue).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 2.0).onTapGesture {
                                 chatHostingDelegate.didTap(question: column.0.title)
                             }
                             if showBackgroundImage {
@@ -86,9 +86,9 @@ struct ChatResultViewHorizontalStack : View  {
                         let showBackgroundImage = column.1.backgroundImageURL != nil
                         HStack{
                             Spacer()
-                            showBackgroundImage ?                                                                  Text(column.1.title).multilineTextAlignment(.center).font(.system(.headline)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style:.circular)).backgroundStyle(.purple).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 2.0).onTapGesture {
+                            showBackgroundImage ?                                                                  Text(column.1.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style:.circular)).backgroundStyle(.purple).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 2.0).onTapGesture {
                                 chatHostingDelegate.didTap(question: column.1.title)
-                            } : Text(column.1.title).multilineTextAlignment(.center).font(.system(.headline)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style: .circular)).backgroundStyle(.blue).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 2.0).onTapGesture {
+                            } : Text(column.1.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style: .circular)).backgroundStyle(.blue).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 2.0).onTapGesture {
                                 chatHostingDelegate.didTap(question: column.1.title)
                             }
 

@@ -12,7 +12,10 @@ public class ChatResultViewModel : ObservableObject {
     private let locationProvider:LocationProvider = LocationProvider()
     private var localPlaceSearchResponses:[PlaceSearchResponse]?
     private let maxChatResults:Int = 7
-    
+
+    private var queryCaption:String?
+    private var queryParametersHistory = [AssistiveChatHostQueryParameters]()
+
     private static let modelDefaults:[ChatResult] = [
         ChatResult(title: "I like a place", backgroundColor: Color.green, backgroundImageURL: nil),
         ChatResult(title: "Where can I find", backgroundColor: Color.green, backgroundImageURL: nil),
@@ -25,6 +28,23 @@ public class ChatResultViewModel : ObservableObject {
 
     public func authorizeLocationProvider() {
         locationProvider.authorize()
+    }
+    
+    public func receiveMessage(caption: String, parameters: AssistiveChatHostQueryParameters, isLocalParticipant: Bool) {
+        queryCaption = caption
+        queryParametersHistory.append(parameters)
+        applyQuery(caption: queryCaption!, parameters: parameters, history: queryParametersHistory)
+    }
+    
+    public func applyQuery(caption:String, parameters:AssistiveChatHostQueryParameters, history:[AssistiveChatHostQueryParameters]) {
+        print("Applying query: \(caption)")
+        print("With parameters:")
+        for intent in parameters.queryIntents {
+            print(intent.caption)
+            print(intent.intent)
+        }
+        
+         
     }
     
     public func refreshModel(resultImageSize:CGSize?, queryIntents:[AssistiveChatHostIntent]? = nil) {
@@ -60,8 +80,10 @@ public class ChatResultViewModel : ObservableObject {
         let _ = Task.init {
             do {
                 var chatResults = [ChatResult]()
-                let searchResult = PlaceResponseFormatter.searchChatResult(queryIntents: intents)
-                chatResults.append(searchResult)
+                if intents.count > 0 {
+                    let searchResult = PlaceResponseFormatter.firstChatResult(queryIntents: intents)
+                    chatResults.append(searchResult)
+                }
                 for index in 0..<min(localPlaceSearchResponses.count,maxChatResults) {
                     
                     let response = localPlaceSearchResponses[index]
@@ -80,8 +102,8 @@ public class ChatResultViewModel : ObservableObject {
                      let placeTipsResponses = try PlaceResponseFormatter.placeTipsResponses(with: rawTipsResponse, for:response.fsqID)
                      */
                     
-                    let result = PlaceResponseFormatter.placeChatResult(for: response, photos: placePhotosResponses, resize: resultImageSize, queryIntents: intents)
-                    chatResults.append(result)
+                    let results = PlaceResponseFormatter.placeChatResults(for: response, photos: placePhotosResponses, resize: resultImageSize, queryIntents: intents)
+                    chatResults.append(contentsOf:results)
                 }
                 
                 let blendedResults = blendDefaults(with: chatResults, queryIntents:intents)
@@ -127,8 +149,8 @@ public class ChatResultViewModel : ObservableObject {
                      let placeTipsResponses = try PlaceResponseFormatter.placeTipsResponses(with: rawTipsResponse, for:response.fsqID)
                      */
                     
-                    let result = PlaceResponseFormatter.placeChatResult(for: response, photos: placePhotosResponses, resize: resultImageSize, queryIntents: nil)
-                    chatResults.append(result)
+                    let results = PlaceResponseFormatter.placeChatResults(for: response, photos: placePhotosResponses, resize: resultImageSize, queryIntents: nil)
+                    chatResults.append(contentsOf:results)
                 }
                 
                 let blendedResults = blendDefaults(with: chatResults)
@@ -145,7 +167,7 @@ public class ChatResultViewModel : ObservableObject {
     }
     
     private func blendDefaults(with chatResults:[ChatResult], queryIntents:[AssistiveChatHostIntent]? = nil)->[ChatResult] {
-        var zeroStateResults:()->[ChatResult] = {
+        let zeroStateResults:()->[ChatResult] = {
             var blendResults = [ChatResult]()
             
             let finalArrayCount = chatResults.count + ChatResultViewModel.modelDefaults.count
@@ -182,7 +204,7 @@ public class ChatResultViewModel : ObservableObject {
         }
         
         
-        guard let queryIntents = queryIntents else {
+        guard let _ = queryIntents else {
             return zeroStateResults()
         }
         

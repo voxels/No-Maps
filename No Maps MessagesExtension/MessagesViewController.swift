@@ -75,13 +75,14 @@ open class MessagesViewController: MSMessagesAppViewController {
         if message.senderParticipantIdentifier == conversation.localParticipantIdentifier {
             print("Did receive message from device: \(message.summaryText)")
             if let caption = message.summaryText {
-                print(caption)
+                self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true)
             }
         } else {
             print("Did receive message from chat: \(message.summaryText)")
+            if let caption = message.summaryText {
+                self.chatHost.receiveMessage(caption: caption, isLocalParticipant: false)
+            }
         }
-        
-
     }
     
     open override func didStartSending(_ message: MSMessage, conversation: MSConversation) {
@@ -142,6 +143,10 @@ public extension MessagesViewController {
 }
 
 extension MessagesViewController : AssistiveChatHostMessagesDelegate {
+    public func addReceivedMessage(caption: String, parameters: AssistiveChatHostQueryParameters, isLocalParticipant: Bool) {
+        chatModel.receiveMessage(caption: caption, parameters: parameters, isLocalParticipant: isLocalParticipant)
+    }
+    
     public func send(message: String) {
         print("Send message\(message)")
         do {
