@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct PlaceSearchResponse {
+public struct PlaceSearchResponse: Equatable {
     let fsqID:String
     let name:String
     let categories:[String]

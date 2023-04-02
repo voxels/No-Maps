@@ -47,7 +47,8 @@ open class PlaceSearchSession : ObservableObject {
         var components = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.placeSearchAPIUrl)")
         let queryItem = URLQueryItem(name: "query", value: request.query)
         let locationQueryItem = URLQueryItem(name: "ll", value: request.ll)
-        components?.queryItems = [queryItem, locationQueryItem]
+        let radiusQueryItem = URLQueryItem(name: "radius", value: "\(request.radius)")
+        components?.queryItems = [queryItem, locationQueryItem, radiusQueryItem]
         
         guard let url = components?.url else {
             throw PlaceSearchSessionError.UnsupportedRequest
@@ -62,12 +63,81 @@ open class PlaceSearchSession : ObservableObject {
         return response
     }
     
-    public func details(for fsqID:String) async throws -> Any {
+    public func details(for request:PlaceDetailsRequest) async throws -> Any {
         if searchSession == nil {
             searchSession = try await session()
         }
         
-        var components = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.placeDetailsAPIUrl)\(fsqID)")
+        var components = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.placeDetailsAPIUrl)\(request.fsqID)")
+        var detailsString = ""
+        
+        if request.description{
+            detailsString.append("description,")
+        }
+        if request.tel {
+            detailsString.append("tel,")
+        }
+        if request.fax{
+            detailsString.append("fax,")
+        }
+        if request.email{
+            detailsString.append("email,")
+        }
+        if request.website{
+            detailsString.append("website,")
+        }
+        if request.socialMedia{
+            detailsString.append("social_media,")
+        }
+        if request.verified{
+            detailsString.append("verified,")
+        }
+        if request.hours{
+            detailsString.append("hours,")
+        }
+        if request.hoursPopular{
+            detailsString.append("hours_popular,")
+        }
+        if request.rating{
+            detailsString.append("rating,")
+        }
+        if request.stats{
+            detailsString.append("stats,")
+        }
+        if request.popularity{
+            detailsString.append("popularity,")
+        }
+        if request.price{
+            detailsString.append("price,")
+        }
+        if request.menu{
+            detailsString.append("menu,")
+        }
+        if request.dateClosed{
+            detailsString.append("date_closed,")
+        }
+        if request.photos{
+            detailsString.append("photos,")
+        }
+        if request.tips{
+            detailsString.append("tips,")
+        }
+        if request.tastes{
+            detailsString.append("tastes,")
+        }
+        if request.features{
+            detailsString.append("features,")
+        }
+        if request.storeID{
+            //detailsString.append("store_id")
+        }
+        
+        if detailsString.hasSuffix(",") {
+            detailsString.removeLast()
+        }
+        
+        let queryItem = URLQueryItem(name: "fields", value:detailsString)
+        components?.queryItems = [queryItem]
         
         guard let url = components?.url else {
             throw PlaceSearchSessionError.UnsupportedRequest

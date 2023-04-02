@@ -129,6 +129,103 @@ open class PlaceResponseFormatter {
         return retVal
     }
     
+    public class func placeDetailsResponse(with response:Any, for placeSearchResponse:PlaceSearchResponse, placePhotosResponses:[PlacePhotoResponse]? = nil, placeTipsResponses:[PlaceTipsResponse]? = nil) throws ->PlaceDetailsResponse {
+        guard let response = response as? NSDictionary else {
+            throw PlaceResponseFormatterError.InvalidRawResponseType
+        }
+        
+        let searchResponse = placeSearchResponse
+        let photoResponses = placePhotosResponses
+        let tipsResponses = placeTipsResponses
+        var description:String? = nil
+        
+        if let rawDescription = response["description"] as? String {
+            print(rawDescription)
+            description = rawDescription
+        }
+        
+        var tel:String? = nil
+        if let rawTel = response["tel"] as? String {
+            tel = rawTel
+        }
+        
+        var fax:String? = nil
+        if let rawFax = response["fax"] as? String {
+            fax = rawFax
+        }
+        
+        var email:String? = nil
+        if let rawEmail = response["email"] as? String {
+            email = rawEmail
+        }
+
+        var website:String? = nil
+        if let rawWebsite = response["website"] as? String {
+            website = rawWebsite
+        }
+
+        var socialMedia:[String:String]? = nil
+        if let rawSocialMedia = response["social_media"] as? [String:String] {
+            socialMedia = rawSocialMedia
+        }
+        
+        var verified:Bool? = nil
+        verified = false
+        
+        var hours:String? = nil
+        var openNow:Bool? = nil
+        if let hoursDict = response["hours"] as? NSDictionary {
+            if let hoursDisplayText = hoursDict["display"] as? String {
+                hours = hoursDisplayText
+            }
+            if let rawOpen = hoursDict["open_now"] as? Int {
+                if rawOpen == 1 {
+                    openNow = true
+                } else {
+                    openNow = false
+                }
+            }
+        }
+        
+        var hoursPopular:[[String:Int]]? = nil
+        if let rawHoursPopular = response["hours_popular"] as? [[String:Int]] {
+            hoursPopular = rawHoursPopular
+        }
+        var rating:Float = 0
+        if let rawRating = response["rating"] as? NSString {
+            rating = rawRating.floatValue
+        }
+        var stats:Bool? = nil
+        stats = false
+        var popularity:Float = 0
+        if let rawPopularity = response["popularity"] as? NSString {
+            popularity = rawPopularity.floatValue
+        }
+        var price:String? = nil
+        if let rawPrice = response["price"] as? String {
+            price = rawPrice
+        }
+        var menu:AnyObject? = nil
+        if let rawMenu = response["menu"] as? AnyObject {
+            menu = rawMenu
+        }
+        var dateClosed:String? = nil
+        if let rawDateClosed = response["date_closed"] as? String {
+            dateClosed = rawDateClosed
+        }
+        
+        var tastes:[String]? = nil
+        if let rawTastes = response["tastes"] as? [String] {
+            tastes = rawTastes
+        }
+        
+        var features:[String]? = nil        
+        
+        return PlaceDetailsResponse(searchResponse: searchResponse, photoResponses: photoResponses, tipsResponses: tipsResponses, description: description, tel: tel, fax: fax, email: email, website: website, socialMedia: socialMedia, verified: verified, hours: hours, openNow: openNow, hoursPopular: hoursPopular, rating: rating, stats: stats, popularity: popularity, price: price, menu: menu, dateClosed: dateClosed, tastes: tastes, features: features)
+        
+    }
+    
+    
     /*
      let ident:String
      let createdAt:String
@@ -219,42 +316,245 @@ open class PlaceResponseFormatter {
         if let lastIntent = queryIntents.last {
             switch lastIntent.intent {
             case .SearchDefault:
-                let result = ChatResult(title:"Where can I find a place nearby?", backgroundColor: Color.orange, backgroundImageURL: nil)
+                let result = ChatResult(title:"Where can I find a place?", backgroundColor: Color.orange, backgroundImageURL: nil, placeResponse: nil, placeDetailsResponse: nil, photoResponse: nil)
                 return result
             case .SaveDefault:
-                let result = ChatResult(title:"Save a new place for later?", backgroundColor: Color.orange, backgroundImageURL: nil)
+                let result = ChatResult(title:"Save a new place for later?", backgroundColor: Color.orange, backgroundImageURL: nil, placeResponse: nil, placeDetailsResponse: nil, photoResponse: nil)
                 return result
             case .TellDefault:
-                let result = ChatResult(title:"Tell me about a new place?", backgroundColor: Color.orange, backgroundImageURL: nil)
+                let result = ChatResult(title:"Tell me about a new place?", backgroundColor: Color.orange, backgroundImageURL: nil, placeResponse: nil, placeDetailsResponse: nil, photoResponse: nil)
                 return result
             case .RecallDefault:
-                let result = ChatResult(title:"What did I like about a place?", backgroundColor: Color.orange, backgroundImageURL: nil)
+                let result = ChatResult(title:"What did I like about a place?", backgroundColor: Color.orange, backgroundImageURL: nil, placeResponse: nil, placeDetailsResponse: nil, photoResponse: nil)
                 return result
             default:
                 break
             }
         }
         
-        let result = ChatResult(title:"Where can I find a different place?", backgroundColor: Color.orange, backgroundImageURL: nil)
+        let result = ChatResult(title:"Ask a different question", backgroundColor: Color.red, backgroundImageURL: nil, placeResponse: nil, placeDetailsResponse: nil, photoResponse: nil)
         return result
     }
     
+    public class func placeDetailsChatResults(for place:PlaceSearchResponse, details:PlaceDetailsResponse, photos:[PlacePhotoResponse], tips:[PlaceTipsResponse],  results:[PlaceSearchResponse], resize:CGSize? = nil, queryIntents:[AssistiveChatHostIntent]? = nil )->[ChatResult] {
+        print("Showing details chat results for \(place.name) with intent:\(queryIntents?.last?.intent)")
+        var usedPhotoIDs = [String]()
+        
+        let placeDetailsChatResultZeroIntent:()->[ChatResult] = {
+            var placeResults = [ChatResult]()
+            if let description = details.description {
+                let placeResultDescription = PlaceResponseFormatter.imageChatResult(title: description, backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
+                placeResults.append(placeResultDescription)
+            }
+            
+            let placeResultAddress = PlaceResponseFormatter.imageChatResult(title: details.searchResponse.address, backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
+            placeResults.append(placeResultAddress)
+            
+            if let tel = details.tel {
+                let placeResultTel = PlaceResponseFormatter.imageChatResult(title: tel, backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
+                placeResults.append(placeResultTel)
+            }
+            
+            if let price = details.price {
+                let placeResultPrice = PlaceResponseFormatter.imageChatResult(title: price, backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs),resize: resize)
+                placeResults.append(placeResultPrice)
+            }
+
+            let placeResultDirections = PlaceResponseFormatter.imageChatResult(title: "How do I get to \(place.name)?", backgroundColor: Color.red, backgroundImageUrl: nil,placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+            placeResults.append(placeResultDirections)
+            if photos.count > 0{
+                let placeResultPhotos = PlaceResponseFormatter.imageChatResult(title: "Show me the photos for \(place.name)", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+                placeResults.append(placeResultPhotos)
+            }
+            if details.tipsResponses != nil {
+                let placeResultTips = PlaceResponseFormatter.imageChatResult(title: "What do people say about \(place.name)?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs),resize:resize)
+                placeResults.append(placeResultTips)
+            }
+            if let socialMedia = details.socialMedia, socialMedia.keys.contains("instagram"){
+                let placeResultInstagram = PlaceResponseFormatter.imageChatResult(title: "Show me \(place.name)'s Instagram account", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+                placeResults.append(placeResultInstagram)
+            }
+            if let _ = details.hours {
+                let placeResultOpenHours = PlaceResponseFormatter.imageChatResult(title: "When is \(place.name) open?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+                placeResults.append(placeResultOpenHours)
+
+            }
+            if let _ = details.hoursPopular {
+                let placeResultBusyHours = PlaceResponseFormatter.imageChatResult(title: "When is it busy at \(place.name)?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+                placeResults.append(placeResultBusyHours)
+            }
+            if details.popularity > 0 {
+                let placeResultPopularity =  PlaceResponseFormatter.imageChatResult(title: "How popular is \(place.name)?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+                placeResults.append(placeResultPopularity)
+            }
+
+            if let _ = details.price{
+                let placeResultCost = PlaceResponseFormatter.imageChatResult(title: "How much does \(place.name) cost?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+                placeResults.append(placeResultCost)
+            }
+            if let _ = details.menu  as? NSDictionary {
+                let placeResultMenu = PlaceResponseFormatter.imageChatResult(title: "What's does \(place.name) have?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+                placeResults.append(placeResultMenu)
+            }
+            
+            if let _ = details.tel {
+                let placeResultPhone = PlaceResponseFormatter.imageChatResult(title: "Call \(place.name)", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+                placeResults.append(placeResultPhone)
+            }
+            
+            return placeResults
+        }
+
+        
+        let placeDetailsChatResults:(AssistiveChatHostIntent)->[ChatResult] = { (intent) in
+            var detailsResults = [ChatResult]()
+            
+            var placeResults = [ChatResult]()
+            if let description = details.description {
+                let placeResultDescription = PlaceResponseFormatter.imageChatResult(title: description, backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
+                placeResults.append(placeResultDescription)
+            }
+            
+            let placeResultAddress = PlaceResponseFormatter.imageChatResult(title: details.searchResponse.address, backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
+            placeResults.append(placeResultAddress)
+            
+            if let tel = details.tel {
+                let placeResultTel = PlaceResponseFormatter.imageChatResult(title: tel, backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
+                placeResults.append(placeResultTel)
+            }
+            
+            if let price = details.price {
+                let placeResultPrice = PlaceResponseFormatter.imageChatResult(title: price, backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs),resize: resize)
+                placeResults.append(placeResultPrice)
+            }
+            
+            var intentResult:ChatResult?
+            
+            switch intent.intent {
+            case .PlaceDetailsDirections:
+                let response = PlaceResponseFormatter.imageChatResult(title: "How do I get to to \(place.name)", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
+                intentResult = response
+            case .PlaceDetailsPhotos:
+                let response = PlaceResponseFormatter.imageChatResult(title: "Show me \(place.name)'s gallery", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
+                intentResult = response
+            case .PlaceDetailsTips:
+                let response = PlaceResponseFormatter.imageChatResult(title: "Give me a summary of \(place.name)'s reviews", backgroundColor: Color.red, backgroundImageUrl: nil,placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
+                intentResult = response
+            case .PlaceDetailsInstagram:
+                let response = PlaceResponseFormatter.imageChatResult(title: "Show me \(place.name)'s Instagram account", backgroundColor: Color.red, backgroundImageUrl: nil,placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
+                intentResult = response
+            case .PlaceDetailsOpenHours:
+                if let hours = details.hours {
+                    let response = PlaceResponseFormatter.imageChatResult(title:hours, backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
+                    intentResult = response
+                }
+            case .PlaceDetailsBusyHours:
+                let placeResultBusyHours = PlaceResponseFormatter.imageChatResult(title: "When is it busy at \(place.name)?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+                intentResult = placeResultBusyHours
+            case .PlaceDetailsPopularity:
+                let response = PlaceResponseFormatter.imageChatResult(title: "\(place.name) popularity is \(details.popularity)", backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
+                intentResult = response
+            case .PlaceDetailsCost:
+                if let price = details.price {
+                    let response = PlaceResponseFormatter.imageChatResult(title: price, backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
+                    intentResult = response
+                }
+            case .PlaceDetailsMenu:
+                let response = PlaceResponseFormatter.imageChatResult(title: "Show me \(place.name)'s menu", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
+                intentResult = response
+            case .PlaceDetailsPhone:
+                let response = PlaceResponseFormatter.imageChatResult(title: "Call \(place.name)", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs),resize: resize)
+                intentResult = response
+            default:
+                break
+            }
+            
+            detailsResults.append(contentsOf: placeResults)
+            
+            if let result = intentResult {
+                detailsResults.append(result)
+            }
+            
+            return detailsResults
+        }
+        
+        let placeChatResults:(AssistiveChatHostIntent)->[ChatResult] = { lastIntent in
+            var placeResults = [ChatResult]()
+            let placeResultDirections = PlaceResponseFormatter.imageChatResult(title: "How do I get to \(place.name)?", backgroundColor: Color.red, backgroundImageUrl: nil,placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+            if lastIntent.intent != .PlaceDetailsDirections {
+                placeResults.append(placeResultDirections)
+            }
+            if photos.count > 0, lastIntent.intent != .PlaceDetailsPhotos {
+                let placeResultPhotos = PlaceResponseFormatter.imageChatResult(title: "Show me the photos for \(place.name)", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+                placeResults.append(placeResultPhotos)
+            }
+            if details.tipsResponses != nil, lastIntent.intent != .PlaceDetailsTips {
+                let placeResultTips = PlaceResponseFormatter.imageChatResult(title: "What do people say about \(place.name)?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs),resize:resize)
+                placeResults.append(placeResultTips)
+            }
+            if ((details.socialMedia?.keys.contains("instagram")) != nil), lastIntent.intent != .PlaceDetailsInstagram {
+                let placeResultInstagram = PlaceResponseFormatter.imageChatResult(title: "Show me \(place.name)'s Instagram account", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+                placeResults.append(placeResultInstagram)
+            }
+            if let _ = details.hours, lastIntent.intent != .PlaceDetailsOpenHours {
+                let placeResultOpenHours = PlaceResponseFormatter.imageChatResult(title: "When is \(place.name) open?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+                placeResults.append(placeResultOpenHours)
+
+            }
+            if let _ = details.hoursPopular, lastIntent.intent != .PlaceDetailsBusyHours {
+                let placeResultBusyHours = PlaceResponseFormatter.imageChatResult(title: "When is it busy at \(place.name)?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+                placeResults.append(placeResultBusyHours)
+            }
+            if lastIntent.intent != .PlaceDetailsPopularity, details.popularity > 0 {
+                let placeResultPopularity =  PlaceResponseFormatter.imageChatResult(title: "How popular is \(place.name)?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+                placeResults.append(placeResultPopularity)
+            }
+            if let _ = details.price, lastIntent.intent != .PlaceDetailsCost {
+                let placeResultCost = PlaceResponseFormatter.imageChatResult(title: "How much does \(place.name) cost?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+                placeResults.append(placeResultCost)
+            }
+            if let _ = details.menu as? NSDictionary, lastIntent.intent != .PlaceDetailsMenu {
+                let placeResultMenu = PlaceResponseFormatter.imageChatResult(title: "What's does \(place.name) have?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+                placeResults.append(placeResultMenu)
+            }
+            if let _ = details.tel, lastIntent.intent != .PlaceDetailsPhone {
+                let placeResultPhone = PlaceResponseFormatter.imageChatResult(title: "What is \(place.name)'s phone number?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+                placeResults.append(placeResultPhone)
+            }
+            
+            return placeResults
+        }
+        
+        if let lastIntent = queryIntents?.last {
+            let detailsChatResults = placeDetailsChatResults(lastIntent)
+            let placeChatResults = placeChatResults(lastIntent)
+            var allResults = detailsChatResults
+            allResults.append(contentsOf: placeChatResults)
+            return allResults
+        } else {
+            let detailsChatResults = placeDetailsChatResultZeroIntent()
+            var allResults = detailsChatResults
+            return allResults
+        }
+    }
+    
     public class func placeChatResults(for place:PlaceSearchResponse, photos:[PlacePhotoResponse], resize:CGSize? = nil, queryIntents:[AssistiveChatHostIntent]? = nil)->[ChatResult] {
+        var usedPhotoIDs = [String]()
         
         let tellChatResult:()->ChatResult = {
-            return PlaceResponseFormatter.imageChatResult(title: "Tell me about \(place.name)?", backgroundColor: Color.red, backgroundImageUrl: nil, photos: photos, resize: resize)
+            return PlaceResponseFormatter.imageChatResult(title: "Tell me about \(place.name)?", backgroundColor: Color.red, backgroundImageUrl: nil,placeResponse: place, placeDetailsResponse: nil, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
         }
         
         let saveChatResult:()->ChatResult = {
-            return PlaceResponseFormatter.imageChatResult(title: "Save \(place.name) for later?", backgroundColor: Color.red, backgroundImageUrl: nil, photos: photos, resize: resize)
+            return PlaceResponseFormatter.imageChatResult(title: "Save \(place.name) for later?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
         }
         
         let recallChatResult:()->ChatResult = {
-            return PlaceResponseFormatter.imageChatResult(title: "What did I like about \(place.name)?", backgroundColor: Color.red, backgroundImageUrl: nil, photos: photos, resize: resize)
+            return PlaceResponseFormatter.imageChatResult(title: "What did I like about \(place.name)?", backgroundColor: Color.red, backgroundImageUrl: nil,placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
         }
         
         let searchChatResult:()->ChatResult = {
-            return PlaceResponseFormatter.imageChatResult(title: "Where can I find \(place.name)?", backgroundColor: Color.red, backgroundImageUrl: nil, photos: photos, resize: resize)
+            return PlaceResponseFormatter.imageChatResult(title: "Where can I find \(place.name)?", backgroundColor: Color.red, backgroundImageUrl: nil,placeResponse: place, placeDetailsResponse: nil, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
         }
         
         guard let queryIntents = queryIntents, queryIntents.count > 0, let lastIntent = queryIntents.last else {
@@ -263,87 +563,13 @@ open class PlaceResponseFormatter {
         
         let placeChatResult:()->[ChatResult] = {
             var placeResults = [ChatResult]()
-            let placeResultDirections = PlaceResponseFormatter.imageChatResult(title: "How do I get to \(place.name)", backgroundColor: Color.purple, backgroundImageUrl: nil, photos: photos, resize:resize)
-            let placeResultPhotos = PlaceResponseFormatter.imageChatResult(title: "Show me the photos for \(place.name)", backgroundColor: Color.purple, backgroundImageUrl: nil, photos: photos, resize:resize)
-            let placeResultTips = PlaceResponseFormatter.imageChatResult(title: "What do people say about \(place.name)", backgroundColor: Color.purple, backgroundImageUrl: nil, photos: photos, resize:resize)
-            let placeResultInstagram = PlaceResponseFormatter.imageChatResult(title: "What is \(place.name)'s Instagram account?", backgroundColor: Color.purple, backgroundImageUrl: nil, photos: photos, resize:resize)
-            let placeResultOpenHours = PlaceResponseFormatter.imageChatResult(title: "When is \(place.name) open?", backgroundColor: Color.purple, backgroundImageUrl: nil, photos: photos, resize:resize)
-            let placeResultBusyHours = PlaceResponseFormatter.imageChatResult(title: "When is it busy at \(place.name)?", backgroundColor: Color.purple, backgroundImageUrl: nil, photos: photos, resize:resize)
-            let placeResultPopularity =  PlaceResponseFormatter.imageChatResult(title: "How popular is \(place.name)?", backgroundColor: Color.purple, backgroundImageUrl: nil, photos: photos, resize:resize)
-            let placeResultCost = PlaceResponseFormatter.imageChatResult(title: "How much does \(place.name) cost?", backgroundColor: Color.purple, backgroundImageUrl: nil, photos: photos, resize:resize)
-            let placeResultMenu = PlaceResponseFormatter.imageChatResult(title: "What's does \(place.name) have?", backgroundColor: Color.purple, backgroundImageUrl: nil, photos: photos, resize:resize)
-            let placeResultPhone = PlaceResponseFormatter.imageChatResult(title: "What is \(place.name)'s phone number?", backgroundColor: Color.purple, backgroundImageUrl: nil, photos: photos, resize:resize)
-            placeResults.append(contentsOf:[placeResultDirections,placeResultPhotos,placeResultPhone, placeResultTips, placeResultInstagram, placeResultOpenHours, placeResultBusyHours, placeResultPopularity, placeResultCost, placeResultMenu ])
+            let placeResultDirections = PlaceResponseFormatter.imageChatResult(title: "How do I get to \(place.name)?", backgroundColor: Color.red, backgroundImageUrl: nil,placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+            let placeResultPhone = PlaceResponseFormatter.imageChatResult(title: "What is \(place.name)'s phone number?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
+            placeResults.append(contentsOf:[placeResultDirections,placeResultPhone])
             
             return placeResults
         }
         
-        let placeDetailsChatResults:(AssistiveChatHost.Intent)->[ChatResult] = { (intent) in
-            switch intent {
-            case .PlaceDetailsDirections:
-                let response = PlaceResponseFormatter.imageChatResult(title: "Show me the map to \(place.name)", backgroundColor: Color.red, backgroundImageUrl: nil, photos: photos, resize: resize)
-                var placeChatResults = placeChatResult()
-                placeChatResults.remove(at:0)
-                placeChatResults.insert(response, at: 0)
-                return placeChatResults
-            case .PlaceDetailsPhotos:
-                let response = PlaceResponseFormatter.imageChatResult(title: "Show me \(place.name)'s gallery", backgroundColor: Color.red, backgroundImageUrl: nil, photos: photos, resize: resize)
-                var placeChatResults = placeChatResult()
-                placeChatResults.remove(at:1)
-                placeChatResults.insert(response, at: 0)
-                return placeChatResults
-            case .PlaceDetailsTips:
-                let response = PlaceResponseFormatter.imageChatResult(title: "Give me a summary of \(place.name)'s reviews", backgroundColor: Color.red, backgroundImageUrl: nil, photos: photos, resize: resize)
-                var placeChatResults = placeChatResult()
-                placeChatResults.remove(at:2)
-                placeChatResults.insert(response, at: 0)
-                return placeChatResults
-            case .PlaceDetailsInstagram:
-                let response = PlaceResponseFormatter.imageChatResult(title: "Take me to \(place.name)'s Instagram", backgroundColor: Color.red, backgroundImageUrl: nil, photos: photos, resize: resize)
-                var placeChatResults = placeChatResult()
-                placeChatResults.remove(at:3)
-                placeChatResults.insert(response, at: 0)
-                return placeChatResults
-            case .PlaceDetailsOpenHours:
-                let response = PlaceResponseFormatter.imageChatResult(title: "\(place.name) is open from", backgroundColor: Color.red, backgroundImageUrl: nil, photos: photos, resize: resize)
-                var placeChatResults = placeChatResult()
-                placeChatResults.remove(at:4)
-                placeChatResults.insert(response, at: 0)
-                return placeChatResults
-            case .PlaceDetailsBusyHours:
-                let response = PlaceResponseFormatter.imageChatResult(title: "\(place.name) is busy from", backgroundColor: Color.red, backgroundImageUrl: nil, photos: photos, resize: resize)
-                var placeChatResults = placeChatResult()
-                placeChatResults.remove(at:5)
-                placeChatResults.insert(response, at: 0)
-                return placeChatResults
-            case .PlaceDetailsPopularity:
-                let response = PlaceResponseFormatter.imageChatResult(title: "\(place.name) is popular", backgroundColor: Color.red, backgroundImageUrl: nil, photos: photos, resize: resize)
-                var placeChatResults = placeChatResult()
-                placeChatResults.remove(at:6)
-                placeChatResults.insert(response, at: 0)
-                return placeChatResults
-            case .PlaceDetailsCost:
-                let response = PlaceResponseFormatter.imageChatResult(title: "\(place.name) is expensive", backgroundColor: Color.red, backgroundImageUrl: nil, photos: photos, resize: resize)
-                var placeChatResults = placeChatResult()
-                placeChatResults.remove(at:7)
-                placeChatResults.insert(response, at: 0)
-                return placeChatResults
-            case .PlaceDetailsMenu:
-                let response = PlaceResponseFormatter.imageChatResult(title: "Show me \(place.name)'s menu", backgroundColor: Color.red, backgroundImageUrl: nil, photos: photos, resize: resize)
-                var placeChatResults = placeChatResult()
-                placeChatResults.remove(at:8)
-                placeChatResults.insert(response, at: 0)
-                return placeChatResults
-            case .PlaceDetailsPhone:
-                let response = PlaceResponseFormatter.imageChatResult(title: "\(place.name) phone number is ", backgroundColor: Color.red, backgroundImageUrl: nil, photos: photos, resize: resize)
-                var placeChatResults = placeChatResult()
-                placeChatResults.remove(at:9)
-                placeChatResults.insert(response, at: 0)
-                return placeChatResults
-            default:
-                return [ChatResult]()
-            }
-        }
         
         switch lastIntent.intent {
         case .TellDefault:
@@ -361,39 +587,35 @@ open class PlaceResponseFormatter {
         case .TellPlace:
             fallthrough
         case .RecallPlace:
+            fallthrough
+        case .PlaceDetailsDirections, .PlaceDetailsPhotos, .PlaceDetailsPhone, .PlaceDetailsTips, .PlaceDetailsMenu, .PlaceDetailsCost, .PlaceDetailsInstagram, .PlaceDetailsOpenHours, .PlaceDetailsPopularity, .PlaceDetailsBusyHours, .OpenDefault:
             return placeChatResult()
-        case .PlaceDetailsDirections, .PlaceDetailsPhotos, .PlaceDetailsPhone, .PlaceDetailsTips, .PlaceDetailsMenu, .PlaceDetailsCost, .PlaceDetailsInstagram, .PlaceDetailsOpenHours, .PlaceDetailsPopularity, .PlaceDetailsBusyHours:
-            return placeDetailsChatResults(lastIntent.intent)
         case .Unsupported:
             return [ChatResult]()
         }
     }
     
-    public class func imageChatResult(title:String, backgroundColor:Color, backgroundImageUrl:URL?, photos:[PlacePhotoResponse],resize:CGSize? = nil )->ChatResult {
-        let result = ChatResult(title:title, backgroundColor: backgroundColor, backgroundImageURL: backgroundImageUrl)
+    public class func imageChatResult(title:String, backgroundColor:Color, backgroundImageUrl:URL?, placeResponse:PlaceSearchResponse?, placeDetailsResponse:PlaceDetailsResponse?, photoResponse:PlacePhotoResponse? = nil, resize:CGSize? = nil )->ChatResult {
+        let result = ChatResult(title:title, backgroundColor: backgroundColor, backgroundImageURL: backgroundImageUrl, placeResponse: placeResponse, placeDetailsResponse:placeDetailsResponse, photoResponse:photoResponse)
         
-        var imageIdent = photos.first?.ident
-        
-        guard imageIdent != nil, var minAspectRatio = photos.first?.aspectRatio else {
+        if backgroundImageUrl != nil {
             return result
         }
         
-        for photo in photos {
-            if photo.aspectRatio > minAspectRatio {
-                imageIdent = photo.ident
-            }
-        }
-        
-        let widestImage = photos.first { response in
-            return response.ident == imageIdent
-        }
-        
-        guard let widestImage = widestImage else {
+        guard let photo = photoResponse else {
             return result
         }
         
-        let imageResult = ChatResult(title: result.title, backgroundColor: result.backgroundColor, backgroundImageURL:  widestImage.photoUrl(resize:resize))
+        let imageResult = ChatResult(title: result.title, backgroundColor: result.backgroundColor, backgroundImageURL:  photo.photoUrl(resize:resize), placeResponse: placeResponse, placeDetailsResponse: placeDetailsResponse, photoResponse: photo)
         
         return imageResult
+    }
+    
+    public class func unusedPhoto(in responses:[PlacePhotoResponse], with usedPhotoIDs:[String])->PlacePhotoResponse? {
+        var remainingPhotos = responses.filter { response in
+            return !usedPhotoIDs.contains(response.ident)
+        }
+        
+        return remainingPhotos.first
     }
 }

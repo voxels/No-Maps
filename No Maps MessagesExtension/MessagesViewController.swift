@@ -14,7 +14,7 @@ public enum MessagesViewControllerError : Error {
 }
 
 public protocol ChatHostingViewControllerDelegate : AnyObject {
-    func didTap(question:String)
+    func didTap(chatResult:ChatResult)
 }
 
 open class MessagesViewController: MSMessagesAppViewController {
@@ -99,6 +99,10 @@ open class MessagesViewController: MSMessagesAppViewController {
         // Called when the user deletes the message without sending it.
     
         // Use this to clean up state related to the deleted message.
+        if let rootView = contentView?.rootView as? ChatResultView {
+            chatModel.refreshModel(resultImageSize:rootView.compactSize(),queryIntents:[AssistiveChatHostIntent]() )
+        }
+
     }
     
     open override func willTransition(to presentationStyle: MSMessagesAppPresentationStyle) {
@@ -117,7 +121,7 @@ open class MessagesViewController: MSMessagesAppViewController {
 }
 
 public extension MessagesViewController {
-    func add(caption:String, to conversation:MSConversation?) throws {
+    func add(caption:String, subcaption:String? = nil, image:UIImage? = nil, mediaFileURL:URL? = nil, imageTitle:String? = nil, imageSubtitle:String? = nil, trailingCaption:String? = nil, trailingSubcaption:String? = nil,to conversation:MSConversation?) throws {
         guard let conversation = conversation else {
             print("No conversation recorded")
             throw MessagesViewControllerError.NoConversationRecorded
@@ -128,6 +132,27 @@ public extension MessagesViewController {
         let message = MSMessage(session: session)
         let layout = MSMessageTemplateLayout()
         layout.caption = caption
+        if let subcaption = subcaption {
+            layout.subcaption = subcaption
+        }
+        if let image = image {
+            layout.image = image
+        }
+        if let mediaFileURL = mediaFileURL {
+            layout.mediaFileURL = mediaFileURL
+        }
+        if let imageTitle = imageTitle {
+            layout.imageTitle = imageTitle
+        }
+        if let imageSubtitle = imageSubtitle {
+            layout.imageSubtitle = imageSubtitle
+        }
+        if let trailingCaption = trailingCaption {
+            layout.trailingCaption = trailingCaption
+        }
+        if let trailingSubcaption = trailingSubcaption {
+            layout.trailingSubcaption = trailingSubcaption
+        }
         message.layout = layout
         message.summaryText = caption
     
@@ -137,20 +162,32 @@ public extension MessagesViewController {
                 return
             }
         }
-        
-        self.chatHost.appendIntentParameters(intent: AssistiveChatHostIntent(caption: caption, intent: self.chatHost.determineIntent(for: caption)))
-    }    
+    }
 }
 
 extension MessagesViewController : AssistiveChatHostMessagesDelegate {
+    public func didTap(chatResult: ChatResult, selectedPlaceSearchResponse:PlaceSearchResponse?, selectedPlaceSearchDetails:PlaceDetailsResponse?, intentHistory:[AssistiveChatHostIntent]? = nil) {
+        let caption = chatResult.title
+        if let lastIntent = intentHistory?.last?.intent {
+            switch lastIntent{
+            case .TellDefault, .SaveDefault, .RecallDefault, .SearchDefault:
+                self.chatHost.resetIntentParameters()
+            default:
+                break
+            }
+        }
+        
+        self.chatHost.appendIntentParameters(intent:AssistiveChatHostIntent(caption: caption, intent: chatHost.determineIntent(for: caption, chatResult: chatResult, lastIntent: intentHistory?.last), selectedPlaceSearchResponse: selectedPlaceSearchResponse, selectedPlaceSearchDetails: selectedPlaceSearchDetails, placeSearchResponses: chatModel.placeSearchResponses(for: caption)))
+    }
+    
     public func addReceivedMessage(caption: String, parameters: AssistiveChatHostQueryParameters, isLocalParticipant: Bool) {
         chatModel.receiveMessage(caption: caption, parameters: parameters, isLocalParticipant: isLocalParticipant)
     }
     
-    public func send(message: String) {
-        print("Send message\(message)")
+    public func send(caption:String, subcaption:String? = nil, image:UIImage? = nil, mediaFileURL:URL? = nil, imageTitle:String? = nil, imageSubtitle:String? = nil, trailingCaption:String? = nil, trailingSubcaption:String? = nil) {
+        print("Send message\(caption)")
         do {
-            try add(caption: message, to: activeConversation)
+            try add(caption: caption, subcaption: subcaption, image:image, mediaFileURL: mediaFileURL, imageTitle: imageTitle, imageSubtitle: imageSubtitle, trailingCaption: trailingCaption, trailingSubcaption: trailingSubcaption, to: activeConversation)
         } catch {
             print(error.localizedDescription)
         }
@@ -164,7 +201,8 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
         }
         
         print("Paramaters did update, requesting new chat model")
-        chatModel.refreshModel(resultImageSize:nil,queryIntents: parameters.queryIntents )
-
+        if let rootView = contentView?.rootView as? ChatResultView {
+            chatModel.refreshModel(resultImageSize:rootView.compactSize(),queryIntents: parameters.queryIntents )
+        }
     }
 }

@@ -8,8 +8,15 @@
 import SwiftUI
 
 public struct ChatResult : Identifiable, Equatable {
+    public static func == (lhs: ChatResult, rhs: ChatResult) -> Bool {
+        lhs.id == rhs.id
+    }
+    
     public let id = UUID()
     let title:String
     let backgroundColor:Color
     let backgroundImageURL:URL?
+    let placeResponse:PlaceSearchResponse?
+    let placeDetailsResponse:PlaceDetailsResponse?
+    let photoResponse:PlacePhotoResponse?
 }

@@ -5,18 +5,26 @@
 //  Created by Michael A Edgcumbe on 3/21/23.
 //
 
-import Foundation
+import UIKit
 
 public struct AssistiveChatHostIntent : Equatable {
     public let uuid = UUID()
     public let caption:String
     public let intent:AssistiveChatHost.Intent
+    public let selectedPlaceSearchResponse:PlaceSearchResponse?
+    public let selectedPlaceSearchDetails:PlaceDetailsResponse?
+    public let placeSearchResponses:[PlaceSearchResponse]
+    
+    public static func == (lhs: AssistiveChatHostIntent, rhs: AssistiveChatHostIntent) -> Bool {
+        return lhs.uuid == rhs.uuid
+    }
 }
 
 public protocol AssistiveChatHostMessagesDelegate : AnyObject {
+    func didTap(chatResult:ChatResult, selectedPlaceSearchResponse:PlaceSearchResponse?, selectedPlaceSearchDetails:PlaceDetailsResponse?, intentHistory:[AssistiveChatHostIntent]?)
     func addReceivedMessage(caption:String, parameters:AssistiveChatHostQueryParameters, isLocalParticipant:Bool)
     func didUpdateQuery(with parameters:AssistiveChatHostQueryParameters)
-    func send(message:String)
+    func send(caption:String, subcaption:String?, image:UIImage?, mediaFileURL:URL?, imageTitle:String?, imageSubtitle:String?, trailingCaption:String?, trailingSubcaption:String?)
 }
 
 open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObject {
@@ -27,6 +35,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
         case SearchDefault
         case RecallDefault
         case TellDefault
+        case OpenDefault
         case SavePlace
         case SearchPlace
         case RecallPlace
@@ -49,11 +58,106 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
         self.delegate = delegate
     }
     
-    public func didTap(question: String) {
-        delegate?.send(message: question)
+    public func didTap(chatResult: ChatResult) {
+        print("Did tap result:\(chatResult.title) for place:")
+        delegate?.didTap(chatResult: chatResult, selectedPlaceSearchResponse: chatResult.placeResponse, selectedPlaceSearchDetails:chatResult.placeDetailsResponse, intentHistory: queryIntentParameters.queryIntents)
     }
     
-    public func determineIntent(for caption:String)->Intent {
+    public func determineIntent(for caption:String, chatResult:ChatResult? = nil, lastIntent:AssistiveChatHostIntent?)->Intent {
+        if let chatResult = chatResult, let lastIntent = lastIntent, chatResult.placeResponse != lastIntent.selectedPlaceSearchResponse {
+            
+        }
+        
+        if let details = chatResult?.placeDetailsResponse, let lastIntent = lastIntent {
+            switch lastIntent.intent {
+            case .Unsupported:
+                break
+            case .SaveDefault:
+                break
+            case .SearchDefault:
+                break
+            case .RecallDefault:
+                break
+            case .TellDefault:
+                break
+            case .OpenDefault:
+                break
+            case .SavePlace:
+                break
+            case .SearchPlace:
+                break
+            case .RecallPlace:
+                break
+            case .TellPlace:
+                break
+            case .PlaceDetailsDirections:
+                break
+            case .PlaceDetailsPhotos:
+                break
+            case .PlaceDetailsTips:
+                break
+            case .PlaceDetailsInstagram:
+                break
+            case .PlaceDetailsOpenHours:
+                break
+            case .PlaceDetailsBusyHours:
+                break
+            case .PlaceDetailsPopularity:
+                break
+            case .PlaceDetailsCost:
+                break
+            case .PlaceDetailsMenu:
+                break
+            case .PlaceDetailsPhone:
+                break
+            }
+        }
+        
+        if let placeResults = chatResult?.placeResponse, let lastIntent = lastIntent {
+            switch lastIntent.intent {
+            case .Unsupported:
+                break
+            case .SaveDefault:
+                break
+            case .SearchDefault:
+                break
+            case .RecallDefault:
+                break
+            case .TellDefault:
+                break
+            case .OpenDefault:
+                break
+            case .SavePlace:
+                break
+            case .SearchPlace:
+                break
+            case .RecallPlace:
+                break
+            case .TellPlace:
+                break
+            case .PlaceDetailsDirections:
+                break
+            case .PlaceDetailsPhotos:
+                break
+            case .PlaceDetailsTips:
+                break
+            case .PlaceDetailsInstagram:
+                break
+            case .PlaceDetailsOpenHours:
+                break
+            case .PlaceDetailsBusyHours:
+                break
+            case .PlaceDetailsPopularity:
+                break
+            case .PlaceDetailsCost:
+                break
+            case .PlaceDetailsMenu:
+                break
+            case .PlaceDetailsPhone:
+                break
+            }
+        }
+        
         switch caption{
         case "I like a place":
             return .SaveDefault
@@ -63,6 +167,8 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
             return .RecallDefault
         case "Tell me about":
             return .TellDefault
+        case "Ask a different question":
+            return .OpenDefault
         default:
             if caption.starts(with: "I like a place") {
                 return .SavePlace
