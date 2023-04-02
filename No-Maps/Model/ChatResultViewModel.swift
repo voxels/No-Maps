@@ -98,7 +98,8 @@ public class ChatResultViewModel : ObservableObject {
             break
         case .PlaceDetailsPhone:
             break
-
+        case .ShareResult:
+            break
         }
     }
     
@@ -172,37 +173,42 @@ public class ChatResultViewModel : ObservableObject {
                 do {
 
                     var chatResults = [ChatResult]()
-                    
                     var checkResponses = [PlaceSearchResponse]()
-                    if lastIntent.placeSearchResponses.count > 0 {
-                        checkResponses.append(contentsOf: lastIntent.placeSearchResponses)
-                    }
                     
-                    for localPlaceSearchResponse in localPlaceSearchResponses {
-                        let foundResponse = checkResponses.contains { thisReponse in
-                            return thisReponse.fsqID == localPlaceSearchResponse.fsqID
+                    if let placeResponse = lastIntent.selectedPlaceSearchResponse, let detailsResponse = lastIntent.selectedPlaceSearchDetails, let photosResponses = detailsResponse.photoResponses, let tipsResponses = detailsResponse.tipsResponses {
+                            let results = PlaceResponseFormatter.placeDetailsChatResults(for: placeResponse, details:detailsResponse, photos: photosResponses, tips: tipsResponses, results: [placeResponse], resize:resultImageSize, queryIntents: intents)
+                            chatResults.append(contentsOf:results)
+                    } else {
+                        if lastIntent.placeSearchResponses.count > 0 {
+                            checkResponses.append(contentsOf: lastIntent.placeSearchResponses)
                         }
-                        if(!foundResponse) {
-                            checkResponses.append(localPlaceSearchResponse)
+                        
+                        for localPlaceSearchResponse in localPlaceSearchResponses {
+                            let foundResponse = checkResponses.contains { thisReponse in
+                                return thisReponse.fsqID == localPlaceSearchResponse.fsqID
+                            }
+                            if(!foundResponse) {
+                                checkResponses.append(localPlaceSearchResponse)
+                            }
                         }
-                    }
-                                                        
-                    for index in 0..<min(checkResponses.count,1) {
-                        let response = checkResponses[index]
-                        print("Fetching photos for \(response.name)")
-                        let rawPhotosResponse = try await placeSearchSession.photos(for: response.fsqID)
-                        let placePhotosResponses = try PlaceResponseFormatter.placePhotoResponses(with: rawPhotosResponse, for:response.fsqID)
-                        print("Fetching tips for \(response.name)")
-                        let rawTipsResponse = try await placeSearchSession.tips(for: response.fsqID)
-                        let placeTipsResponses = try PlaceResponseFormatter.placeTipsResponses(with: rawTipsResponse, for:response.fsqID)
+                                                            
+                        for index in 0..<min(checkResponses.count,1) {
+                            let response = checkResponses[index]
+                            print("Fetching photos for \(response.name)")
+                            let rawPhotosResponse = try await placeSearchSession.photos(for: response.fsqID)
+                            let placePhotosResponses = try PlaceResponseFormatter.placePhotoResponses(with: rawPhotosResponse, for:response.fsqID)
+                            print("Fetching tips for \(response.name)")
+                            let rawTipsResponse = try await placeSearchSession.tips(for: response.fsqID)
+                            let placeTipsResponses = try PlaceResponseFormatter.placeTipsResponses(with: rawTipsResponse, for:response.fsqID)
 
-                        let request = PlaceDetailsRequest(fsqID: response.fsqID, description: true, tel: true, fax: false, email: false, website: true, socialMedia: true, verified: false, hours: true, hoursPopular: true, rating: true, stats: false, popularity: true, price: true, menu: true, tastes: true, features: false)
-                        print("Fetching details for \(response.name)")
-                        let rawDetailsResponse = try await placeSearchSession.details(for: request)
-                        print(rawDetailsResponse)
-                        let detailsResponse = try PlaceResponseFormatter.placeDetailsResponse(with: rawDetailsResponse, for: response, placePhotosResponses: placePhotosResponses, placeTipsResponses: placeTipsResponses)
-                        let results = PlaceResponseFormatter.placeDetailsChatResults(for: response, details:detailsResponse, photos: placePhotosResponses, tips: placeTipsResponses, results: checkResponses, resize:resultImageSize, queryIntents: intents)
-                        chatResults.append(contentsOf:results)
+                            let request = PlaceDetailsRequest(fsqID: response.fsqID, description: true, tel: true, fax: false, email: false, website: true, socialMedia: true, verified: false, hours: true, hoursPopular: true, rating: true, stats: false, popularity: true, price: true, menu: true, tastes: true, features: false)
+                            print("Fetching details for \(response.name)")
+                            let rawDetailsResponse = try await placeSearchSession.details(for: request)
+                            print(rawDetailsResponse)
+                            let detailsResponse = try PlaceResponseFormatter.placeDetailsResponse(with: rawDetailsResponse, for: response, placePhotosResponses: placePhotosResponses, placeTipsResponses: placeTipsResponses)
+                            let results = PlaceResponseFormatter.placeDetailsChatResults(for: response, details:detailsResponse, photos: placePhotosResponses, tips: placeTipsResponses, results: checkResponses, resize:resultImageSize, queryIntents: intents)
+                            chatResults.append(contentsOf:results)
+                        }
                     }
                     
                     let blendedResults = blendDefaults(with: chatResults, queryIntents: intents)

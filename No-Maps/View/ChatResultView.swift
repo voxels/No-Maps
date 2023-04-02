@@ -63,16 +63,15 @@ struct ChatResultViewHorizontalStack : View  {
                 LazyHStack {
                     let columns = createColumns(from: model.results)
                     ForEach(columns, id:\.0.id) { column in
-                        Divider().padding(10)
                         VStack{
                             Spacer()
                             ZStack{
                                 let showBackgroundImage = column.0.backgroundImageURL != nil
                                 HStack{
                                     Spacer()
-                                    showBackgroundImage ?                      Text(column.0.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style:.circular)).backgroundStyle(column.0.backgroundColor).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 2.0).onTapGesture {
+                                    showBackgroundImage ?                      Text(column.0.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style:.circular)).backgroundStyle(column.0.backgroundColor).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 1.5).onTapGesture {
                                         chatHostingDelegate.didTap(chatResult: column.0)
-                                    } : Text(column.0.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style: .circular)).backgroundStyle(column.0.backgroundColor).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 2.0).onTapGesture {
+                                    } : Text(column.0.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style: .circular)).backgroundStyle(column.0.backgroundColor).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 1.5).onTapGesture {
                                         chatHostingDelegate.didTap(chatResult: column.0)
                                         if let firstColumnID = columns.first?.0.id {
                                             proxy.scrollTo(firstColumnID)
@@ -80,7 +79,7 @@ struct ChatResultViewHorizontalStack : View  {
                                     }
                                     if showBackgroundImage {
                                         //                                                    let _ = print(column.0.backgroundImageURL)
-                                        AsyncImage(url: column.0.backgroundImageURL).cornerRadius(16.0).padding(8).onTapGesture {
+                                        AsyncImage(url: column.0.backgroundImageURL).cornerRadius(16.0).padding(4).onTapGesture {
                                             chatHostingDelegate.didTap(chatResult: column.0)
                                             if let firstColumnID = columns.first?.0.id {
                                                 proxy.scrollTo(firstColumnID)
@@ -91,14 +90,13 @@ struct ChatResultViewHorizontalStack : View  {
                                     }
                                 }
                             }.id(column.0.id)
-                            Spacer()
                             ZStack {
                                 let showBackgroundImage = column.1.backgroundImageURL != nil
                                 HStack{
                                     Spacer()
-                                    showBackgroundImage ?                                                                  Text(column.1.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style:.circular)).backgroundStyle(column.1.backgroundColor).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 2.0).onTapGesture {
+                                    showBackgroundImage ?                                                                  Text(column.1.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style:.circular)).backgroundStyle(column.1.backgroundColor).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 1.5).onTapGesture {
                                         chatHostingDelegate.didTap(chatResult: column.1)
-                                    } : Text(column.1.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style: .circular)).backgroundStyle(column.1.backgroundColor).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 2.0).onTapGesture {
+                                    } : Text(column.1.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style: .circular)).backgroundStyle(column.1.backgroundColor).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 1.5).onTapGesture {
                                         chatHostingDelegate.didTap(chatResult: column.1)
                                         if let firstColumnID = columns.first?.0.id {
                                             proxy.scrollTo(firstColumnID)
@@ -107,7 +105,7 @@ struct ChatResultViewHorizontalStack : View  {
 
                                     if showBackgroundImage {
                                         //                                                    let _ = print(column.1.backgroundImageURL)
-                                        AsyncImage(url: column.1.backgroundImageURL).cornerRadius(16.0).padding(8).onTapGesture {
+                                        AsyncImage(url: column.1.backgroundImageURL).cornerRadius(16.0).padding(4).onTapGesture {
                                             chatHostingDelegate.didTap(chatResult: column.1)
                                             if let firstColumnID = columns.first?.0.id {
                                                 proxy.scrollTo(firstColumnID)

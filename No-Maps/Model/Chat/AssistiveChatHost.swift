@@ -50,6 +50,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
         case PlaceDetailsCost
         case PlaceDetailsMenu
         case PlaceDetailsPhone
+        case ShareResult
     }
     
     weak private var delegate:AssistiveChatHostMessagesDelegate?
@@ -63,101 +64,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
         delegate?.didTap(chatResult: chatResult, selectedPlaceSearchResponse: chatResult.placeResponse, selectedPlaceSearchDetails:chatResult.placeDetailsResponse, intentHistory: queryIntentParameters.queryIntents)
     }
     
-    public func determineIntent(for caption:String, chatResult:ChatResult? = nil, lastIntent:AssistiveChatHostIntent?)->Intent {
-        if let chatResult = chatResult, let lastIntent = lastIntent, chatResult.placeResponse != lastIntent.selectedPlaceSearchResponse {
-            
-        }
-        
-        if let details = chatResult?.placeDetailsResponse, let lastIntent = lastIntent {
-            switch lastIntent.intent {
-            case .Unsupported:
-                break
-            case .SaveDefault:
-                break
-            case .SearchDefault:
-                break
-            case .RecallDefault:
-                break
-            case .TellDefault:
-                break
-            case .OpenDefault:
-                break
-            case .SavePlace:
-                break
-            case .SearchPlace:
-                break
-            case .RecallPlace:
-                break
-            case .TellPlace:
-                break
-            case .PlaceDetailsDirections:
-                break
-            case .PlaceDetailsPhotos:
-                break
-            case .PlaceDetailsTips:
-                break
-            case .PlaceDetailsInstagram:
-                break
-            case .PlaceDetailsOpenHours:
-                break
-            case .PlaceDetailsBusyHours:
-                break
-            case .PlaceDetailsPopularity:
-                break
-            case .PlaceDetailsCost:
-                break
-            case .PlaceDetailsMenu:
-                break
-            case .PlaceDetailsPhone:
-                break
-            }
-        }
-        
-        if let placeResults = chatResult?.placeResponse, let lastIntent = lastIntent {
-            switch lastIntent.intent {
-            case .Unsupported:
-                break
-            case .SaveDefault:
-                break
-            case .SearchDefault:
-                break
-            case .RecallDefault:
-                break
-            case .TellDefault:
-                break
-            case .OpenDefault:
-                break
-            case .SavePlace:
-                break
-            case .SearchPlace:
-                break
-            case .RecallPlace:
-                break
-            case .TellPlace:
-                break
-            case .PlaceDetailsDirections:
-                break
-            case .PlaceDetailsPhotos:
-                break
-            case .PlaceDetailsTips:
-                break
-            case .PlaceDetailsInstagram:
-                break
-            case .PlaceDetailsOpenHours:
-                break
-            case .PlaceDetailsBusyHours:
-                break
-            case .PlaceDetailsPopularity:
-                break
-            case .PlaceDetailsCost:
-                break
-            case .PlaceDetailsMenu:
-                break
-            case .PlaceDetailsPhone:
-                break
-            }
-        }
-        
+    public func determineIntent(for caption:String, chatResult:ChatResult? = nil, lastIntent:AssistiveChatHostIntent?)->Intent {        
         switch caption{
         case "I like a place":
             return .SaveDefault
@@ -205,6 +112,36 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
                 return .PlaceDetailsOpenHours
             }
             
+            if let chatResult = chatResult, let placeResponse = chatResult.placeResponse, let detailsResponse = chatResult.placeDetailsResponse {
+                switch chatResult.title {
+                case placeResponse.address, placeResponse.formattedAddress, placeResponse.addressExtended:
+                    return .ShareResult
+                default:
+                    if let tel = detailsResponse.tel, chatResult.title == tel {
+                        return .ShareResult
+                    }
+                    if let website = detailsResponse.website, chatResult.title == website {
+                        return .ShareResult
+                    }
+                    if let description = detailsResponse.description, chatResult.title == description {
+                        return .ShareResult
+                    }
+                    if let hours = detailsResponse.hours, chatResult.title == hours {
+                        return .ShareResult
+                    }
+                    if let price = detailsResponse.price, chatResult.title == price {
+                        return .ShareResult
+                    }
+                }
+            }
+            
+            if let chatResult = chatResult, let placeResponse = chatResult.placeResponse, let tipsResponses = chatResult.placeDetailsResponse?.tipsResponses {
+                for response in tipsResponses {
+                    if chatResult.title == response.text {
+                        return .ShareResult
+                    }
+                }
+            }
             return .Unsupported
         }
     }

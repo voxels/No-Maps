@@ -204,5 +204,155 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
         if let rootView = contentView?.rootView as? ChatResultView {
             chatModel.refreshModel(resultImageSize:rootView.compactSize(),queryIntents: parameters.queryIntents )
         }
+        
+        if let lastIntent = parameters.queryIntents.last {
+            switch lastIntent.intent {
+            case .Unsupported:
+                break
+            case .SaveDefault, .SearchDefault, .RecallDefault, .TellDefault:
+                // Open the drawer and search for a new place
+                break
+            case .OpenDefault:
+                // Open the drawer and search for something else
+                break
+            case .SearchPlace:
+                // Open Apple Maps
+                break
+            case .RecallPlace:
+                // Open drawer and show past places
+                break
+            case .TellPlace:
+                // Compose a message about the place
+                if lastIntent.selectedPlaceSearchResponse != nil {
+                    composeIntentMessageAndSend(intent: lastIntent)
+                }
+            case .SavePlace:
+                // Save the place and confirm place has been saved
+                break
+            case .PlaceDetailsDirections:
+                // Open Apple Maps Directions
+                break
+            case .PlaceDetailsPhotos:
+                // open drawer and show photos
+                break
+            case .PlaceDetailsTips:
+                // open drawer and show tips
+                break
+            case .PlaceDetailsInstagram:
+                if lastIntent.selectedPlaceSearchDetails?.socialMedia != nil {
+                    composeIntentMessageAndSend(intent: lastIntent)
+                } else {
+                    // throw error
+                }
+            case .PlaceDetailsOpenHours:
+                if lastIntent.selectedPlaceSearchDetails?.hours != nil {
+                    composeIntentMessageAndSend(intent: lastIntent)
+                } else {
+                    // throw error
+                }
+            case .PlaceDetailsBusyHours:
+                if lastIntent.selectedPlaceSearchDetails?.hoursPopular != nil {
+                    composeIntentMessageAndSend(intent: lastIntent)
+                } else {
+                    // throw error
+                }
+            case .PlaceDetailsPopularity:
+                if let pop = lastIntent.selectedPlaceSearchDetails?.popularity, pop > 0 {
+                    composeIntentMessageAndSend(intent: lastIntent)
+                } else {
+                    // throw error
+                }
+            case .PlaceDetailsCost:
+                if lastIntent.selectedPlaceSearchDetails?.price != nil {
+                    composeIntentMessageAndSend(intent: lastIntent)
+                } else {
+                    // throw error
+                }
+            case .PlaceDetailsMenu:
+                if lastIntent.selectedPlaceSearchDetails?.menu != nil {
+                    composeIntentMessageAndSend(intent: lastIntent)
+                } else {
+                    // throw error
+                }
+            case .PlaceDetailsPhone:
+                if lastIntent.selectedPlaceSearchDetails?.tel != nil {
+                    composeIntentMessageAndSend(intent: lastIntent)
+                } else {
+                    // throw error
+                }
+                
+            case .ShareResult:
+                if lastIntent.selectedPlaceSearchResponse != nil {
+                    composeIntentMessageAndSend(intent: lastIntent)
+                } else {
+                    
+                }
+            }
+        }
+    }
+    
+    public func composeIntentMessageAndSend(intent:AssistiveChatHostIntent) {
+        switch intent.intent {
+        case .Unsupported:
+            break
+        case .SaveDefault, .SearchDefault, .RecallDefault, .TellDefault:
+            // Search for a place
+            break
+        case .OpenDefault:
+            // Search for something else
+            break
+        case .SavePlace:
+            break
+        case .SearchPlace:
+            break
+        case .RecallPlace:
+            break
+        case .TellPlace:
+            // compose place description message
+            break
+        case .PlaceDetailsDirections:
+            break
+        case .PlaceDetailsPhotos:
+            break
+        case .PlaceDetailsTips:
+            break
+        case .PlaceDetailsInstagram:
+            break
+        case .PlaceDetailsOpenHours:
+            if let searchResponse = intent.selectedPlaceSearchResponse, let details = intent.selectedPlaceSearchDetails, let hours = details.hours {
+                send(caption:hours, subcaption:"Open Now", image:nil, mediaFileURL:nil, imageTitle:nil, imageSubtitle:nil, trailingCaption:searchResponse.name, trailingSubcaption:nil)
+            }
+        case .PlaceDetailsBusyHours:
+            // compose message and send
+            break
+        case .PlaceDetailsPopularity:
+            if let searchResponse = intent.selectedPlaceSearchResponse, let details = intent.selectedPlaceSearchDetails, details.popularity > 0 {
+                send(caption:"Popularity Score: \(details.popularity)}", subcaption:nil, image:nil, mediaFileURL:nil, imageTitle:nil, imageSubtitle:nil, trailingCaption:searchResponse.name, trailingSubcaption:nil)
+            }
+        case .PlaceDetailsCost:
+            if let searchResponse = intent.selectedPlaceSearchResponse, let details = intent.selectedPlaceSearchDetails, let price = details.price {
+                send(caption:price, subcaption:nil, image:nil, mediaFileURL:nil, imageTitle:nil, imageSubtitle:nil, trailingCaption:searchResponse.name, trailingSubcaption:nil)
+            }
+        case .PlaceDetailsMenu:
+            // compose message and send
+            break
+        case .PlaceDetailsPhone:
+            // compose message and send
+            if let searchResponse = intent.selectedPlaceSearchResponse, let details = intent.selectedPlaceSearchDetails, let tel = details.tel {
+                send(caption:tel, subcaption:nil, image:nil, mediaFileURL:nil, imageTitle:nil, imageSubtitle:nil, trailingCaption:searchResponse.name, trailingSubcaption:nil)
+            }
+        case .ShareResult:
+            if let searchResponse = intent.selectedPlaceSearchResponse, let details = intent.selectedPlaceSearchDetails {
+                var photoURL:URL?
+                if let photoResponses = details.photoResponses, let firstPhoto = photoResponses.randomElement() {
+                    photoURL = firstPhoto.photoUrl()
+                }
+                var image:UIImage?
+                if let url = photoURL, let data = try? Data(contentsOf: url) {
+                    image = UIImage(data: data)
+                }
+                send(caption:intent.caption ,subcaption:nil, image:image, mediaFileURL:nil, imageTitle:nil, imageSubtitle:nil, trailingCaption:searchResponse.name, trailingSubcaption:nil)
+            }
+        }
     }
 }
