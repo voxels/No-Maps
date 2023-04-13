@@ -161,6 +161,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
             var rawParameters = try await languageDelegate.fetchSearchQueryParameters(with: query)
 
             rawParameters = rawParameters.trimmingCharacters(in: .whitespacesAndNewlines)
+            rawParameters = rawParameters.replacingOccurrences(of: "\n", with: "")
             guard let data = rawParameters.data(using: .utf8) else {
                 print("Raw parameters could not be encoded into json: \(rawParameters)")
                 return

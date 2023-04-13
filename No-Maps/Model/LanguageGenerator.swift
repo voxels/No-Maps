@@ -269,7 +269,8 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
         let rawResponse = try await session.query(languageGeneratorRequest: request)
         if let rawResponse = rawResponse, let choices = rawResponse["choices"] as? [NSDictionary] {
             if let firstChoice = choices.first, let text = firstChoice["text"] as? String {
-                return text
+                var repair = "{\"query\":\"\(query)\","
+                return repair.appending(text.dropLast())
             }
         }
         return ""
