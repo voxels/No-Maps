@@ -7,13 +7,29 @@
 
 import UIKit
 
+public enum ChatDetailsViewControllerError : Error {
+    case MissingIntent
+}
+
+public protocol ChatDetailsViewControllerDelegate : AnyObject {
+    func didTap(textResponse:String)
+    func didRequestSearch(for query:String)
+}
+
 open class ChatDetailsViewController : UIViewController {
-    
+    weak public var delegate:ChatDetailsViewControllerDelegate?
     private var model:ChatDetailsViewModel
     private var detailsContainerView = UIView(frame:.zero)
     private var textResponseContainerView = UIView(frame:.zero)
+    private var textResponseViewController:TextResponseViewController?
+    private var searchResponseContainerView = UIView(frame:.zero)
+    private var searchResponseViewController:SearchResponseViewController?
     public init(parameters:AssistiveChatHostQueryParameters) {
-        self.model = ChatDetailsViewModel(queryParameters: parameters, delegate: nil)
+        if let lastIntent = parameters.queryIntents.last {
+            self.model = ChatDetailsViewModel(queryParameters: parameters,intent:lastIntent, delegate: nil)
+        } else {
+            self.model = ChatDetailsViewModel(queryParameters: parameters,intent:AssistiveChatHostIntent(caption: "Ask a different question", intent: .OpenDefault, selectedPlaceSearchResponse: nil, selectedPlaceSearchDetails: nil, placeSearchResponses: [PlaceSearchResponse]()), delegate: nil)
+        }
         super.init(nibName: nil, bundle: nil)
         self.model.delegate = self
     }
@@ -38,10 +54,7 @@ open class ChatDetailsViewController : UIViewController {
     }
     
     private func buildTextResponseContainerView(with responseString:String, parentView:UIView) {
-        if textResponseContainerView.superview != nil {
-            textResponseContainerView.removeFromSuperview()
-        }
-        
+        removeDetailViewController()
         textResponseContainerView = UIView(frame: .zero)
         textResponseContainerView.translatesAutoresizingMaskIntoConstraints = false
         parentView.addSubview(textResponseContainerView)
@@ -50,17 +63,60 @@ open class ChatDetailsViewController : UIViewController {
         textResponseContainerView.topAnchor.constraint(equalTo: parentView.topAnchor).isActive = true
         textResponseContainerView.bottomAnchor.constraint(equalTo: parentView.bottomAnchor).isActive = true
         
-        let textResponseViewController = TextResponseViewController(responseString: responseString)
-        textResponseContainerView.addSubview(textResponseViewController.view)
-        addChild(textResponseViewController)
-        textResponseViewController.didMove(toParent: self)
+        textResponseViewController = TextResponseViewController(responseString: responseString)
+        textResponseContainerView.addSubview(textResponseViewController!.view)
+        addChild(textResponseViewController!)
+        textResponseViewController!.didMove(toParent: self)
         
-        textResponseViewController.view.translatesAutoresizingMaskIntoConstraints = false
-        textResponseViewController.view.leftAnchor.constraint(equalTo: textResponseContainerView.leftAnchor).isActive = true
-        textResponseViewController.view.rightAnchor.constraint(equalTo: textResponseContainerView.rightAnchor).isActive = true
-        textResponseViewController.view.topAnchor.constraint(equalTo: textResponseContainerView.topAnchor).isActive = true
-        textResponseViewController.view.bottomAnchor.constraint(equalTo: textResponseContainerView.bottomAnchor).isActive = true
+        textResponseViewController!.view.translatesAutoresizingMaskIntoConstraints = false
+        textResponseViewController!.view.leftAnchor.constraint(equalTo: textResponseContainerView.leftAnchor).isActive = true
+        textResponseViewController!.view.rightAnchor.constraint(equalTo: textResponseContainerView.rightAnchor).isActive = true
+        textResponseViewController!.view.topAnchor.constraint(equalTo: textResponseContainerView.topAnchor).isActive = true
+        textResponseViewController!.view.bottomAnchor.constraint(equalTo: textResponseContainerView.bottomAnchor).isActive = true
 
+    }
+    
+    private func buildSearchResponseContainerView(with responseString:String, parentView:UIView) {
+        removeDetailViewController()
+        searchResponseContainerView = UIView(frame: .zero)
+        searchResponseContainerView.translatesAutoresizingMaskIntoConstraints = false
+        parentView.addSubview(searchResponseContainerView)
+        searchResponseContainerView.leftAnchor.constraint(equalTo: parentView.leftAnchor).isActive = true
+        searchResponseContainerView.rightAnchor.constraint(equalTo: parentView.rightAnchor).isActive = true
+        searchResponseContainerView.topAnchor.constraint(equalTo: parentView.topAnchor).isActive = true
+        searchResponseContainerView.bottomAnchor.constraint(equalTo: parentView.bottomAnchor).isActive = true
+        
+        searchResponseViewController = SearchResponseViewController(responseString: responseString)
+        searchResponseViewController?.delegate = self
+        searchResponseContainerView.addSubview(searchResponseViewController!.view)
+        addChild(searchResponseViewController!)
+        searchResponseViewController!.didMove(toParent: self)
+        
+        searchResponseViewController!.view.translatesAutoresizingMaskIntoConstraints = false
+        searchResponseViewController!.view.leftAnchor.constraint(equalTo: searchResponseContainerView.leftAnchor).isActive = true
+        searchResponseViewController!.view.rightAnchor.constraint(equalTo: searchResponseContainerView.rightAnchor).isActive = true
+        searchResponseViewController!.view.topAnchor.constraint(equalTo: searchResponseContainerView.topAnchor).isActive = true
+        searchResponseViewController!.view.bottomAnchor.constraint(equalTo: searchResponseContainerView.bottomAnchor).isActive = true
+    }
+    
+    private func removeDetailViewController() {
+        if textResponseContainerView.superview != nil {
+            if let textResponseViewController = textResponseViewController, textResponseViewController.view.superview != nil {
+                textResponseViewController.willMove(toParent: nil)
+                textResponseViewController.view.removeFromSuperview()
+                textResponseViewController.removeFromParent()
+            }
+            textResponseContainerView.removeFromSuperview()
+        }
+        
+        if searchResponseContainerView.superview != nil {
+            if let searchResponseViewController = searchResponseViewController, searchResponseViewController.view.superview != nil {
+                searchResponseViewController.willMove(toParent: nil)
+                searchResponseViewController.view.removeFromSuperview()
+                searchResponseViewController.removeFromParent()
+            }
+            searchResponseContainerView.removeFromSuperview()
+        }
     }
 }
 
@@ -76,10 +132,30 @@ extension ChatDetailsViewController {
 
 extension ChatDetailsViewController : ChatDetailsViewModelDelegate {
     public func modelDidUpdate() {
-        if let response = model.responseString {
-            if !detailsContainerView.subviews.contains(textResponseContainerView) {
-                buildTextResponseContainerView(with: response, parentView:detailsContainerView)
+        
+        switch model.currentIntent.intent {
+        case .TellDefault, .OpenDefault, .SearchDefault:
+            if let response = model.responseString {
+                if !detailsContainerView.subviews.contains(searchResponseContainerView) {
+                    buildSearchResponseContainerView(with: response, parentView:detailsContainerView)
+                } else {
+                    searchResponseViewController?.updateResponseView(with: response)
+                }
+            }
+        default:
+            if let response = model.responseString {
+                if !detailsContainerView.subviews.contains(textResponseContainerView) {
+                    buildTextResponseContainerView(with: response, parentView:detailsContainerView)
+                } else {
+                    textResponseViewController?.updateResponseView(with: response)
+                }
             }
         }
+    }
+}
+
+extension ChatDetailsViewController : SearchResponseViewControllerDelegate {
+    public func requestSearch(for query: String) {
+        delegate?.didRequestSearch(for: query)
     }
 }

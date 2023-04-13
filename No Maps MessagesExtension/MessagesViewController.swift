@@ -114,7 +114,7 @@ open class MessagesViewController: MSMessagesAppViewController {
     
         // Use this to clean up state related to the deleted message.
         if let rootView = chatResultView?.rootView as? ChatResultView {
-            chatModel.refreshModel(resultImageSize:rootView.compactSize(),queryIntents:[AssistiveChatHostIntent]() )
+            chatModel.refreshModel(resultImageSize:rootView.compactSize(),queryIntents:[AssistiveChatHostIntent](),parameters: self.chatHost.queryIntentParameters)
         }
 
     }
@@ -187,6 +187,7 @@ extension MessagesViewController {
         
         if chatDetailsViewController == nil {
             chatDetailsViewController = ChatDetailsViewController(parameters: queryParameters)
+            chatDetailsViewController?.delegate = self
             chatDetailsContainerView?.addSubview(chatDetailsViewController!.view)
             addChild(chatDetailsViewController!)
             chatDetailsViewController?.didMove(toParent: self)            
@@ -209,16 +210,27 @@ extension MessagesViewController {
             switch lastIntent.intent {
             case .Unsupported:
                 break
-            case .SaveDefault, .SearchDefault, .RecallDefault, .TellDefault:
+            case .SaveDefault, .RecallDefault:
                 // Open the drawer and search for a new place
-                let _ = Task.init {
-                    let searchQueryParamters = try await self.chatHost.fetchSearchQueryParameters(with: "What place has best bagels in the East Village in Manhattan on a Saturday morning?")
-                    print("Found query parameters:")
-                    print(searchQueryParamters)
-                }
                 break
-            case .OpenDefault:
-                // Open the drawer and search for something else
+            case .SearchDefault, .TellDefault, .OpenDefault:
+                let _ = Task.init {
+                    do {
+                        let description = lastIntent.caption
+                        DispatchQueue.main.async { [unowned self] in
+                            do {
+                                try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description)
+                            } catch{
+                                print(error.localizedDescription)
+                            }
+                        }
+                    } catch {
+                        print(error .localizedDescription)
+                    }
+                }
+            case .SearchQuery:
+                break
+            case .TellQuery:
                 break
             case .SearchPlace:
                 // Open Apple Maps
@@ -306,24 +318,59 @@ extension MessagesViewController {
                     
                 }
             }
+        } else {
+            let _ = Task.init {
+                do {
+                    let description = ""
+                    DispatchQueue.main.async { [unowned self] in
+                        do {
+                            try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description)
+                        } catch{
+                            print(error.localizedDescription)
+                        }
+                    }
+                } catch {
+                    print(error .localizedDescription)
+                }
+            }
         }
     }
 }
 
+
+extension MessagesViewController : ChatDetailsViewControllerDelegate {
+    public func didTap(textResponse: String) {
+        
+    }
+    
+    public func didRequestSearch(for query: String) {
+        let _ = Task.init {
+            let newIntent = AssistiveChatHostIntent(caption: query, intent: chatHost.determineIntent(for: query, lastIntent: chatModel.lastIntent), selectedPlaceSearchResponse:chatModel.lastIntent?.selectedPlaceSearchResponse, selectedPlaceSearchDetails: chatModel.lastIntent?.selectedPlaceSearchDetails, placeSearchResponses: chatModel.lastIntent?.placeSearchResponses ?? [PlaceSearchResponse]())
+            try await self.chatHost.refreshParameters(for: query, intent:newIntent)
+            self.chatHost.receiveMessage(caption: query, isLocalParticipant: true)
+        }
+    }
+}
+
+
 extension MessagesViewController : AssistiveChatHostMessagesDelegate {
     public func didTap(chatResult: ChatResult, selectedPlaceSearchResponse:PlaceSearchResponse?, selectedPlaceSearchDetails:PlaceDetailsResponse?, intentHistory:[AssistiveChatHostIntent]? = nil) {
-        let caption = chatResult.title
-        if let lastIntent = intentHistory?.last?.intent {
-            switch lastIntent{
-            case .TellDefault, .SaveDefault, .RecallDefault, .SearchDefault:
-                self.chatHost.resetIntentParameters()
-            default:
-                break
+        let _ = Task.init {
+            let caption = chatResult.title
+            if let lastIntent = intentHistory?.last?.intent {
+                switch lastIntent{
+                case .TellDefault, .SaveDefault, .RecallDefault, .SearchDefault:
+                    //self.chatHost.resetIntentParameters()
+                    break
+                default:
+                    break
+                }
             }
+            
+            let newIntent = AssistiveChatHostIntent(caption: caption, intent: chatHost.determineIntent(for: caption, chatResult: chatResult, lastIntent: intentHistory?.last), selectedPlaceSearchResponse: selectedPlaceSearchResponse, selectedPlaceSearchDetails: selectedPlaceSearchDetails, placeSearchResponses: chatModel.placeSearchResponses(for: caption))
+            try await self.chatHost.refreshParameters(for: caption, intent:newIntent)
+            self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true)
         }
-        
-        self.chatHost.appendIntentParameters(intent:AssistiveChatHostIntent(caption: caption, intent: chatHost.determineIntent(for: caption, chatResult: chatResult, lastIntent: intentHistory?.last), selectedPlaceSearchResponse: selectedPlaceSearchResponse, selectedPlaceSearchDetails: selectedPlaceSearchDetails, placeSearchResponses: chatModel.placeSearchResponses(for: caption)))
-        self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true)
     }
     
     public func addReceivedMessage(caption: String, parameters: AssistiveChatHostQueryParameters, isLocalParticipant: Bool) {
@@ -348,7 +395,7 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
         
         print("Paramaters did update, requesting new chat model")
         if let rootView = chatResultView?.rootView as? ChatResultView {
-            chatModel.refreshModel(resultImageSize:rootView.compactSize(),queryIntents: parameters.queryIntents )
+            chatModel.refreshModel(resultImageSize:rootView.compactSize(),queryIntents: parameters.queryIntents, parameters: chatHost.queryIntentParameters )
         }
     }
     
@@ -358,6 +405,8 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
             break
         case .SaveDefault, .SearchDefault, .RecallDefault, .TellDefault:
             // Search for a place
+            break
+        case .SearchQuery, .TellQuery:
             break
         case .OpenDefault:
             // Search for something else

@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		1E0CA34A29E6ECB800F260D6 /* integrated_category_taxonomy.json in Resources */ = {isa = PBXBuildFile; fileRef = 1E0CA34929E6ECB800F260D6 /* integrated_category_taxonomy.json */; };
 		1E0CA34B29E6ECB800F260D6 /* integrated_category_taxonomy.json in Resources */ = {isa = PBXBuildFile; fileRef = 1E0CA34929E6ECB800F260D6 /* integrated_category_taxonomy.json */; };
+		1E0CA34D29E8287400F260D6 /* SearchResponseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E0CA34C29E8287400F260D6 /* SearchResponseViewController.swift */; };
+		1E0CA34E29E8287400F260D6 /* SearchResponseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E0CA34C29E8287400F260D6 /* SearchResponseViewController.swift */; };
 		1E16D16429C1F56400B2559E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1E16D16329C1F56400B2559E /* Assets.xcassets */; };
 		1E16D16A29C1F56400B2559E /* No Maps MessagesExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1E16D16929C1F56400B2559E /* No Maps MessagesExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		1E16D16F29C1F56400B2559E /* Messages.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E16D16E29C1F56400B2559E /* Messages.framework */; };
@@ -105,6 +107,7 @@
 
 /* Begin PBXFileReference section */
 		1E0CA34929E6ECB800F260D6 /* integrated_category_taxonomy.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = integrated_category_taxonomy.json; sourceTree = "<group>"; };
+		1E0CA34C29E8287400F260D6 /* SearchResponseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchResponseViewController.swift; sourceTree = "<group>"; };
 		1E16D16029C1F56300B2559E /* No Maps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "No Maps.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E16D16329C1F56400B2559E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1E16D16929C1F56400B2559E /* No Maps MessagesExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "No Maps MessagesExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -304,6 +307,7 @@
 				1ED9133529C72C1C002D9172 /* ChatResultView.swift */,
 				1ECCCD4E29DC34970081035C /* ChatDetailsViewController.swift */,
 				1ECCCD5429DC3D930081035C /* TextResponseViewController.swift */,
+				1E0CA34C29E8287400F260D6 /* SearchResponseViewController.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -521,6 +525,7 @@
 				1ECCCD4629DAF55E0081035C /* LanguageGenerator.swift in Sources */,
 				1ECCCD4029D847B60081035C /* PlaceDetailsRequest.swift in Sources */,
 				1ED9134929C85EFD002D9172 /* LocationProvider.swift in Sources */,
+				1E0CA34D29E8287400F260D6 /* SearchResponseViewController.swift in Sources */,
 				1ECCCD4F29DC34970081035C /* ChatDetailsViewController.swift in Sources */,
 				1ED9133629C72C1C002D9172 /* ChatResultView.swift in Sources */,
 				1ED9135629C8A75C002D9172 /* ChatResultViewModel.swift in Sources */,
@@ -550,6 +555,7 @@
 				1ECCCD4729DAF55E0081035C /* LanguageGenerator.swift in Sources */,
 				1ECCCD4129D847B60081035C /* PlaceDetailsRequest.swift in Sources */,
 				1ED9134A29C85EFD002D9172 /* LocationProvider.swift in Sources */,
+				1E0CA34E29E8287400F260D6 /* SearchResponseViewController.swift in Sources */,
 				1ECCCD5029DC34970081035C /* ChatDetailsViewController.swift in Sources */,
 				1ED9130E29C716E2002D9172 /* No_MapsApp.swift in Sources */,
 				1ED9135729C8A75C002D9172 /* ChatResultViewModel.swift in Sources */,

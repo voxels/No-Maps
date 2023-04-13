@@ -83,6 +83,10 @@ public class ChatResultViewModel : ObservableObject {
             break
         case .OpenDefault:
             break
+        case .SearchQuery:
+            break
+        case .TellQuery:
+            break
         case .SavePlace:
             break
         case .SearchPlace:
@@ -116,7 +120,8 @@ public class ChatResultViewModel : ObservableObject {
         }
     }
     
-    public func applyQuery(caption:String, parameters:AssistiveChatHostQueryParameters, history:[AssistiveChatHostQueryParameters]) {
+    public func
+    applyQuery(caption:String, parameters:AssistiveChatHostQueryParameters, history:[AssistiveChatHostQueryParameters]) {
         print("Applying query: \(caption)")
         print("With parameters:")
         for intent in parameters.queryIntents {
@@ -127,7 +132,7 @@ public class ChatResultViewModel : ObservableObject {
          
     }
     
-    public func refreshModel(resultImageSize:CGSize?, queryIntents:[AssistiveChatHostIntent]? = nil) {
+    public func refreshModel(resultImageSize:CGSize?, queryIntents:[AssistiveChatHostIntent]? = nil, parameters:AssistiveChatHostQueryParameters) {
         guard let queryIntents = queryIntents else {
             zeroStateModel(resultImageSize: resultImageSize)
             return
@@ -144,14 +149,14 @@ public class ChatResultViewModel : ObservableObject {
             zeroStateModel(resultImageSize: resultImageSize)
         default:
             if let lastIntent = queryIntents.last {
-                model(resultImageSize: resultImageSize, intents: queryIntents, lastIntent:lastIntent, localPlaceSearchResponses: localPlaceSearchResponses)
+                model(resultImageSize: resultImageSize, intents: queryIntents, lastIntent:lastIntent, parameters: parameters, localPlaceSearchResponses: localPlaceSearchResponses)
             } else {
                 zeroStateModel(resultImageSize: resultImageSize)
             }
         }
     }
     
-    public func model(resultImageSize:CGSize?, intents:[AssistiveChatHostIntent], lastIntent:AssistiveChatHostIntent, localPlaceSearchResponses:[PlaceSearchResponse]? = nil) {
+    public func model(resultImageSize:CGSize?, intents:[AssistiveChatHostIntent], lastIntent:AssistiveChatHostIntent, parameters:AssistiveChatHostQueryParameters, localPlaceSearchResponses:[PlaceSearchResponse]? = nil) {
         guard let localPlaceSearchResponses = localPlaceSearchResponses else {
             zeroStateModel(resultImageSize: resultImageSize)
             return
@@ -193,6 +198,8 @@ public class ChatResultViewModel : ObservableObject {
                     NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "ChatResultViewModelDidUpdate")))
                 }
             }
+        case .SearchQuery:
+            searchQueryModel(resultImageSize: resultImageSize, query: lastIntent.caption, queryIntents: intents, parameters:parameters )
         default:
             let _ = Task.init {
                 do {
@@ -305,6 +312,46 @@ public class ChatResultViewModel : ObservableObject {
         }
         
     }
+    
+    public func searchQueryModel(resultImageSize:CGSize?, query:String,  queryIntents:[AssistiveChatHostIntent]?, parameters:AssistiveChatHostQueryParameters ) {
+        print("Refreshing model with search query parameters:\(parameters.queryParameters)")
+        let _ = Task.init {
+            do {
+                var locationString = ""
+                let request = PlaceSearchRequest(query: "", ll: locationString, categories: nil, fields: nil, openNow: true, nearLocation: nil)
+                let rawQueryResponse = try await placeSearchSession.query(request:request)
+                let placeSearchResponses = try PlaceResponseFormatter.placeSearchResponses(with: rawQueryResponse)
+                
+                var chatResults = [ChatResult]()
+                for index in 0..<min(placeSearchResponses.count,maxChatResults) {
+                    
+                    let response = placeSearchResponses[index]
+                    print("Fetching photos for \(response.name)")
+                    let rawPhotosResponse = try await placeSearchSession.photos(for: response.fsqID)
+                    let placePhotosResponses = try PlaceResponseFormatter.placePhotoResponses(with: rawPhotosResponse, for:response.fsqID)
+                    let placeDetailsRequest = PlaceDetailsRequest(fsqID: response.fsqID, description: true, tel: true, fax: false, email: false, website: true, socialMedia: true, verified: false, hours: true, hoursPopular: true, rating: true, stats: false, popularity: true, price: true, menu: true, tastes: true, features: false)
+                     let placeDetailsResponse = try await placeSearchSession.details(for: placeDetailsRequest)
+                     print(placeDetailsResponse)
+                     let rawTipsResponse = try await placeSearchSession.tips(for: response.fsqID)
+                     let placeTipsResponses = try PlaceResponseFormatter.placeTipsResponses(with: rawTipsResponse, for:response.fsqID)
+                    let results = PlaceResponseFormatter.placeChatResults(for: response, photos: placePhotosResponses, resize: resultImageSize, queryIntents: queryIntents)
+                    chatResults.append(contentsOf:results)
+                }
+                
+                let blendedResults = blendDefaults(with: chatResults)
+                DispatchQueue.main.async { [unowned self] in
+                    self.localPlaceSearchResponses = placeSearchResponses
+                    self.results.removeAll()
+                    self.results = blendedResults
+                    NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "ChatResultViewModelDidUpdate")))
+                }
+            }
+            catch {
+                print(error.localizedDescription)
+            }
+        }
+
+    }
         
     public func zeroStateModel(resultImageSize:CGSize?) {
         let location = locationProvider.currentLocation()
@@ -374,18 +421,14 @@ public class ChatResultViewModel : ObservableObject {
                 return results
             case .SearchDefault:
                 defaults.remove(at: 0)
-                results.append(contentsOf: defaults)
-                return results
+                return defaults
             case .RecallDefault:
                 return results
             case  .TellDefault:
                 defaults.remove(at: 1)
-                defaults.insert(searchResult, at: 1)
                 results.append(contentsOf: defaults)
                 return results
             case .OpenDefault:
-                defaults.remove(at: 2)
-                defaults.insert(searchResult, at: 0)
                 results.append(contentsOf: defaults)
                 return results
             default:

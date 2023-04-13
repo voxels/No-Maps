@@ -36,6 +36,8 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
         case RecallDefault
         case TellDefault
         case OpenDefault
+        case SearchQuery
+        case TellQuery
         case SavePlace
         case SearchPlace
         case RecallPlace
@@ -81,14 +83,20 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
             if caption.starts(with: "I like a place") {
                 return .SavePlace
             } else if caption.starts(with: "Where can I find") {
-                if caption.hasSuffix("a different place?") {
+                if caption.hasSuffix("a place or a thing?") {
                     return .SearchDefault
                 }
-                return .SearchPlace
+                if let place = lastIntent?.selectedPlaceSearchResponse {
+                    return .SearchPlace
+                }
+                return .SearchQuery
             } else if caption.starts(with:"What did I like") {
                 return .RecallPlace
             } else if caption.starts(with:"Tell me about") {
-                return .TellPlace
+                if let place = lastIntent?.selectedPlaceSearchResponse {
+                    return .TellPlace
+                }
+                return .TellQuery
             } else if caption.starts(with: "How do I get to") {
                 return .PlaceDetailsDirections
             } else if caption.starts(with: "Show me the photos for") {
@@ -147,9 +155,38 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
         }
     }
     
+    public func refreshParameters(for query:String, intent:AssistiveChatHostIntent) async throws {
+        switch intent.intent {
+        case .SearchQuery, .TellQuery:
+            var rawParameters = try await languageDelegate.fetchSearchQueryParameters(with: query)
+
+            rawParameters = rawParameters.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard let data = rawParameters.data(using: .utf8) else {
+                print("Raw parameters could not be encoded into json: \(rawParameters)")
+                return
+            }
+            
+            do {
+                let json = try JSONSerialization.jsonObject(with: data)
+                if let parameterDict = json as? [String:Any] {
+                    queryIntentParameters.queryParameters = parameterDict
+                } else {
+                    print("Found non-dictionary object when attemting to refresh parameters:\(json)")
+                }
+            } catch {
+                queryIntentParameters.queryParameters = nil
+                print(error.localizedDescription)
+            }
+        default:
+            queryIntentParameters.queryParameters = nil
+            break
+        }
+        
+        appendIntentParameters(intent: intent)
+    }
+    
     public func appendIntentParameters(intent:AssistiveChatHostIntent) {
         queryIntentParameters.queryIntents.append(intent)
-        delegate?.didUpdateQuery(with:queryIntentParameters)
     }
     
     public func resetIntentParameters() {
@@ -158,6 +195,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
     
     public func receiveMessage(caption:String, isLocalParticipant:Bool ) {
         delegate?.addReceivedMessage(caption: caption, parameters: queryIntentParameters, isLocalParticipant: isLocalParticipant)
+        delegate?.didUpdateQuery(with:queryIntentParameters)
     }
 }
 

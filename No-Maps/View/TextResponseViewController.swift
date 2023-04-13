@@ -9,7 +9,7 @@ import UIKit
 
 open class TextResponseViewController : UIViewController {
     public var responseString:String
-    
+    var textView = UITextView(frame: .zero)
     public init(responseString: String) {
         self.responseString = responseString
         super.init(nibName: nil, bundle: nil)
@@ -26,7 +26,7 @@ open class TextResponseViewController : UIViewController {
     }
     
     public func buildTextResponseView(with responseString:String) {
-        let textView = UITextView(frame: .zero)
+        
         textView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(textView)
         
@@ -40,4 +40,7 @@ open class TextResponseViewController : UIViewController {
         textView.backgroundColor = UIColor.systemBackground
     }
     
+    public func updateResponseView(with responseString:String) {
+        textView.text = responseString
+    }
 }

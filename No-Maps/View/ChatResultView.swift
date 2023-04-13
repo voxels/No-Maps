@@ -26,9 +26,9 @@ struct ChatResultView : View {
                     ScrollView(.horizontal) {
                         ChatResultViewHorizontalStack(chatHostingDelegate: chatHostingDelegate, chatHost: chatHost, messagesViewHeight: $messagesViewHeight, model: model).padding(scrollViewPadding).onAppear {
                             model.authorizeLocationProvider()
-                            model.refreshModel(resultImageSize: compactSize(), queryIntents: chatHost.queryIntentParameters.queryIntents)
+                            model.refreshModel(resultImageSize: compactSize(), queryIntents: chatHost.queryIntentParameters.queryIntents, parameters: chatHost.queryIntentParameters)
                         }.refreshable {
-                            model.refreshModel(resultImageSize: compactSize(), queryIntents: chatHost.queryIntentParameters.queryIntents)
+                            model.refreshModel(resultImageSize: compactSize(), queryIntents: chatHost.queryIntentParameters.queryIntents, parameters: chatHost.queryIntentParameters)
                         }
                     }
                 }.frame(height:messagesViewHeight)
