@@ -80,4 +80,13 @@ open class SearchResponseViewController : UIViewController {
         searchBarTextField?.text = responseString
     }
     
+    public func updateResponseView(with responseString:String, placeDetailsResponses:[PlaceDetailsResponse] ) {
+        print("Updating response view with response:\(responseString)")
+        for response in placeDetailsResponses {
+            print(response.searchResponse.name)
+            print(response.searchResponse.address)
+            print(response.searchResponse.categories)
+        }
+    }
+    
 }

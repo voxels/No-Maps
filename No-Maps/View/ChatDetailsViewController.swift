@@ -121,9 +121,9 @@ open class ChatDetailsViewController : UIViewController {
 }
 
 extension ChatDetailsViewController {
-    public func update(parameters:AssistiveChatHostQueryParameters, responseString:String? = nil ) {
+    public func update(parameters:AssistiveChatHostQueryParameters, responseString:String? = nil, placeDetailsResponses:[PlaceDetailsResponse] = [PlaceDetailsResponse]() ) {
         do {
-            try self.model.updateModel(parameters: parameters, responseString: responseString)
+            try self.model.updateModel(parameters: parameters, responseString: responseString, placeDetailsResponses: placeDetailsResponses)
         } catch {
             print(error.localizedDescription)
         }
@@ -139,7 +139,7 @@ extension ChatDetailsViewController : ChatDetailsViewModelDelegate {
                 if !detailsContainerView.subviews.contains(searchResponseContainerView) {
                     buildSearchResponseContainerView(with: response, parentView:detailsContainerView)
                 } else {
-                    searchResponseViewController?.updateResponseView(with: response)
+                    searchResponseViewController?.updateResponseView(with: response, placeDetailsResponses: model.placeDetailsResponses)
                 }
             }
         default:

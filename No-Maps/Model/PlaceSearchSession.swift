@@ -11,6 +11,7 @@ import CloudKit
 public enum PlaceSearchSessionError : Error {
     case ServiceNotFound
     case UnsupportedRequest
+    case ServerErrorMessage
 }
 
 open class PlaceSearchSession : ObservableObject {
@@ -235,7 +236,13 @@ open class PlaceSearchSession : ObservableObject {
                     if let d = data {
                         do {
                             let json = try JSONSerialization.jsonObject(with: d)
-                            checkedContinuation.resume(returning:json)
+                            if let checkDict = json as? NSDictionary, let message = checkDict["message"] as? String, message.hasPrefix("Foursquare servers")  {
+                                print("Message from server:")
+                                print(message)
+                                checkedContinuation.resume(throwing: PlaceSearchSessionError.ServerErrorMessage)
+                            } else {
+                                checkedContinuation.resume(returning:json)
+                            }
                         } catch {
                             print(error.localizedDescription)
                             let returnedString = String(data: d, encoding: String.Encoding.utf8)

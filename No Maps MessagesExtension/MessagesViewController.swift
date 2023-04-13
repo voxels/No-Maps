@@ -180,7 +180,7 @@ public extension MessagesViewController {
 }
 
 extension MessagesViewController {
-    public func showDetailsViewController(with queryParameters:AssistiveChatHostQueryParameters, responseString:String) throws {
+    public func showDetailsViewController(with queryParameters:AssistiveChatHostQueryParameters, responseString:String, placeDetailsRespones:[PlaceDetailsResponse] = [PlaceDetailsResponse]()) throws {
         guard let _ = queryParameters.queryIntents.last?.intent else {
             throw MessagesViewControllerError.ShowingDetailsWithNoIntent
         }
@@ -213,13 +213,16 @@ extension MessagesViewController {
             case .SaveDefault, .RecallDefault:
                 // Open the drawer and search for a new place
                 break
-            case .SearchDefault, .TellDefault, .OpenDefault:
+            case .SearchDefault, .TellDefault, .OpenDefault, .SearchQuery, .TellQuery:
                 let _ = Task.init {
                     do {
                         let description = lastIntent.caption
                         DispatchQueue.main.async { [unowned self] in
                             do {
-                                try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description)
+                                let allDetailsResponses = chatModel.results.compactMap { result in
+                                    return result.placeDetailsResponse
+                                }
+                                try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description, placeDetailsRespones: allDetailsResponses)
                             } catch{
                                 print(error.localizedDescription)
                             }
@@ -228,10 +231,6 @@ extension MessagesViewController {
                         print(error .localizedDescription)
                     }
                 }
-            case .SearchQuery:
-                break
-            case .TellQuery:
-                break
             case .SearchPlace:
                 // Open Apple Maps
                 break
@@ -246,7 +245,10 @@ extension MessagesViewController {
                             let description = try await self.chatHost.placeDescription(searchResponse: placeResponse, detailsResponse: details)
                             DispatchQueue.main.async { [unowned self] in
                                 do {
-                                    try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description)
+                                    let allDetailsResponses = chatModel.results.compactMap { result in
+                                        return result.placeDetailsResponse
+                                    }
+                                    try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description, placeDetailsRespones: allDetailsResponses)
                                 } catch{
                                     print(error.localizedDescription)
                                 }

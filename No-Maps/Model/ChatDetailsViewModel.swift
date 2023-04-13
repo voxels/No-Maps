@@ -19,6 +19,7 @@ public class ChatDetailsViewModel {
     public var currentIntent:AssistiveChatHostIntent
     public var queryParameters:AssistiveChatHostQueryParameters
     public var responseString:String?
+    public var placeDetailsResponses:[PlaceDetailsResponse] = [PlaceDetailsResponse]()
     public weak var delegate:ChatDetailsViewModelDelegate?
     public init(queryParameters:AssistiveChatHostQueryParameters, intent:AssistiveChatHostIntent, delegate:ChatDetailsViewModelDelegate? ) {
         self.currentIntent = intent
@@ -26,13 +27,14 @@ public class ChatDetailsViewModel {
         self.delegate = delegate
     }
     
-    public func updateModel(parameters:AssistiveChatHostQueryParameters, responseString:String? = nil ) throws {
+    public func updateModel(parameters:AssistiveChatHostQueryParameters, responseString:String? = nil, placeDetailsResponses:[PlaceDetailsResponse] = [PlaceDetailsResponse]() ) throws {
         guard let lastIntent = parameters.queryIntents.last else {
             throw ChatDetailsViewModelError.NoIntentFound
         }
         self.currentIntent = lastIntent
         self.queryParameters = parameters
         self.responseString = responseString
+        self.placeDetailsResponses = placeDetailsResponses
         delegate?.modelDidUpdate()
     }
 }
