@@ -54,6 +54,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
     }
     
     weak private var delegate:AssistiveChatHostMessagesDelegate?
+    private var languageDelegate:LanguageGeneratorDelegate = LanguageGenerator()
     @Published public var queryIntentParameters = AssistiveChatHostQueryParameters()
     public init(delegate:AssistiveChatHostMessagesDelegate? = nil) {
         self.delegate = delegate
@@ -157,5 +158,15 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
     
     public func receiveMessage(caption:String, isLocalParticipant:Bool ) {
         delegate?.addReceivedMessage(caption: caption, parameters: queryIntentParameters, isLocalParticipant: isLocalParticipant)
+    }
+}
+
+extension AssistiveChatHost {
+    public func placeDescription(searchResponse:PlaceSearchResponse, detailsResponse:PlaceDetailsResponse) async throws ->String {
+        return try await languageDelegate.placeDescription(searchResponse: searchResponse, detailsResponse: detailsResponse)
+    }
+    
+    public func fetchSearchQueryParameters( with query:String) async throws -> String {
+        return try await languageDelegate.fetchSearchQueryParameters(with: query)
     }
 }

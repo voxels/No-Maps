@@ -231,6 +231,7 @@ open class PlaceSearchSession : ObservableObject {
             
             let success = try await withCheckedThrowingContinuation { checkedContinuation in
                 operation.queryResultBlock = { result in
+                    print(self.foursquareApiKey)
                     if self.foursquareApiKey == "" {
                         checkedContinuation.resume(with: .success(false))
                     } else {
@@ -238,6 +239,19 @@ open class PlaceSearchSession : ObservableObject {
                     }
                 }
                 
+                /*
+                operation.queryCompletionBlock = { (result, error) in
+                    if self.foursquareApiKey == "" {
+                        checkedContinuation.resume(with: .success(false))
+                    } else {
+                        checkedContinuation.resume(with: .success(true))
+                    }
+                }
+                 */
+                
+                operation.queuePriority = .veryHigh
+                operation.qualityOfService = .userInteractive
+  
                 keysContainer.publicCloudDatabase.add(operation)
             }
             

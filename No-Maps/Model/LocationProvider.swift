@@ -32,6 +32,7 @@ open class LocationProvider : NSObject, ObservableObject  {
             }
             locationManager.delegate = self
             locationManager.requestLocation()
+            lastKnownLocation = locationManager.location
             return locationManager.location
         } else {
             locationManager.delegate = self

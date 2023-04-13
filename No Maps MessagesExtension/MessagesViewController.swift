@@ -11,6 +11,8 @@ import SwiftUI
 
 public enum MessagesViewControllerError : Error {
     case NoConversationRecorded
+    case ShowingDetailsWithNoIntent
+    case ChatDetailsViewControllerNotFound
 }
 
 public protocol ChatHostingViewControllerDelegate : AnyObject {
@@ -18,8 +20,9 @@ public protocol ChatHostingViewControllerDelegate : AnyObject {
 }
 
 open class MessagesViewController: MSMessagesAppViewController {
-    
-    var contentView:UIHostingController<ChatResultView>?
+    var chatDetailsContainerView:UIView?
+    var chatDetailsViewController:ChatDetailsViewController?
+    var chatResultView:UIHostingController<ChatResultView>?
     private var messagesViewHeight:CGFloat = 253
     private var chatHost = AssistiveChatHost()
     private var session = MSSession()
@@ -27,22 +30,33 @@ open class MessagesViewController: MSMessagesAppViewController {
     
     open override func viewDidLoad() {
         super.viewDidLoad()
-        chatHost = AssistiveChatHost(delegate:self)
-        contentView = UIHostingController(rootView: ChatResultView(chatHostingDelegate:chatHost, chatHost: self.chatHost, messagesViewHeight:.constant(messagesViewHeight), model: self.chatModel))
-        addChild(contentView!)
-        view.addSubview(contentView!.view)
-        
-        contentView?.view.translatesAutoresizingMaskIntoConstraints = false
-        contentView?.view.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
-        contentView?.view.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
-        contentView?.view.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
-        contentView?.view.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
 
+        chatDetailsContainerView = UIView(frame: .zero)
+        chatDetailsContainerView?.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(chatDetailsContainerView!)
+        chatDetailsContainerView?.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
+        chatDetailsContainerView?.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
+        chatDetailsContainerView?.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
+        chatDetailsContainerView?.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
+
+        
+        chatHost = AssistiveChatHost(delegate:self)
+        chatResultView = UIHostingController(rootView: ChatResultView(chatHostingDelegate:chatHost, chatHost: self.chatHost, messagesViewHeight:.constant(messagesViewHeight), model: self.chatModel))
+        addChild(chatResultView!)
+        view.addSubview(chatResultView!.view)
+        
+        chatResultView?.view.translatesAutoresizingMaskIntoConstraints = false
+        chatResultView?.view.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        chatResultView?.view.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
+        chatResultView?.view.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
+        //chatResultView?.view.heightAnchor.constraint(equalToConstant: messagesViewHeight).isActive = true
+        
+
+        NotificationCenter.default.addObserver(self, selector: #selector(modelDidUpdate), name: Notification.Name("ChatResultViewModelDidUpdate"), object: nil)
     }
     
     open override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        requestPresentationStyle(.compact)
     }
     
     // MARK: - Conversation Handling
@@ -99,7 +113,7 @@ open class MessagesViewController: MSMessagesAppViewController {
         // Called when the user deletes the message without sending it.
     
         // Use this to clean up state related to the deleted message.
-        if let rootView = contentView?.rootView as? ChatResultView {
+        if let rootView = chatResultView?.rootView as? ChatResultView {
             chatModel.refreshModel(resultImageSize:rootView.compactSize(),queryIntents:[AssistiveChatHostIntent]() )
         }
 
@@ -165,52 +179,43 @@ public extension MessagesViewController {
     }
 }
 
-extension MessagesViewController : AssistiveChatHostMessagesDelegate {
-    public func didTap(chatResult: ChatResult, selectedPlaceSearchResponse:PlaceSearchResponse?, selectedPlaceSearchDetails:PlaceDetailsResponse?, intentHistory:[AssistiveChatHostIntent]? = nil) {
-        let caption = chatResult.title
-        if let lastIntent = intentHistory?.last?.intent {
-            switch lastIntent{
-            case .TellDefault, .SaveDefault, .RecallDefault, .SearchDefault:
-                self.chatHost.resetIntentParameters()
-            default:
-                break
-            }
+extension MessagesViewController {
+    public func showDetailsViewController(with queryParameters:AssistiveChatHostQueryParameters, responseString:String) throws {
+        guard let _ = queryParameters.queryIntents.last?.intent else {
+            throw MessagesViewControllerError.ShowingDetailsWithNoIntent
         }
         
-        self.chatHost.appendIntentParameters(intent:AssistiveChatHostIntent(caption: caption, intent: chatHost.determineIntent(for: caption, chatResult: chatResult, lastIntent: intentHistory?.last), selectedPlaceSearchResponse: selectedPlaceSearchResponse, selectedPlaceSearchDetails: selectedPlaceSearchDetails, placeSearchResponses: chatModel.placeSearchResponses(for: caption)))
-    }
-    
-    public func addReceivedMessage(caption: String, parameters: AssistiveChatHostQueryParameters, isLocalParticipant: Bool) {
-        chatModel.receiveMessage(caption: caption, parameters: parameters, isLocalParticipant: isLocalParticipant)
-    }
-    
-    public func send(caption:String, subcaption:String? = nil, image:UIImage? = nil, mediaFileURL:URL? = nil, imageTitle:String? = nil, imageSubtitle:String? = nil, trailingCaption:String? = nil, trailingSubcaption:String? = nil) {
-        print("Send message\(caption)")
-        do {
-            try add(caption: caption, subcaption: subcaption, image:image, mediaFileURL: mediaFileURL, imageTitle: imageTitle, imageSubtitle: imageSubtitle, trailingCaption: trailingCaption, trailingSubcaption: trailingSubcaption, to: activeConversation)
-        } catch {
-            print(error.localizedDescription)
-        }
-    }
-    
-    public func didUpdateQuery(with parameters: AssistiveChatHostQueryParameters) {
-        print("Did update query with parameters:")
-        for intent in parameters.queryIntents {
-            print(intent.intent)
-            print(intent.caption)
+        if chatDetailsViewController == nil {
+            chatDetailsViewController = ChatDetailsViewController(parameters: queryParameters)
+            chatDetailsContainerView?.addSubview(chatDetailsViewController!.view)
+            addChild(chatDetailsViewController!)
+            chatDetailsViewController?.didMove(toParent: self)            
+            chatDetailsViewController?.update(parameters: queryParameters, responseString: responseString)
+        } else {
+            chatDetailsViewController?.update(parameters: queryParameters, responseString: responseString)
         }
         
-        print("Paramaters did update, requesting new chat model")
-        if let rootView = contentView?.rootView as? ChatResultView {
-            chatModel.refreshModel(resultImageSize:rootView.compactSize(),queryIntents: parameters.queryIntents )
+        guard let chatDetailsViewController = chatDetailsViewController else {
+            throw MessagesViewControllerError.ChatDetailsViewControllerNotFound
         }
         
-        if let lastIntent = parameters.queryIntents.last {
+        requestPresentationStyle(.expanded)
+    }
+}
+
+extension MessagesViewController {
+    @objc public func modelDidUpdate(){
+        if let lastIntent = chatModel.lastIntent {
             switch lastIntent.intent {
             case .Unsupported:
                 break
             case .SaveDefault, .SearchDefault, .RecallDefault, .TellDefault:
                 // Open the drawer and search for a new place
+                let _ = Task.init {
+                    let searchQueryParamters = try await self.chatHost.fetchSearchQueryParameters(with: "What place has best bagels in the East Village in Manhattan on a Saturday morning?")
+                    print("Found query parameters:")
+                    print(searchQueryParamters)
+                }
                 break
             case .OpenDefault:
                 // Open the drawer and search for something else
@@ -222,9 +227,22 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
                 // Open drawer and show past places
                 break
             case .TellPlace:
-                // Compose a message about the place
-                if lastIntent.selectedPlaceSearchResponse != nil {
-                    composeIntentMessageAndSend(intent: lastIntent)
+                // Open drawer and show description
+                if let placeResponse = lastIntent.selectedPlaceSearchResponse, let details = lastIntent.selectedPlaceSearchDetails {
+                    let _ = Task.init {
+                        do {
+                            let description = try await self.chatHost.placeDescription(searchResponse: placeResponse, detailsResponse: details)
+                            DispatchQueue.main.async { [unowned self] in
+                                do {
+                                    try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description)
+                                } catch{
+                                    print(error.localizedDescription)
+                                }
+                            }
+                        } catch {
+                            print(error .localizedDescription)
+                        }
+                    }
                 }
             case .SavePlace:
                 // Save the place and confirm place has been saved
@@ -290,6 +308,49 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
             }
         }
     }
+}
+
+extension MessagesViewController : AssistiveChatHostMessagesDelegate {
+    public func didTap(chatResult: ChatResult, selectedPlaceSearchResponse:PlaceSearchResponse?, selectedPlaceSearchDetails:PlaceDetailsResponse?, intentHistory:[AssistiveChatHostIntent]? = nil) {
+        let caption = chatResult.title
+        if let lastIntent = intentHistory?.last?.intent {
+            switch lastIntent{
+            case .TellDefault, .SaveDefault, .RecallDefault, .SearchDefault:
+                self.chatHost.resetIntentParameters()
+            default:
+                break
+            }
+        }
+        
+        self.chatHost.appendIntentParameters(intent:AssistiveChatHostIntent(caption: caption, intent: chatHost.determineIntent(for: caption, chatResult: chatResult, lastIntent: intentHistory?.last), selectedPlaceSearchResponse: selectedPlaceSearchResponse, selectedPlaceSearchDetails: selectedPlaceSearchDetails, placeSearchResponses: chatModel.placeSearchResponses(for: caption)))
+        self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true)
+    }
+    
+    public func addReceivedMessage(caption: String, parameters: AssistiveChatHostQueryParameters, isLocalParticipant: Bool) {
+        chatModel.receiveMessage(caption: caption, parameters: parameters, isLocalParticipant: isLocalParticipant)
+    }
+    
+    public func send(caption:String, subcaption:String? = nil, image:UIImage? = nil, mediaFileURL:URL? = nil, imageTitle:String? = nil, imageSubtitle:String? = nil, trailingCaption:String? = nil, trailingSubcaption:String? = nil) {
+        print("Send message\(caption)")
+        do {
+            try add(caption: caption, subcaption: subcaption, image:image, mediaFileURL: mediaFileURL, imageTitle: imageTitle, imageSubtitle: imageSubtitle, trailingCaption: trailingCaption, trailingSubcaption: trailingSubcaption, to: activeConversation)
+        } catch {
+            print(error.localizedDescription)
+        }
+    }
+    
+    public func didUpdateQuery(with parameters: AssistiveChatHostQueryParameters) {
+        print("Did update query with parameters:")
+        for intent in parameters.queryIntents {
+            print(intent.intent)
+            print(intent.caption)
+        }
+        
+        print("Paramaters did update, requesting new chat model")
+        if let rootView = chatResultView?.rootView as? ChatResultView {
+            chatModel.refreshModel(resultImageSize:rootView.compactSize(),queryIntents: parameters.queryIntents )
+        }
+    }
     
     public func composeIntentMessageAndSend(intent:AssistiveChatHostIntent) {
         switch intent.intent {
@@ -308,8 +369,26 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
         case .RecallPlace:
             break
         case .TellPlace:
-            // compose place description message
-            break
+            if let placeResponse = intent.selectedPlaceSearchResponse, let details = intent.selectedPlaceSearchDetails {
+                var photoURL:URL?
+                if let photoResponses = details.photoResponses, let firstPhoto = photoResponses.randomElement() {
+                    photoURL = firstPhoto.photoUrl()
+                }
+                var image:UIImage?
+                if let url = photoURL, let data = try? Data(contentsOf: url) {
+                    image = UIImage(data: data)
+                }
+                let _ = Task.init {
+                    do {
+                        let description = try await self.chatHost.placeDescription(searchResponse: placeResponse, detailsResponse: details)
+                        send(caption:description, subcaption:nil, image:image, mediaFileURL:nil, imageTitle:nil, imageSubtitle:nil, trailingCaption:nil, trailingSubcaption:nil)
+                        
+                    } catch {
+                        print(error .localizedDescription)
+                    }
+                }
+
+            }
         case .PlaceDetailsDirections:
             break
         case .PlaceDetailsPhotos:

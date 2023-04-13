@@ -6,7 +6,7 @@
 //
 
 import Foundation
-public struct PlaceDetailsResponse {
+public struct PlaceDetailsResponse  {
     let searchResponse:PlaceSearchResponse
     let photoResponses:[PlacePhotoResponse]?
     let tipsResponses:[PlaceTipsResponse]?

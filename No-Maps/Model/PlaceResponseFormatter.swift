@@ -316,13 +316,13 @@ open class PlaceResponseFormatter {
         if let lastIntent = queryIntents.last {
             switch lastIntent.intent {
             case .SearchDefault:
-                let result = ChatResult(title:"Where can I find a place?", backgroundColor: Color.orange, backgroundImageURL: nil, placeResponse: nil, placeDetailsResponse: nil, photoResponse: nil)
+                let result = ChatResult(title:"Where can I find a place or a thing?", backgroundColor: Color.orange, backgroundImageURL: nil, placeResponse: nil, placeDetailsResponse: nil, photoResponse: nil)
                 return result
             case .SaveDefault:
                 let result = ChatResult(title:"Save a new place for later?", backgroundColor: Color.orange, backgroundImageURL: nil, placeResponse: nil, placeDetailsResponse: nil, photoResponse: nil)
                 return result
             case .TellDefault:
-                let result = ChatResult(title:"Tell me about a new place?", backgroundColor: Color.orange, backgroundImageURL: nil, placeResponse: nil, placeDetailsResponse: nil, photoResponse: nil)
+                let result = ChatResult(title:"Tell me about a different place.", backgroundColor: Color.orange, backgroundImageURL: nil, placeResponse: nil, placeDetailsResponse: nil, photoResponse: nil)
                 return result
             case .RecallDefault:
                 let result = ChatResult(title:"What did I like about a place?", backgroundColor: Color.orange, backgroundImageURL: nil, placeResponse: nil, placeDetailsResponse: nil, photoResponse: nil)
