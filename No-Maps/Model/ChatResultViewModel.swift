@@ -317,8 +317,80 @@ public class ChatResultViewModel : ObservableObject {
         print("Refreshing model with search query parameters:\(parameters.queryParameters)")
         let _ = Task.init {
             do {
-                var locationString = ""
-                let request = PlaceSearchRequest(query: "", ll: locationString, categories: nil, fields: nil, openNow: true, nearLocation: nil)
+                var query = ""
+                var ll:String? = nil
+                var openNow = false
+                var openAt:String? = nil
+                var nearLocation:String? = nil
+                var minPrice = 1
+                var maxPrice = 4
+                var radius:Int? = nil
+                var sort:String? = nil
+                if let rawParameters = parameters.queryParameters?["parameters"] as? NSDictionary {
+                    if let rawMinPrice = rawParameters["min_price"] as? Int, rawMinPrice > 1 {
+                        minPrice = rawMinPrice
+                    }
+                    
+                    if let rawMaxPrice = rawParameters["max_price"] as? Int, rawMaxPrice < 4 {
+                        maxPrice = rawMaxPrice
+                    }
+                    
+                    if let rawRadius = rawParameters["radius"] as? Int {
+                        radius = rawRadius
+                    }
+                    
+                    if let rawSort = rawParameters["sort"] as? String {
+                        sort = rawSort
+                    }
+                    
+                    if let rawCategories = rawParameters["categories"] as? [NSDictionary] {
+                        for rawCategory in rawCategories {
+                            if let categoryName = rawCategory["name"] as? String {
+                                query.append("\(categoryName) ")
+                            }
+                        }
+                    }
+                    
+                    if let rawTips = rawParameters["tips"] as? [String] {
+                        for rawTip in rawTips {
+                            query.append("\(rawTip) ")
+                        }
+                    }
+                    
+                    if let rawTastes = rawParameters["tastes"] as? [String] {
+                        for rawTaste in rawTastes {
+                            query.append("\(rawTaste)")
+                        }
+                    }
+                    
+                    
+                    if let rawNear = rawParameters["near"] as? [String] {
+                        nearLocation = rawNear.first
+                        if rawNear.count > 1, let last = rawNear.last {
+                            query.append("in \(last) ")
+                        }
+                    }
+                    
+                    if let rawOpenAt = rawParameters["open_at"] as? String, rawOpenAt.count > 0 {
+                        openAt = rawOpenAt
+                    }
+                    
+                    if let rawOpenNow = rawParameters["open_now"] as? Bool {
+                        openNow = rawOpenNow
+                    }
+                }
+                
+                print("Created query for search request:\(query) near location:\(nearLocation)")
+                if nearLocation == nil {
+                    let location = locationProvider.currentLocation()
+                    if let l = location {
+                        ll = "\(l.coordinate.latitude),\(l.coordinate.longitude)"
+                    }
+                    
+                    print("Did not find a location in the query, using current location:\(ll)")
+                }
+                var request = PlaceSearchRequest(query:query, ll: ll, radius:radius ?? 250, categories: nil, fields: nil, minPrice: minPrice, maxPrice: maxPrice, openAt: openAt, openNow: openNow, nearLocation: nearLocation, sort: sort)
+                
                 let rawQueryResponse = try await placeSearchSession.query(request:request)
                 let placeSearchResponses = try PlaceResponseFormatter.placeSearchResponses(with: rawQueryResponse)
                 
@@ -367,7 +439,7 @@ public class ChatResultViewModel : ObservableObject {
                     }
                     return
                 }
-                let request = PlaceSearchRequest(query: "", ll: locationString, categories: nil, fields: nil, openNow: true, nearLocation: nil)
+                let request = PlaceSearchRequest(query: "", ll: locationString, categories: nil, fields: nil, openAt: nil, openNow: true, nearLocation: nil, sort: nil)
                 let rawQueryResponse = try await placeSearchSession.query(request:request)
                 let placeSearchResponses = try PlaceResponseFormatter.placeSearchResponses(with: rawQueryResponse)
                 

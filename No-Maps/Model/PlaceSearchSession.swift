@@ -45,10 +45,57 @@ open class PlaceSearchSession : ObservableObject {
         }
         
         var components = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.placeSearchAPIUrl)")
-        let queryItem = URLQueryItem(name: "query", value: request.query)
-        let locationQueryItem = URLQueryItem(name: "ll", value: request.ll)
+        components?.queryItems = [URLQueryItem]()
+        if request.query.count > 0 {
+            let queryItem = URLQueryItem(name: "query", value: request.query)
+            components?.queryItems?.append(queryItem)
+        }
+
         let radiusQueryItem = URLQueryItem(name: "radius", value: "\(request.radius)")
-        components?.queryItems = [queryItem, locationQueryItem, radiusQueryItem]
+        components?.queryItems?.append(radiusQueryItem)
+
+        if let rawLocation = request.ll {
+            let locationQueryItem = URLQueryItem(name: "ll", value: rawLocation)
+            components?.queryItems?.append(locationQueryItem)
+        }
+        
+        if let categories = request.categories {
+            let categoriesQueryItem = URLQueryItem(name:"categories", value:categories)
+            components?.queryItems?.append(categoriesQueryItem)
+        }
+        
+        if request.minPrice > 1 {
+            let minPriceQueryItem = URLQueryItem(name: "min_price", value: "\(request.minPrice)")
+            components?.queryItems?.append(minPriceQueryItem)
+        }
+
+        if request.maxPrice < 4 {
+            let maxPriceQueryItem = URLQueryItem(name: "max_price", value: "\(request.maxPrice)")
+            components?.queryItems?.append(maxPriceQueryItem)
+
+        }
+        
+        if let openAt = request.openAt {
+            let openAtQueryItem = URLQueryItem(name:"open_at", value:openAt)
+
+            components?.queryItems?.append(openAtQueryItem)
+        }
+        
+        if request.openNow == true {
+            let openNowQueryItem = URLQueryItem(name: "open_now", value: "true")
+            components?.queryItems?.append(openNowQueryItem)
+        }
+        
+        if let nearLocation = request.nearLocation {
+            let nearQueryItem = URLQueryItem(name: "near", value: nearLocation)
+            components?.queryItems?.append(nearQueryItem)
+
+        }
+        
+        if let sort = request.sort {
+            let sortQueryItem = URLQueryItem(name: "sort", value: sort)
+            components?.queryItems?.append(sortQueryItem)
+        }
         
         guard let url = components?.url else {
             throw PlaceSearchSessionError.UnsupportedRequest

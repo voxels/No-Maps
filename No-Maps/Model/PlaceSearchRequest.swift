@@ -15,6 +15,8 @@ public struct PlaceSearchRequest {
     let fields:String?
     var minPrice:Int = 1
     var maxPrice:Int = 4
+    let openAt:String?
     let openNow:Bool
     let nearLocation:String?
+    let sort:String?
 }
