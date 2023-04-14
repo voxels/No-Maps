@@ -265,12 +265,12 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
         prompt.append(query)
         prompt.append("\",")
         
-        let request = LanguageGeneratorRequest(model: "text-davinci-003", prompt: prompt, maxTokens: 200, temperature: 0, stop: "},", user: nil)
+        let request = LanguageGeneratorRequest(model: "text-davinci-003", prompt: prompt, maxTokens: 200, temperature: 0, stop: nil, user: nil)
         let rawResponse = try await session.query(languageGeneratorRequest: request)
         if let rawResponse = rawResponse, let choices = rawResponse["choices"] as? [NSDictionary] {
             if let firstChoice = choices.first, let text = firstChoice["text"] as? String {
-                var repair = "{\"query\":\"\(query)\","
-                return repair.appending(text.dropLast())
+                let repair = "[{\"query\":\"\(query)\","
+                return repair.appending(text)
             }
         }
         return ""

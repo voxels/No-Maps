@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import NaturalLanguage
 
 public struct AssistiveChatHostIntent : Equatable {
     public let uuid = UUID()
@@ -57,6 +58,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
     
     weak private var delegate:AssistiveChatHostMessagesDelegate?
     private var languageDelegate:LanguageGeneratorDelegate = LanguageGenerator()
+    private var placeSearchSession = PlaceSearchSession()
     @Published public var queryIntentParameters = AssistiveChatHostQueryParameters()
     public init(delegate:AssistiveChatHostMessagesDelegate? = nil) {
         self.delegate = delegate
@@ -67,7 +69,32 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
         delegate?.didTap(chatResult: chatResult, selectedPlaceSearchResponse: chatResult.placeResponse, selectedPlaceSearchDetails:chatResult.placeDetailsResponse, intentHistory: queryIntentParameters.queryIntents)
     }
     
-    public func determineIntent(for caption:String, chatResult:ChatResult? = nil, lastIntent:AssistiveChatHostIntent?)->Intent {        
+    
+    public func determineIntent(for caption:String, parameters:[String:Any]?, chatResult:ChatResult? = nil, lastIntent:AssistiveChatHostIntent?)->Intent
+    {
+        let tagger = NLTagger(tagSchemes: [.nameTypeOrLexicalClass])
+        tagger.string = caption
+
+        let options: NLTagger.Options = [.omitPunctuation, .omitWhitespace, .joinNames]
+        let tags: [NLTag] = [.personalName, .placeName, .organizationName, .noun]
+        var foundName:Bool = false
+
+        tagger.enumerateTags(in: caption.startIndex..<caption.endIndex, unit: .word, scheme: .nameTypeOrLexicalClass, options: options) { tag, tokenRange in
+            // Get the most likely tag, and print it if it's a named entity.
+            if let tag = tag, tags.contains(tag) {
+                print("\(caption[tokenRange]): \(tag.rawValue)")
+                foundName = true
+            } else {
+                print("\(caption[tokenRange]): \(tag?.rawValue)")
+            }
+                
+            // Get multiple possible tags with their associated confidence scores.
+            let (hypotheses, _) = tagger.tagHypotheses(at: tokenRange.lowerBound, unit: .word, scheme: .nameTypeOrLexicalClass, maximumCount: 1)
+            print(hypotheses)
+                
+           return true
+        }
+        
         switch caption{
         case "I like a place":
             return .SaveDefault
@@ -82,18 +109,18 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
         default:
             if caption.starts(with: "I like a place") {
                 return .SavePlace
-            } else if caption.starts(with: "Where can I find") {
+            } else if caption.starts(with: "Where can I") {
                 if caption.hasSuffix("a place or a thing?") {
                     return .SearchDefault
                 }
-                if let place = lastIntent?.selectedPlaceSearchResponse {
+                if chatResult?.placeResponse != nil || foundName {
                     return .SearchPlace
                 }
                 return .SearchQuery
             } else if caption.starts(with:"What did I like") {
                 return .RecallPlace
             } else if caption.starts(with:"Tell me about") {
-                if let place = lastIntent?.selectedPlaceSearchResponse {
+                if chatResult?.placeResponse != nil || foundName {
                     return .TellPlace
                 }
                 return .TellQuery
@@ -157,7 +184,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
     
     public func refreshParameters(for query:String, intent:AssistiveChatHostIntent) async throws {
         switch intent.intent {
-        case .SearchQuery, .TellQuery:
+        case .SearchQuery, .TellQuery, .TellPlace, .SearchPlace:
             var rawParameters = try await languageDelegate.fetchSearchQueryParameters(with: query)
 
             rawParameters = rawParameters.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -169,7 +196,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
             
             do {
                 let json = try JSONSerialization.jsonObject(with: data)
-                if let parameterDict = json as? [String:Any] {
+                if let array = json as? [[String:Any]], let parameterDict = array.first {
                     queryIntentParameters.queryParameters = parameterDict
                 } else {
                     print("Found non-dictionary object when attemting to refresh parameters:\(json)")
@@ -178,12 +205,11 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
                 queryIntentParameters.queryParameters = nil
                 print(error.localizedDescription)
             }
+            
         default:
             queryIntentParameters.queryParameters = nil
             break
         }
-        
-        appendIntentParameters(intent: intent)
     }
     
     public func appendIntentParameters(intent:AssistiveChatHostIntent) {

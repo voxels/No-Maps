@@ -23,6 +23,7 @@ open class PlaceSearchSession : ObservableObject {
     static let placeDetailsAPIUrl = "v3/places/"
     static let placePhotosAPIUrl = "/photos"
     static let placeTipsAPIUrl = "/tips"
+    static let autocompleteAPIUrl = "v3/autocomplete"
     
     public enum PlaceSearchService : String {
         case foursquare
@@ -51,13 +52,18 @@ open class PlaceSearchSession : ObservableObject {
             let queryItem = URLQueryItem(name: "query", value: request.query)
             components?.queryItems?.append(queryItem)
         }
+        
+        if let nearLocation = request.nearLocation {
+            let nearQueryItem = URLQueryItem(name: "near", value: nearLocation)
+            components?.queryItems?.append(nearQueryItem)
+        } else {
+            let radiusQueryItem = URLQueryItem(name: "radius", value: "\(request.radius)")
+            components?.queryItems?.append(radiusQueryItem)
 
-        let radiusQueryItem = URLQueryItem(name: "radius", value: "\(request.radius)")
-        components?.queryItems?.append(radiusQueryItem)
-
-        if let rawLocation = request.ll {
-            let locationQueryItem = URLQueryItem(name: "ll", value: rawLocation)
-            components?.queryItems?.append(locationQueryItem)
+            if let rawLocation = request.ll {
+                let locationQueryItem = URLQueryItem(name: "ll", value: rawLocation)
+                components?.queryItems?.append(locationQueryItem)
+            }
         }
         
         if let categories = request.categories {
@@ -87,11 +93,7 @@ open class PlaceSearchSession : ObservableObject {
             components?.queryItems?.append(openNowQueryItem)
         }
         
-        if let nearLocation = request.nearLocation {
-            let nearQueryItem = URLQueryItem(name: "near", value: nearLocation)
-            components?.queryItems?.append(nearQueryItem)
 
-        }
         
         if let sort = request.sort {
             let sortQueryItem = URLQueryItem(name: "sort", value: sort)
@@ -214,6 +216,20 @@ open class PlaceSearchSession : ObservableObject {
         }
         
         var components = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.placeDetailsAPIUrl)\(fsqID)\(PlaceSearchSession.placeTipsAPIUrl)")
+        
+        guard let url = components?.url else {
+            throw PlaceSearchSessionError.UnsupportedRequest
+        }
+        
+        return try await fetch(url: url, apiKey: self.foursquareApiKey)
+    }
+    
+    public func autocomplete(query:String) async throws -> Any {
+        if searchSession == nil {
+            searchSession = try await session()
+        }
+        
+        var components = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.autocompleteAPIUrl)")
         
         guard let url = components?.url else {
             throw PlaceSearchSessionError.UnsupportedRequest

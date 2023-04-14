@@ -198,6 +198,8 @@ public class ChatResultViewModel : ObservableObject {
                     NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "ChatResultViewModelDidUpdate")))
                 }
             }
+        case .TellPlace, .SearchPlace:
+            placeQueryModel(resultImageSize: resultImageSize, query: lastIntent.caption, queryIntents: intents, parameters: parameters)
         case .SearchQuery:
             searchQueryModel(resultImageSize: resultImageSize, query: lastIntent.caption, queryIntents: intents, parameters:parameters )
         default:
@@ -310,87 +312,55 @@ public class ChatResultViewModel : ObservableObject {
                 }
             }
         }
+    }
+    
+    public func placeQueryModel(resultImageSize:CGSize?, query:String,  queryIntents:[AssistiveChatHostIntent]?, parameters:AssistiveChatHostQueryParameters ) {
+        print("Refreshing model with search query parameters:\(parameters.queryParameters)")
         
+        let _ = Task.init {
+            do {
+                // find the name of the place using autocomplete
+                let rawAutocompleteQuery = try await placeSearchSession.autocomplete(query: query)
+                var request = placeSearchRequest(parameters: parameters)
+                let rawQueryResponse = try await placeSearchSession.query(request:request)
+                let placeSearchResponses = try PlaceResponseFormatter.placeSearchResponses(with: rawQueryResponse)
+                
+                var chatResults = [ChatResult]()
+                for index in 0..<min(placeSearchResponses.count,maxChatResults) {
+                    
+                    let response = placeSearchResponses[index]
+                    print("Fetching photos for \(response.name)")
+                    let rawPhotosResponse = try await placeSearchSession.photos(for: response.fsqID)
+                    let placePhotosResponses = try PlaceResponseFormatter.placePhotoResponses(with: rawPhotosResponse, for:response.fsqID)
+                    let placeDetailsRequest = PlaceDetailsRequest(fsqID: response.fsqID, description: true, tel: true, fax: false, email: false, website: true, socialMedia: true, verified: false, hours: true, hoursPopular: true, rating: true, stats: false, popularity: true, price: true, menu: true, tastes: true, features: false)
+                     let placeDetailsResponse = try await placeSearchSession.details(for: placeDetailsRequest)
+                     print(placeDetailsResponse)
+                     let rawTipsResponse = try await placeSearchSession.tips(for: response.fsqID)
+                     let placeTipsResponses = try PlaceResponseFormatter.placeTipsResponses(with: rawTipsResponse, for:response.fsqID)
+                    let results = PlaceResponseFormatter.placeChatResults(for: response, photos: placePhotosResponses, resize: resultImageSize, queryIntents: queryIntents)
+                    chatResults.append(contentsOf:results)
+                }
+                
+                let blendedResults = blendDefaults(with: chatResults)
+                DispatchQueue.main.async { [unowned self] in
+                    self.localPlaceSearchResponses = placeSearchResponses
+                    self.results.removeAll()
+                    self.results = blendedResults
+                    NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "ChatResultViewModelDidUpdate")))
+                }
+            }
+            catch {
+                print(error.localizedDescription)
+            }
+        }
     }
     
     public func searchQueryModel(resultImageSize:CGSize?, query:String,  queryIntents:[AssistiveChatHostIntent]?, parameters:AssistiveChatHostQueryParameters ) {
         print("Refreshing model with search query parameters:\(parameters.queryParameters)")
         let _ = Task.init {
             do {
-                var query = ""
-                var ll:String? = nil
-                var openNow = false
-                var openAt:String? = nil
-                var nearLocation:String? = nil
-                var minPrice = 1
-                var maxPrice = 4
-                var radius:Int? = nil
-                var sort:String? = nil
-                if let rawParameters = parameters.queryParameters?["parameters"] as? NSDictionary {
-                    if let rawMinPrice = rawParameters["min_price"] as? Int, rawMinPrice > 1 {
-                        minPrice = rawMinPrice
-                    }
-                    
-                    if let rawMaxPrice = rawParameters["max_price"] as? Int, rawMaxPrice < 4 {
-                        maxPrice = rawMaxPrice
-                    }
-                    
-                    if let rawRadius = rawParameters["radius"] as? Int {
-                        radius = rawRadius
-                    }
-                    
-                    if let rawSort = rawParameters["sort"] as? String {
-                        sort = rawSort
-                    }
-                    
-                    if let rawCategories = rawParameters["categories"] as? [NSDictionary] {
-                        for rawCategory in rawCategories {
-                            if let categoryName = rawCategory["name"] as? String {
-                                query.append("\(categoryName) ")
-                            }
-                        }
-                    }
-                    
-                    if let rawTips = rawParameters["tips"] as? [String] {
-                        for rawTip in rawTips {
-                            query.append("\(rawTip) ")
-                        }
-                    }
-                    
-                    if let rawTastes = rawParameters["tastes"] as? [String] {
-                        for rawTaste in rawTastes {
-                            query.append("\(rawTaste)")
-                        }
-                    }
-                    
-                    
-                    if let rawNear = rawParameters["near"] as? [String] {
-                        nearLocation = rawNear.first
-                        if rawNear.count > 1, let last = rawNear.last {
-                            query.append("in \(last) ")
-                        }
-                    }
-                    
-                    if let rawOpenAt = rawParameters["open_at"] as? String, rawOpenAt.count > 0 {
-                        openAt = rawOpenAt
-                    }
-                    
-                    if let rawOpenNow = rawParameters["open_now"] as? Bool {
-                        openNow = rawOpenNow
-                    }
-                }
-                
-                print("Created query for search request:\(query) near location:\(nearLocation)")
-                if nearLocation == nil {
-                    let location = locationProvider.currentLocation()
-                    if let l = location {
-                        ll = "\(l.coordinate.latitude),\(l.coordinate.longitude)"
-                    }
-                    
-                    print("Did not find a location in the query, using current location:\(ll)")
-                }
-                var request = PlaceSearchRequest(query:query, ll: ll, radius:radius ?? 250, categories: nil, fields: nil, minPrice: minPrice, maxPrice: maxPrice, openAt: openAt, openNow: openNow, nearLocation: nearLocation, sort: sort)
-                
+
+                var request = placeSearchRequest(parameters: parameters)
                 let rawQueryResponse = try await placeSearchSession.query(request:request)
                 let placeSearchResponses = try PlaceResponseFormatter.placeSearchResponses(with: rawQueryResponse)
                 
@@ -510,5 +480,84 @@ public class ChatResultViewModel : ObservableObject {
         } else {
             return defaultResults
         }
+    }
+    
+    
+    private func placeSearchRequest(parameters:AssistiveChatHostQueryParameters )->PlaceSearchRequest {
+        var query = ""
+        var ll:String? = nil
+        var openNow = false
+        var openAt:String? = nil
+        var nearLocation:String? = nil
+        var minPrice = 1
+        var maxPrice = 4
+        var radius:Int? = nil
+        var sort:String? = nil
+        if let rawParameters = parameters.queryParameters?["parameters"] as? NSDictionary {
+            if let rawMinPrice = rawParameters["min_price"] as? Int, rawMinPrice > 1 {
+                minPrice = rawMinPrice
+            }
+            
+            if let rawMaxPrice = rawParameters["max_price"] as? Int, rawMaxPrice < 4 {
+                maxPrice = rawMaxPrice
+            }
+            
+            if let rawRadius = rawParameters["radius"] as? Int {
+                radius = rawRadius
+            }
+            
+            if let rawSort = rawParameters["sort"] as? String {
+                sort = rawSort
+            }
+            
+            if let rawCategories = rawParameters["categories"] as? [NSDictionary] {
+                for rawCategory in rawCategories {
+                    if let categoryName = rawCategory["name"] as? String {
+                        //query.append("\(categoryName) ")
+                    }
+                }
+            }
+            
+            if let rawTips = rawParameters["tips"] as? [String] {0
+                for rawTip in rawTips {
+                    query.append("\(rawTip) ")
+                }
+            }
+            
+            if let rawTastes = rawParameters["tastes"] as? [String] {
+                for rawTaste in rawTastes {
+                    query.append("\(rawTaste) ")
+                }
+            }
+            
+            
+            if let rawNear = rawParameters["near"] as? [String] {
+                nearLocation = rawNear.first
+                if rawNear.count > 1, let last = rawNear.last {
+                    //query.append(" in \(last) ")
+                }
+            }
+            
+            if let rawOpenAt = rawParameters["open_at"] as? String, rawOpenAt.count > 0 {
+                openAt = rawOpenAt
+            }
+            
+            if let rawOpenNow = rawParameters["open_now"] as? Bool {
+                openNow = rawOpenNow
+            }
+        }
+        
+        print("Created query for search request:\(query) near location:\(nearLocation)")
+        if nearLocation == nil {
+            let location = locationProvider.currentLocation()
+            if let l = location {
+                ll = "\(l.coordinate.latitude),\(l.coordinate.longitude)"
+            }
+            
+            print("Did not find a location in the query, using current location:\(ll)")
+        }
+        
+        let request = PlaceSearchRequest(query:query, ll: ll, radius:radius ?? 250, categories: nil, fields: nil, minPrice: minPrice, maxPrice: maxPrice, openAt: openAt, openNow: openNow, nearLocation: nearLocation, sort: sort)
+        return request
     }
 }

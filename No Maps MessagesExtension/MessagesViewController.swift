@@ -347,8 +347,16 @@ extension MessagesViewController : ChatDetailsViewControllerDelegate {
     
     public func didRequestSearch(for query: String) {
         let _ = Task.init {
-            let newIntent = AssistiveChatHostIntent(caption: query, intent: chatHost.determineIntent(for: query, lastIntent: chatModel.lastIntent), selectedPlaceSearchResponse:chatModel.lastIntent?.selectedPlaceSearchResponse, selectedPlaceSearchDetails: chatModel.lastIntent?.selectedPlaceSearchDetails, placeSearchResponses: chatModel.lastIntent?.placeSearchResponses ?? [PlaceSearchResponse]())
+            let newIntent = AssistiveChatHostIntent(caption: query, intent: chatHost.determineIntent(for: query, parameters: nil, lastIntent: chatModel.lastIntent), selectedPlaceSearchResponse:chatModel.lastIntent?.selectedPlaceSearchResponse, selectedPlaceSearchDetails: chatModel.lastIntent?.selectedPlaceSearchDetails, placeSearchResponses: chatModel.lastIntent?.placeSearchResponses ?? [PlaceSearchResponse]())
             try await self.chatHost.refreshParameters(for: query, intent:newIntent)
+            let checkIntentWithParameters = chatHost.determineIntent(for: query, parameters: chatHost.queryIntentParameters.queryParameters, lastIntent: newIntent)
+            if newIntent.intent == checkIntentWithParameters {
+                chatHost.appendIntentParameters(intent: newIntent)
+            } else {
+                let revisedIntent = AssistiveChatHostIntent(caption: query, intent: checkIntentWithParameters, selectedPlaceSearchResponse: nil, selectedPlaceSearchDetails: nil, placeSearchResponses: [PlaceSearchResponse]())
+                try await self.chatHost.refreshParameters(for: query, intent:revisedIntent)
+                chatHost.appendIntentParameters(intent: revisedIntent)
+            }
             self.chatHost.receiveMessage(caption: query, isLocalParticipant: true)
         }
     }
@@ -369,8 +377,16 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
                 }
             }
             
-            let newIntent = AssistiveChatHostIntent(caption: caption, intent: chatHost.determineIntent(for: caption, chatResult: chatResult, lastIntent: intentHistory?.last), selectedPlaceSearchResponse: selectedPlaceSearchResponse, selectedPlaceSearchDetails: selectedPlaceSearchDetails, placeSearchResponses: chatModel.placeSearchResponses(for: caption))
+            let newIntent = AssistiveChatHostIntent(caption: caption, intent: chatHost.determineIntent(for: caption, parameters: nil, chatResult: chatResult, lastIntent: intentHistory?.last), selectedPlaceSearchResponse: selectedPlaceSearchResponse, selectedPlaceSearchDetails: selectedPlaceSearchDetails, placeSearchResponses: chatModel.placeSearchResponses(for: caption))
             try await self.chatHost.refreshParameters(for: caption, intent:newIntent)
+            let checkIntentWithParameters = chatHost.determineIntent(for: caption, parameters: chatHost.queryIntentParameters.queryParameters, chatResult: chatResult, lastIntent: newIntent)
+            if checkIntentWithParameters == newIntent.intent {
+                chatHost.appendIntentParameters(intent: newIntent)
+            } else {
+                let revisedIntent = AssistiveChatHostIntent(caption: caption, intent: checkIntentWithParameters, selectedPlaceSearchResponse: nil, selectedPlaceSearchDetails: nil, placeSearchResponses: [PlaceSearchResponse]())
+                try await self.chatHost.refreshParameters(for: caption, intent:revisedIntent)
+                chatHost.appendIntentParameters(intent: revisedIntent)
+            }
             self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true)
         }
     }

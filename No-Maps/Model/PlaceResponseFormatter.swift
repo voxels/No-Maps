@@ -581,10 +581,9 @@ open class PlaceResponseFormatter {
         case .SearchDefault:
             return [searchChatResult()]
         case .SearchQuery:
-            fallthrough
+            return [tellChatResult()]
         case .TellQuery:
-            fallthrough
-            
+            return [tellChatResult()]
         case .SearchPlace:
             fallthrough
         case .SavePlace:

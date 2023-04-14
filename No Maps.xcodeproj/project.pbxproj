@@ -11,6 +11,7 @@
 		1E0CA34B29E6ECB800F260D6 /* integrated_category_taxonomy.json in Resources */ = {isa = PBXBuildFile; fileRef = 1E0CA34929E6ECB800F260D6 /* integrated_category_taxonomy.json */; };
 		1E0CA34D29E8287400F260D6 /* SearchResponseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E0CA34C29E8287400F260D6 /* SearchResponseViewController.swift */; };
 		1E0CA34E29E8287400F260D6 /* SearchResponseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E0CA34C29E8287400F260D6 /* SearchResponseViewController.swift */; };
+		1E0CA35029E97AFC00F260D6 /* NaturalLanguage.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E0CA34F29E97AFC00F260D6 /* NaturalLanguage.framework */; };
 		1E16D16429C1F56400B2559E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1E16D16329C1F56400B2559E /* Assets.xcassets */; };
 		1E16D16A29C1F56400B2559E /* No Maps MessagesExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1E16D16929C1F56400B2559E /* No Maps MessagesExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		1E16D16F29C1F56400B2559E /* Messages.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E16D16E29C1F56400B2559E /* Messages.framework */; };
@@ -108,6 +109,7 @@
 /* Begin PBXFileReference section */
 		1E0CA34929E6ECB800F260D6 /* integrated_category_taxonomy.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = integrated_category_taxonomy.json; sourceTree = "<group>"; };
 		1E0CA34C29E8287400F260D6 /* SearchResponseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchResponseViewController.swift; sourceTree = "<group>"; };
+		1E0CA34F29E97AFC00F260D6 /* NaturalLanguage.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NaturalLanguage.framework; path = System/Library/Frameworks/NaturalLanguage.framework; sourceTree = SDKROOT; };
 		1E16D16029C1F56300B2559E /* No Maps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "No Maps.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E16D16329C1F56400B2559E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1E16D16929C1F56400B2559E /* No Maps MessagesExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "No Maps MessagesExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -156,6 +158,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1E0CA35029E97AFC00F260D6 /* NaturalLanguage.framework in Frameworks */,
 				1E16D16F29C1F56400B2559E /* Messages.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -220,6 +223,7 @@
 		1E16D16D29C1F56400B2559E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				1E0CA34F29E97AFC00F260D6 /* NaturalLanguage.framework */,
 				1E16D16E29C1F56400B2559E /* Messages.framework */,
 			);
 			name = Frameworks;
