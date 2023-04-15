@@ -7,11 +7,13 @@
 
 import Foundation
 import CloudKit
+import NaturalLanguage
 
 public enum PlaceSearchSessionError : Error {
     case ServiceNotFound
     case UnsupportedRequest
     case ServerErrorMessage
+    case NoPlaceLocationsFound
 }
 
 open class PlaceSearchSession : ObservableObject {
@@ -224,18 +226,131 @@ open class PlaceSearchSession : ObservableObject {
         return try await fetch(url: url, apiKey: self.foursquareApiKey)
     }
     
-    public func autocomplete(query:String) async throws -> Any {
+    public func autocomplete(caption:String, parameters:[String:Any]?, currentLocation:CLLocationCoordinate2D) async throws -> Any {
         if searchSession == nil {
             searchSession = try await session()
         }
         
-        var components = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.autocompleteAPIUrl)")
+        var ll = ""
         
-        guard let url = components?.url else {
+        if let parameters = parameters, let rawParameters = parameters["parameters"] as? NSDictionary {
+            if let nearLocations = rawParameters["near"] as? [String], nearLocations.count > 0, let firstLocation = nearLocations.first, firstLocation.count > 0 {
+                ll = try await self.ll(near: nearLocations)
+            } else {
+                ll = "\(currentLocation.latitude),\(currentLocation.longitude)"
+            }
+        }
+        
+        let tagger = NLTagger(tagSchemes: [.nameTypeOrLexicalClass])
+        tagger.string = caption
+
+        let options: NLTagger.Options = [.omitPunctuation, .omitWhitespace, .joinNames]
+        let tags: [NLTag] = [.personalName, .placeName, .organizationName, .noun, .adjective]
+        var nameString:String = ""
+
+        tagger.enumerateTags(in: caption.startIndex..<caption.endIndex, unit: .word, scheme: .nameTypeOrLexicalClass, options: options) { tag, tokenRange in
+            // Get the most likely tag, and print it if it's a named entity.
+            if let tag = tag, tags.contains(tag) {
+                print("\(caption[tokenRange]): \(tag.rawValue)")
+                nameString.append("\(caption[tokenRange]) ")
+            }
+                
+            // Get multiple possible tags with their associated confidence scores.
+            let (hypotheses, _) = tagger.tagHypotheses(at: tokenRange.lowerBound, unit: .word, scheme: .nameTypeOrLexicalClass, maximumCount: 1)
+            print(hypotheses)
+                
+           return true
+        }
+        
+        var queryComponents = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.autocompleteAPIUrl)")
+        queryComponents?.queryItems = [URLQueryItem]()
+
+        if nameString.count > 0 {
+            let queryUrlItem = URLQueryItem(name: "query", value: nameString.trimmingCharacters(in: .whitespacesAndNewlines))
+            queryComponents?.queryItems?.append(queryUrlItem)
+        } else {
+            let queryUrlItem = URLQueryItem(name: "query", value: caption)
+            queryComponents?.queryItems?.append(queryUrlItem)
+        }
+        
+        if ll.count > 0 {
+            let locationQueryItem = URLQueryItem(name: "ll", value: ll)
+            queryComponents?.queryItems?.append(locationQueryItem)
+            
+            let radiusQueryItem = URLQueryItem(name: "radius", value: "500")
+            queryComponents?.queryItems?.append(radiusQueryItem)
+        }
+        
+        guard let url = queryComponents?.url else {
             throw PlaceSearchSessionError.UnsupportedRequest
         }
         
         return try await fetch(url: url, apiKey: self.foursquareApiKey)
+    }
+    
+    internal func ll(near locationNames:[String]) async throws ->String {
+        var ll = ""
+        
+        var parentLocationLL = ""
+        
+        for locationName in locationNames {
+            var queryComponents = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.autocompleteAPIUrl)")
+            queryComponents?.queryItems = [URLQueryItem]()
+            let queryUrlItem = URLQueryItem(name: "query", value: locationName)
+            queryComponents?.queryItems?.append(queryUrlItem)
+            if parentLocationLL.count > 0 {
+                let locationQueryItem = URLQueryItem(name: "ll", value: ll)
+                queryComponents?.queryItems?.append(locationQueryItem)
+                
+                let radiusQueryItem = URLQueryItem(name: "radius", value: "500")
+                queryComponents?.queryItems?.append(radiusQueryItem)
+            }
+            
+            guard let url = queryComponents?.url else {
+                throw PlaceSearchSessionError.UnsupportedRequest
+            }
+            
+            let locationNameAutoComplete = try await fetch(url: url, apiKey: self.foursquareApiKey)
+            let placeSearchResults = try PlaceResponseFormatter.autocompletePlaceSearchResponses(with: locationNameAutoComplete)
+            let coordinate = try location(near: placeSearchResults)
+            parentLocationLL = ll
+            ll = "\(coordinate.latitude),\(coordinate.longitude)"
+        }
+        return ll
+    }
+    
+    internal func location(near places:[PlaceSearchResponse]) throws ->CLLocationCoordinate2D {
+        guard let firstPlace = places.first else {
+            throw PlaceSearchSessionError.NoPlaceLocationsFound
+        }
+        
+        let retval = CLLocationCoordinate2D(latitude: firstPlace.latitude, longitude: firstPlace.longitude)
+        let coordinates = places.compactMap { place in
+            return CLLocationCoordinate2D(latitude: place.latitude, longitude: place.longitude)
+        }
+        
+        var minLatitude  = retval.latitude
+        var minLongitude = retval.longitude
+        var maxLatitude = retval.latitude
+        var maxLongitude = retval.longitude
+        
+        for coordinate in coordinates {
+            if coordinate.latitude < minLatitude {
+                minLatitude = coordinate.latitude
+            } else if coordinate.latitude > maxLatitude {
+                maxLatitude = coordinate.latitude
+            }
+            
+            if coordinate.longitude < minLongitude {
+                minLongitude = coordinate.longitude
+            } else if coordinate.longitude > maxLongitude {
+                maxLongitude = coordinate.longitude
+            }
+        }
+
+        let centerLatitude = (maxLatitude - minLatitude) / 2 + minLatitude
+        let centerLongitude = (maxLongitude - minLongitude) / 2 + minLongitude
+        return CLLocationCoordinate2D(latitude: centerLatitude, longitude: centerLongitude)
     }
     
     

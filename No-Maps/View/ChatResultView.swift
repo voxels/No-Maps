@@ -157,7 +157,7 @@ struct ChatResultViewHorizontalStack : View  {
             default:
                 firstResult = result
                 if index == model.results.count - 1, model.results.count % 2 == 1 {
-                    columns.append((firstResult, ChatResult(title: "", backgroundColor: Color.white, backgroundImageURL: nil, placeResponse: nil, placeDetailsResponse: nil, photoResponse: nil)))
+                    columns.append((firstResult, ChatResult(title: "", backgroundColor: Color.white, backgroundImageURL: nil, placeResponse: nil, placeDetailsResponse: nil)))
                 }
             }
         }

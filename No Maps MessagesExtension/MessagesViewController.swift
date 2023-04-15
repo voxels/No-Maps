@@ -89,12 +89,24 @@ open class MessagesViewController: MSMessagesAppViewController {
         if message.senderParticipantIdentifier == conversation.localParticipantIdentifier {
             print("Did receive message from device: \(message.summaryText)")
             if let caption = message.summaryText {
-                self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true)
+                let task = Task.init {
+                    do {
+                        try await self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true)
+                    } catch {
+                        print(error.localizedDescription)
+                    }
+                }
             }
         } else {
             print("Did receive message from chat: \(message.summaryText)")
             if let caption = message.summaryText {
-                self.chatHost.receiveMessage(caption: caption, isLocalParticipant: false)
+                let task = Task.init {
+                    do {
+                        try await self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true)
+                    } catch {
+                        print(error.localizedDescription)
+                    }
+                }
             }
         }
     }
@@ -180,7 +192,7 @@ public extension MessagesViewController {
 }
 
 extension MessagesViewController {
-    public func showDetailsViewController(with queryParameters:AssistiveChatHostQueryParameters, responseString:String, placeDetailsRespones:[PlaceDetailsResponse] = [PlaceDetailsResponse]()) throws {
+    public func showDetailsViewController(with queryParameters:AssistiveChatHostQueryParameters, responseString:String) throws {
         guard let _ = queryParameters.queryIntents.last?.intent else {
             throw MessagesViewControllerError.ShowingDetailsWithNoIntent
         }
@@ -213,16 +225,13 @@ extension MessagesViewController {
             case .SaveDefault, .RecallDefault:
                 // Open the drawer and search for a new place
                 break
-            case .SearchDefault, .TellDefault, .OpenDefault, .SearchQuery, .TellQuery:
+            case .SearchDefault, .TellDefault, .OpenDefault, .SearchQuery:
                 let _ = Task.init {
                     do {
                         let description = lastIntent.caption
                         DispatchQueue.main.async { [unowned self] in
                             do {
-                                let allDetailsResponses = chatModel.results.compactMap { result in
-                                    return result.placeDetailsResponse
-                                }
-                                try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description, placeDetailsRespones: allDetailsResponses)
+                                try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description)
                             } catch{
                                 print(error.localizedDescription)
                             }
@@ -233,11 +242,26 @@ extension MessagesViewController {
                 }
             case .SearchPlace:
                 // Open Apple Maps
-                break
+                if let placeResponse = lastIntent.selectedPlaceSearchResponse, let details = lastIntent.selectedPlaceSearchDetails {
+                    let _ = Task.init {
+                        do {
+                            let description = try await self.chatHost.placeDescription(searchResponse: placeResponse, detailsResponse: details)
+                            DispatchQueue.main.async { [unowned self] in
+                                do {
+                                    try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description)
+                                } catch{
+                                    print(error.localizedDescription)
+                                }
+                            }
+                        } catch {
+                            print(error .localizedDescription)
+                        }
+                    }
+                }
             case .RecallPlace:
                 // Open drawer and show past places
                 break
-            case .TellPlace:
+            case .TellPlace, .TellQuery:
                 // Open drawer and show description
                 if let placeResponse = lastIntent.selectedPlaceSearchResponse, let details = lastIntent.selectedPlaceSearchDetails {
                     let _ = Task.init {
@@ -245,10 +269,25 @@ extension MessagesViewController {
                             let description = try await self.chatHost.placeDescription(searchResponse: placeResponse, detailsResponse: details)
                             DispatchQueue.main.async { [unowned self] in
                                 do {
+                                    try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description)
+                                } catch{
+                                    print(error.localizedDescription)
+                                }
+                            }
+                        } catch {
+                            print(error .localizedDescription)
+                        }
+                    }
+                } else {
+                    let _ = Task.init {
+                        do {
+                            let description = lastIntent.caption
+                            DispatchQueue.main.async { [unowned self] in
+                                do {
                                     let allDetailsResponses = chatModel.results.compactMap { result in
                                         return result.placeDetailsResponse
                                     }
-                                    try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description, placeDetailsRespones: allDetailsResponses)
+                                    try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description)
                                 } catch{
                                     print(error.localizedDescription)
                                 }
@@ -347,7 +386,7 @@ extension MessagesViewController : ChatDetailsViewControllerDelegate {
     
     public func didRequestSearch(for query: String) {
         let _ = Task.init {
-            let newIntent = AssistiveChatHostIntent(caption: query, intent: chatHost.determineIntent(for: query, parameters: nil, lastIntent: chatModel.lastIntent), selectedPlaceSearchResponse:chatModel.lastIntent?.selectedPlaceSearchResponse, selectedPlaceSearchDetails: chatModel.lastIntent?.selectedPlaceSearchDetails, placeSearchResponses: chatModel.lastIntent?.placeSearchResponses ?? [PlaceSearchResponse]())
+            let newIntent = AssistiveChatHostIntent(caption: query, intent: chatHost.determineIntent(for: query, parameters: nil, lastIntent: chatModel.lastIntent), selectedPlaceSearchResponse:nil, selectedPlaceSearchDetails:nil, placeSearchResponses:[PlaceSearchResponse]())
             try await self.chatHost.refreshParameters(for: query, intent:newIntent)
             let checkIntentWithParameters = chatHost.determineIntent(for: query, parameters: chatHost.queryIntentParameters.queryParameters, lastIntent: newIntent)
             if newIntent.intent == checkIntentWithParameters {
@@ -357,7 +396,7 @@ extension MessagesViewController : ChatDetailsViewControllerDelegate {
                 try await self.chatHost.refreshParameters(for: query, intent:revisedIntent)
                 chatHost.appendIntentParameters(intent: revisedIntent)
             }
-            self.chatHost.receiveMessage(caption: query, isLocalParticipant: true)
+            try await self.chatHost.receiveMessage(caption: query, isLocalParticipant: true)
         }
     }
 }
@@ -387,12 +426,12 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
                 try await self.chatHost.refreshParameters(for: caption, intent:revisedIntent)
                 chatHost.appendIntentParameters(intent: revisedIntent)
             }
-            self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true)
+            try await self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true)
         }
     }
     
-    public func addReceivedMessage(caption: String, parameters: AssistiveChatHostQueryParameters, isLocalParticipant: Bool) {
-        chatModel.receiveMessage(caption: caption, parameters: parameters, isLocalParticipant: isLocalParticipant)
+    public func addReceivedMessage(caption: String, parameters: AssistiveChatHostQueryParameters, isLocalParticipant: Bool) async throws {
+        try await chatModel.receiveMessage(caption: caption, parameters: parameters, isLocalParticipant: isLocalParticipant)
     }
     
     public func send(caption:String, subcaption:String? = nil, image:UIImage? = nil, mediaFileURL:URL? = nil, imageTitle:String? = nil, imageSubtitle:String? = nil, trailingCaption:String? = nil, trailingSubcaption:String? = nil) {

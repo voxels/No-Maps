@@ -18,5 +18,4 @@ public struct ChatResult : Identifiable, Equatable {
     let backgroundImageURL:URL?
     let placeResponse:PlaceSearchResponse?
     let placeDetailsResponse:PlaceDetailsResponse?
-    let photoResponse:PlacePhotoResponse?
 }

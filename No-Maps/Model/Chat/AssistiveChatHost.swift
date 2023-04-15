@@ -23,7 +23,7 @@ public struct AssistiveChatHostIntent : Equatable {
 
 public protocol AssistiveChatHostMessagesDelegate : AnyObject {
     func didTap(chatResult:ChatResult, selectedPlaceSearchResponse:PlaceSearchResponse?, selectedPlaceSearchDetails:PlaceDetailsResponse?, intentHistory:[AssistiveChatHostIntent]?)
-    func addReceivedMessage(caption:String, parameters:AssistiveChatHostQueryParameters, isLocalParticipant:Bool)
+    func addReceivedMessage(caption:String, parameters:AssistiveChatHostQueryParameters, isLocalParticipant:Bool) async throws
     func didUpdateQuery(with parameters:AssistiveChatHostQueryParameters)
     func send(caption:String, subcaption:String?, image:UIImage?, mediaFileURL:URL?, imageTitle:String?, imageSubtitle:String?, trailingCaption:String?, trailingSubcaption:String?)
 }
@@ -76,7 +76,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
         tagger.string = caption
 
         let options: NLTagger.Options = [.omitPunctuation, .omitWhitespace, .joinNames]
-        let tags: [NLTag] = [.personalName, .placeName, .organizationName, .noun]
+        let tags: [NLTag] = [.personalName, .placeName, .organizationName, .noun, .adjective]
         var foundName:Bool = false
 
         tagger.enumerateTags(in: caption.startIndex..<caption.endIndex, unit: .word, scheme: .nameTypeOrLexicalClass, options: options) { tag, tokenRange in
@@ -121,7 +121,10 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
                 return .RecallPlace
             } else if caption.starts(with:"Tell me about") {
                 if chatResult?.placeResponse != nil || foundName {
-                    return .TellPlace
+                    
+                    if let placeResponse = chatResult?.placeResponse, caption.contains(placeResponse.name) {
+                        return .TellPlace
+                    }
                 }
                 return .TellQuery
             } else if caption.starts(with: "How do I get to") {
@@ -184,7 +187,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
     
     public func refreshParameters(for query:String, intent:AssistiveChatHostIntent) async throws {
         switch intent.intent {
-        case .SearchQuery, .TellQuery, .TellPlace, .SearchPlace:
+        case .TellDefault, .SearchDefault, .SearchQuery, .TellQuery, .TellPlace, .SearchPlace:
             var rawParameters = try await languageDelegate.fetchSearchQueryParameters(with: query)
 
             rawParameters = rawParameters.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -220,8 +223,8 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
         queryIntentParameters.queryIntents = [AssistiveChatHostIntent]()
     }
     
-    public func receiveMessage(caption:String, isLocalParticipant:Bool ) {
-        delegate?.addReceivedMessage(caption: caption, parameters: queryIntentParameters, isLocalParticipant: isLocalParticipant)
+    public func receiveMessage(caption:String, isLocalParticipant:Bool ) async throws {
+        try await delegate?.addReceivedMessage(caption: caption, parameters: queryIntentParameters, isLocalParticipant: isLocalParticipant)
         delegate?.didUpdateQuery(with:queryIntentParameters)
     }
 }
