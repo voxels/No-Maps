@@ -28,7 +28,7 @@ open class LanguageGeneratorSession : ObservableObject {
         if searchSession == nil {
             searchSession = try await session()
         }
-        var components = URLComponents(string: LanguageGeneratorSession.serverUrl)
+        let components = URLComponents(string: LanguageGeneratorSession.serverUrl)
         guard let url = components?.url else {
             throw LanguageGeneratorSessionError.ServiceNotFound
         }
@@ -54,7 +54,7 @@ open class LanguageGeneratorSession : ObservableObject {
     }
     
     internal func fetch(urlRequest:URLRequest, apiKey:String) async throws -> Any {
-        print("Requesting URL: \(urlRequest.url)")
+        print("Requesting URL: \(String(describing: urlRequest.url))")
         let responseAny:Any = try await withCheckedThrowingContinuation({checkedContinuation in
             let dataTask = searchSession?.dataTask(with: urlRequest, completionHandler: { data, response, error in
                 if let e = error {
@@ -68,7 +68,7 @@ open class LanguageGeneratorSession : ObservableObject {
                         } catch {
                             print(error.localizedDescription)
                             let returnedString = String(data: d, encoding: String.Encoding.utf8)
-                            print(returnedString)
+                            print(returnedString ?? "")
                             checkedContinuation.resume(throwing:error)
                         }
                     }
@@ -93,7 +93,7 @@ open class LanguageGeneratorSession : ObservableObject {
                 do {
                     let record = try result.get()
                     if let apiKey = record["value"] as? String {
-                        print("\(record["service"])")
+                        print("\(String(describing: record["service"]))")
                         print("Found API Key \(apiKey)")
                         self.openaiApiKey = apiKey
                     } else {

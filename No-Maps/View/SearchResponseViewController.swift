@@ -15,7 +15,6 @@ open class SearchResponseViewController : UIViewController {
     public weak var delegate:SearchResponseViewControllerDelegate?
     private let searchBarContainerViewHeight:CGFloat = 48 + 16
     public var responseString:String
-    private var textView:UITextView?
     private var searchBarContainerView:UIView = UIView(frame:.zero)
     private var searchBarTextField:UISearchTextField?
     public init(responseString: String) {
@@ -31,7 +30,6 @@ open class SearchResponseViewController : UIViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
         buildSearchBarContainerView(with: responseString)
-        buildTextResponseView(with: responseString)
     }
     
     public func buildSearchBarContainerView(with responseString:String) {
@@ -58,21 +56,6 @@ open class SearchResponseViewController : UIViewController {
         searchBarTextField!.bottomAnchor.constraint(equalTo: searchBarContainerView.bottomAnchor, constant: -8.0).isActive = true
         searchBarTextField?.placeholder = responseString
         searchBarTextField?.text = responseString
-    }
-    
-    public func buildTextResponseView(with responseString:String) {
-        textView = UITextView(frame: .zero)
-        textView!.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(textView!)
-        
-        textView!.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 20).isActive = true
-        textView!.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -20).isActive = true
-        textView!.topAnchor.constraint(equalTo: searchBarContainerView.bottomAnchor, constant: 20).isActive = true
-        textView!.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20).isActive = true
-        textView!.text = nil
-        textView!.font = UIFont.systemFont(ofSize: 14)
-        textView!.textColor = UIColor.label
-        textView!.backgroundColor = UIColor.systemBackground
     }
     
     public func updateResponseView(with responseString:String) {

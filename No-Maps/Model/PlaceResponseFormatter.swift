@@ -37,10 +37,10 @@ open class PlaceResponseFormatter {
                     var locality = ""
                     var postCode = ""
                     var region = ""
-                    var chains = [String]()
+                    let chains = [String]()
                     var link = ""
                     var children = [String]()
-                    var parents = [String]()
+                    let parents = [String]()
                     
                     if let idString = result["fsq_id"] as? String {
                         ident = idString
@@ -101,11 +101,13 @@ open class PlaceResponseFormatter {
                         }
                     }
                     
+                    /*
                     if let chainsArray = response["chain"] as? [NSDictionary] {
                         for chainDict in chainsArray {
                             
                         }
                     }
+                     */
                     
                     if let linkString = response["link"] as? String {
                         link = linkString
@@ -156,10 +158,10 @@ open class PlaceResponseFormatter {
                 var locality = ""
                 var postCode = ""
                 var region = ""
-                var chains = [String]()
+                let chains = [String]()
                 var link = ""
                 var children = [String]()
-                var parents = [String]()
+                let parents = [String]()
                 
                 if let idString = result["fsq_id"] as? String {
                     ident = idString
@@ -220,11 +222,13 @@ open class PlaceResponseFormatter {
                     }
                 }
                 
+                /*
                 if let chainsArray = response["chain"] as? [NSDictionary] {
                     for chainDict in chainsArray {
                         
                     }
                 }
+                 */
                 
                 if let linkString = response["link"] as? String {
                     link = linkString
@@ -340,7 +344,7 @@ open class PlaceResponseFormatter {
             tastes = rawTastes
         }
         
-        var features:[String]? = nil        
+        let features:[String]? = nil        
         
         return PlaceDetailsResponse(searchResponse: searchResponse, photoResponses: photoResponses, tipsResponses: tipsResponses, description: description, tel: tel, fax: fax, email: email, website: website, socialMedia: socialMedia, verified: verified, hours: hours, openNow: openNow, hoursPopular: hoursPopular, rating: rating, stats: stats, popularity: popularity, price: price, menu: menu, dateClosed: dateClosed, tastes: tastes, features: features)
         
@@ -458,8 +462,8 @@ open class PlaceResponseFormatter {
     }
     
     public class func placeDetailsChatResults(for place:PlaceSearchResponse, details:PlaceDetailsResponse, photos:[PlacePhotoResponse], tips:[PlaceTipsResponse],  results:[PlaceSearchResponse], resize:CGSize? = nil, queryIntents:[AssistiveChatHostIntent]? = nil )->[ChatResult] {
-        print("Showing details chat results for \(place.name) with intent:\(queryIntents?.last?.intent)")
-        var usedPhotoIDs = [String]()
+        print("Showing details chat results for \(place.name) with intent:\(String(describing: queryIntents?.last?.intent))")
+        let usedPhotoIDs = [String]()
         
         let placeDetailsChatResultZeroIntent:()->[ChatResult] = {
             var placeResults = [ChatResult]()
@@ -654,15 +658,15 @@ open class PlaceResponseFormatter {
             return allResults
         } else {
             let detailsChatResults = placeDetailsChatResultZeroIntent()
-            var allResults = detailsChatResults
+            let allResults = detailsChatResults
             return allResults
         }
     }
     
     public class func placeChatResults(for place:PlaceSearchResponse, details:PlaceDetailsResponse? = nil, resize:CGSize? = nil, queryIntents:[AssistiveChatHostIntent]? = nil)->[ChatResult] {
-        var photos = details?.photoResponses ?? [PlacePhotoResponse]()
+        let photos = details?.photoResponses ?? [PlacePhotoResponse]()
         
-        var usedPhotoIDs = [String]()
+        let usedPhotoIDs = [String]()
         
         let tellChatResult:()->ChatResult = {
             return PlaceResponseFormatter.imageChatResult(title: "Tell me about \(place.name)?", backgroundColor: Color.red, backgroundImageUrl: nil,placeResponse: place, placeDetailsResponse: nil, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
@@ -705,8 +709,6 @@ open class PlaceResponseFormatter {
             return [searchChatResult()]
         case .SearchQuery:
             return [tellChatResult()]
-        case .TellQuery:
-            return [tellChatResult()]
         case .SearchPlace:
             return [tellChatResult()]
         case .SavePlace:
@@ -715,7 +717,7 @@ open class PlaceResponseFormatter {
             fallthrough
         case .RecallPlace:
             fallthrough
-        case .PlaceDetailsDirections, .PlaceDetailsPhotos, .PlaceDetailsPhone, .PlaceDetailsTips, .PlaceDetailsMenu, .PlaceDetailsCost, .PlaceDetailsInstagram, .PlaceDetailsOpenHours, .PlaceDetailsPopularity, .PlaceDetailsBusyHours, .OpenDefault, .ShareResult:
+        case .TellQuery, .PlaceDetailsDirections, .PlaceDetailsPhotos, .PlaceDetailsPhone, .PlaceDetailsTips, .PlaceDetailsMenu, .PlaceDetailsCost, .PlaceDetailsInstagram, .PlaceDetailsOpenHours, .PlaceDetailsPopularity, .PlaceDetailsBusyHours, .OpenDefault, .ShareResult:
             return placeChatResult()
         case .Unsupported:
             return [ChatResult]()
@@ -739,7 +741,7 @@ open class PlaceResponseFormatter {
     }
     
     public class func unusedPhoto(in responses:[PlacePhotoResponse], with usedPhotoIDs:[String])->PlacePhotoResponse? {
-        var remainingPhotos = responses.filter { response in
+        let remainingPhotos = responses.filter { response in
             return !usedPhotoIDs.contains(response.ident)
         }
         

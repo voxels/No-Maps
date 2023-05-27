@@ -203,7 +203,7 @@ open class PlaceSearchSession : ObservableObject {
             searchSession = try await session()
         }
         
-        var components = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.placeDetailsAPIUrl)\(fsqID)\(PlaceSearchSession.placePhotosAPIUrl)")
+        let components = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.placeDetailsAPIUrl)\(fsqID)\(PlaceSearchSession.placePhotosAPIUrl)")
         
         guard let url = components?.url else {
             throw PlaceSearchSessionError.UnsupportedRequest
@@ -217,7 +217,7 @@ open class PlaceSearchSession : ObservableObject {
             searchSession = try await session()
         }
         
-        var components = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.placeDetailsAPIUrl)\(fsqID)\(PlaceSearchSession.placeTipsAPIUrl)")
+        let components = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.placeDetailsAPIUrl)\(fsqID)\(PlaceSearchSession.placeTipsAPIUrl)")
         
         guard let url = components?.url else {
             throw PlaceSearchSessionError.UnsupportedRequest
@@ -377,7 +377,7 @@ open class PlaceSearchSession : ObservableObject {
                         } catch {
                             print(error.localizedDescription)
                             let returnedString = String(data: d, encoding: String.Encoding.utf8)
-                            print(returnedString)
+                            print(returnedString ?? "")
                             checkedContinuation.resume(throwing:error)
                         }
                     }
@@ -402,7 +402,7 @@ open class PlaceSearchSession : ObservableObject {
                 do {
                     let record = try result.get()
                     if let apiKey = record["value"] as? String {
-                        print("\(record["service"])")
+                        print("\(String(describing: record["service"]))")
                         print("Found API Key \(apiKey)")
                         self.foursquareApiKey = apiKey
                     } else {

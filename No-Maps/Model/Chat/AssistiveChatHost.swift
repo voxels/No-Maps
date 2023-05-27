@@ -85,7 +85,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
                 print("\(caption[tokenRange]): \(tag.rawValue)")
                 foundName = true
             } else {
-                print("\(caption[tokenRange]): \(tag?.rawValue)")
+                print("\(caption[tokenRange]): \(tag?.rawValue ?? "")")
             }
                 
             // Get multiple possible tags with their associated confidence scores.
@@ -123,6 +123,8 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
                 if chatResult?.placeResponse != nil || foundName {
                     
                     if let placeResponse = chatResult?.placeResponse, caption.contains(placeResponse.name) {
+                        return .TellPlace
+                    } else if foundName {
                         return .TellPlace
                     }
                 }
@@ -174,7 +176,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
                 }
             }
             
-            if let chatResult = chatResult, let placeResponse = chatResult.placeResponse, let tipsResponses = chatResult.placeDetailsResponse?.tipsResponses {
+            if let chatResult = chatResult, let _ = chatResult.placeResponse, let tipsResponses = chatResult.placeDetailsResponse?.tipsResponses {
                 for response in tipsResponses {
                     if chatResult.title == response.text {
                         return .ShareResult
@@ -187,7 +189,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
     
     public func refreshParameters(for query:String, intent:AssistiveChatHostIntent) async throws {
         switch intent.intent {
-        case .TellDefault, .SearchDefault, .SearchQuery, .TellQuery, .TellPlace, .SearchPlace:
+        case .SearchQuery, .TellQuery, .TellPlace, .SearchPlace:
             var rawParameters = try await languageDelegate.fetchSearchQueryParameters(with: query)
 
             rawParameters = rawParameters.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -134,7 +134,7 @@ extension ChatDetailsViewController : ChatDetailsViewModelDelegate {
     public func modelDidUpdate() {
         
         switch model.currentIntent.intent {
-        case .TellDefault, .OpenDefault, .SearchDefault, .TellQuery:
+        case .TellDefault, .OpenDefault, .SearchDefault:
             if let response = model.responseString {
                 if !detailsContainerView.subviews.contains(searchResponseContainerView) {
                     buildSearchResponseContainerView(with: response, parentView:detailsContainerView)

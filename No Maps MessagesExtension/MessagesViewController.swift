@@ -49,7 +49,6 @@ open class MessagesViewController: MSMessagesAppViewController {
         chatResultView?.view.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
         chatResultView?.view.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
         chatResultView?.view.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
-        //chatResultView?.view.heightAnchor.constraint(equalToConstant: messagesViewHeight).isActive = true
         
 
         NotificationCenter.default.addObserver(self, selector: #selector(modelDidUpdate), name: Notification.Name("ChatResultViewModelDidUpdate"), object: nil)
@@ -67,7 +66,7 @@ open class MessagesViewController: MSMessagesAppViewController {
         // This will happen when the extension is about to present UI.
         
         // Use this method to configure the extension and restore previously stored state.
-        print("will become active with selected message:\(conversation.selectedMessage?.summaryText)")
+        print("will become active with selected message:\(String(describing: conversation.selectedMessage?.summaryText))")
     }
     
     
@@ -87,9 +86,9 @@ open class MessagesViewController: MSMessagesAppViewController {
         
         // Use this method to trigger UI updates in response to the message.
         if message.senderParticipantIdentifier == conversation.localParticipantIdentifier {
-            print("Did receive message from device: \(message.summaryText)")
+            print("Did receive message from device: \(String(describing: message.summaryText))")
             if let caption = message.summaryText {
-                let task = Task.init {
+                _ = Task.init {
                     do {
                         try await self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true)
                     } catch {
@@ -98,9 +97,9 @@ open class MessagesViewController: MSMessagesAppViewController {
                 }
             }
         } else {
-            print("Did receive message from chat: \(message.summaryText)")
+            print("Did receive message from chat: \(String(describing: message.summaryText))")
             if let caption = message.summaryText {
-                let task = Task.init {
+                _ = Task.init {
                     do {
                         try await self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true)
                     } catch {
@@ -115,9 +114,9 @@ open class MessagesViewController: MSMessagesAppViewController {
         print("did send message")
         // Called when the user taps the send button.
         if message.senderParticipantIdentifier == conversation.localParticipantIdentifier {
-            print("Did send message from device: \(message.summaryText)")
+            print("Did send message from device: \(String(describing: message.summaryText))")
         } else {
-            print("Did send message from chat: \(message.summaryText)")
+            print("Did send message from chat: \(String(describing: message.summaryText))")
         }
     }
     
@@ -182,7 +181,7 @@ public extension MessagesViewController {
         message.layout = layout
         message.summaryText = caption
     
-        conversation.insert(message) { [unowned self] error in
+        conversation.insert(message) { error in
             if let e = error {
                 print(e.localizedDescription)
                 return
@@ -208,7 +207,7 @@ extension MessagesViewController {
             chatDetailsViewController?.update(parameters: queryParameters, responseString: responseString)
         }
         
-        guard let chatDetailsViewController = chatDetailsViewController else {
+        guard chatDetailsViewController != nil else {
             throw MessagesViewControllerError.ChatDetailsViewControllerNotFound
         }
         
@@ -227,7 +226,6 @@ extension MessagesViewController {
                 break
             case .SearchDefault, .TellDefault, .OpenDefault, .SearchQuery:
                 let _ = Task.init {
-                    do {
                         let description = lastIntent.caption
                         DispatchQueue.main.async { [unowned self] in
                             do {
@@ -236,9 +234,6 @@ extension MessagesViewController {
                                 print(error.localizedDescription)
                             }
                         }
-                    } catch {
-                        print(error .localizedDescription)
-                    }
                 }
             case .SearchPlace:
                 // Open Apple Maps
@@ -280,21 +275,14 @@ extension MessagesViewController {
                     }
                 } else {
                     let _ = Task.init {
-                        do {
                             let description = lastIntent.caption
                             DispatchQueue.main.async { [unowned self] in
                                 do {
-                                    let allDetailsResponses = chatModel.results.compactMap { result in
-                                        return result.placeDetailsResponse
-                                    }
                                     try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description)
                                 } catch{
                                     print(error.localizedDescription)
                                 }
                             }
-                        } catch {
-                            print(error .localizedDescription)
-                        }
                     }
                 }
             case .SavePlace:
@@ -361,7 +349,6 @@ extension MessagesViewController {
             }
         } else {
             let _ = Task.init {
-                do {
                     let description = ""
                     DispatchQueue.main.async { [unowned self] in
                         do {
@@ -370,9 +357,6 @@ extension MessagesViewController {
                             print(error.localizedDescription)
                         }
                     }
-                } catch {
-                    print(error .localizedDescription)
-                }
             }
         }
     }

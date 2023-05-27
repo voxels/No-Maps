@@ -65,7 +65,7 @@ extension LocationProvider : CLLocationManagerDelegate {
     
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         self.lastKnownLocation = locations.last
-        print("Last Known Location:\(lastKnownLocation?.coordinate.latitude), \(lastKnownLocation?.coordinate.longitude)")
+        print("Last Known Location:\(String(describing: lastKnownLocation?.coordinate.latitude)), \(String(describing: lastKnownLocation?.coordinate.longitude))")
     }
     
     public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {

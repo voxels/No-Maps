@@ -29,7 +29,7 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
             tastesSummary.append(summary)
         }
         
-        var tipsSummary = "Other people say,\n"
+        var tipsSummary = ""
         if let tips = detailsResponse.tipsResponses {
             let tipsText = tips.compactMap { response in
                 return response.text
@@ -70,6 +70,10 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
     }
     
     public func fetchTipsSummary(with placeName:String, tips:[String]) async throws -> String {
+        if tips.count == 1 {
+            return tips.first!
+        }
+        
         var prompt = "Combine these reviews into an appealing description:"
         for tip in tips {
             prompt.append("\n\(tip)")
