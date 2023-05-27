@@ -19,6 +19,7 @@ public class ChatDetailsViewModel {
     public var currentIntent:AssistiveChatHostIntent
     public var queryParameters:AssistiveChatHostQueryParameters
     public var responseString:String?
+    public var placeSearchResponses:[PlaceSearchResponse] = [PlaceSearchResponse]()
     public var placeDetailsResponses:[PlaceDetailsResponse] = [PlaceDetailsResponse]()
     public weak var delegate:ChatDetailsViewModelDelegate?
     public init(queryParameters:AssistiveChatHostQueryParameters, intent:AssistiveChatHostIntent, delegate:ChatDetailsViewModelDelegate? ) {
@@ -27,7 +28,7 @@ public class ChatDetailsViewModel {
         self.delegate = delegate
     }
     
-    public func updateModel(parameters:AssistiveChatHostQueryParameters, responseString:String? = nil, placeDetailsResponses:[PlaceDetailsResponse] = [PlaceDetailsResponse]() ) throws {
+    public func updateModel(parameters:AssistiveChatHostQueryParameters, responseString:String? = nil, placeSearchResponses:[PlaceSearchResponse] = [PlaceSearchResponse](), placeDetailsResponses:[PlaceDetailsResponse] = [PlaceDetailsResponse]() ) throws {
         guard let lastIntent = parameters.queryIntents.last else {
             throw ChatDetailsViewModelError.NoIntentFound
         }

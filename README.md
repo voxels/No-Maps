@@ -1,5 +1,6 @@
 TODO:
 
+Query History, Result Cacheing
 Tastes vs Place Names
 Where am I results, Directions in Words
 Tell me about streaming results

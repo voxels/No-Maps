@@ -1,17 +1,20 @@
 //
-//  TextResponseView.swift
+//  SearchQueryResponseViewController.swift
 //  No Maps
 //
-//  Created by Michael A Edgcumbe on 4/4/23.
+//  Created by Michael A Edgcumbe on 5/27/23.
 //
 
 import UIKit
 
-open class TextResponseViewController : UIViewController {
+open class SearchQueryResponseViewController : UIViewController {
     public var responseString:String
-    var textView = UITextView(frame: .zero)
-    public init(responseString: String) {
+    public var placeSearchResponses:[PlaceSearchResponse]
+    
+    var textView = UILabel(frame:.zero)
+    public init(responseString: String, placeSearchResponses:[PlaceSearchResponse]) {
         self.responseString = responseString
+        self.placeSearchResponses = placeSearchResponses
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -29,20 +32,22 @@ open class TextResponseViewController : UIViewController {
         
         textView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(textView)
-        
+                
         textView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 20).isActive = true
         textView.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -20).isActive = true
         textView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20).isActive = true
-        textView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20).isActive = true
         textView.text = responseString
+        
+        let height = textView.sizeThatFits(CGSize(width: view.frame.size.width - 40, height: CGFloat.infinity)).height
+        textView.heightAnchor.constraint(equalToConstant: height).isActive = true
+        
         textView.font = UIFont.systemFont(ofSize: 14)
         textView.textColor = UIColor.label
         textView.backgroundColor = UIColor.systemBackground
-        textView.isEditable = false
-        textView.isScrollEnabled = true
     }
     
-    public func updateResponseView(with responseString:String) {
+    public func updateResponseView(with responseString:String, placeSearchResponses:[PlaceSearchResponse]) {
         textView.text = responseString
     }
 }
+

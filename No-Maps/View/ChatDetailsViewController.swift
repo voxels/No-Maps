@@ -20,10 +20,10 @@ open class ChatDetailsViewController : UIViewController {
     weak public var delegate:ChatDetailsViewControllerDelegate?
     private var model:ChatDetailsViewModel
     private var detailsContainerView = UIView(frame:.zero)
-    private var textResponseContainerView = UIView(frame:.zero)
+    private var responseContainerView = UIView(frame:.zero)
     private var textResponseViewController:TextResponseViewController?
-    private var searchResponseContainerView = UIView(frame:.zero)
     private var searchResponseViewController:SearchResponseViewController?
+    private var searchQueryResponseViewController:SearchQueryResponseViewController?
     public init(parameters:AssistiveChatHostQueryParameters) {
         if let lastIntent = parameters.queryIntents.last {
             self.model = ChatDetailsViewModel(queryParameters: parameters,intent:lastIntent, delegate: nil)
@@ -53,77 +53,98 @@ open class ChatDetailsViewController : UIViewController {
         detailsContainerView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
     }
     
+    private func buildResponseContainerView(parentView:UIView) {
+        responseContainerView = UIView(frame: .zero)
+        responseContainerView.translatesAutoresizingMaskIntoConstraints = false
+        parentView.addSubview(responseContainerView)
+        responseContainerView.leftAnchor.constraint(equalTo: parentView.leftAnchor).isActive = true
+        responseContainerView.rightAnchor.constraint(equalTo: parentView.rightAnchor).isActive = true
+        responseContainerView.topAnchor.constraint(equalTo: parentView.topAnchor).isActive = true
+        responseContainerView.bottomAnchor.constraint(equalTo: parentView.bottomAnchor).isActive = true
+    }
+
+    
     private func buildTextResponseContainerView(with responseString:String, parentView:UIView) {
-        removeDetailViewController()
-        textResponseContainerView = UIView(frame: .zero)
-        textResponseContainerView.translatesAutoresizingMaskIntoConstraints = false
-        parentView.addSubview(textResponseContainerView)
-        textResponseContainerView.leftAnchor.constraint(equalTo: parentView.leftAnchor).isActive = true
-        textResponseContainerView.rightAnchor.constraint(equalTo: parentView.rightAnchor).isActive = true
-        textResponseContainerView.topAnchor.constraint(equalTo: parentView.topAnchor).isActive = true
-        textResponseContainerView.bottomAnchor.constraint(equalTo: parentView.bottomAnchor).isActive = true
+
+        buildResponseContainerView(parentView: parentView)
         
         textResponseViewController = TextResponseViewController(responseString: responseString)
-        textResponseContainerView.addSubview(textResponseViewController!.view)
+        responseContainerView.addSubview(textResponseViewController!.view)
         addChild(textResponseViewController!)
         textResponseViewController!.didMove(toParent: self)
         
         textResponseViewController!.view.translatesAutoresizingMaskIntoConstraints = false
-        textResponseViewController!.view.leftAnchor.constraint(equalTo: textResponseContainerView.leftAnchor).isActive = true
-        textResponseViewController!.view.rightAnchor.constraint(equalTo: textResponseContainerView.rightAnchor).isActive = true
-        textResponseViewController!.view.topAnchor.constraint(equalTo: textResponseContainerView.topAnchor).isActive = true
-        textResponseViewController!.view.bottomAnchor.constraint(equalTo: textResponseContainerView.bottomAnchor).isActive = true
+        textResponseViewController!.view.leftAnchor.constraint(equalTo: responseContainerView.leftAnchor).isActive = true
+        textResponseViewController!.view.rightAnchor.constraint(equalTo: responseContainerView.rightAnchor).isActive = true
+        textResponseViewController!.view.topAnchor.constraint(equalTo: responseContainerView.topAnchor).isActive = true
+        textResponseViewController!.view.bottomAnchor.constraint(equalTo: responseContainerView.bottomAnchor).isActive = true
 
     }
     
     private func buildSearchResponseContainerView(with responseString:String, parentView:UIView) {
-        removeDetailViewController()
-        searchResponseContainerView = UIView(frame: .zero)
-        searchResponseContainerView.translatesAutoresizingMaskIntoConstraints = false
-        parentView.addSubview(searchResponseContainerView)
-        searchResponseContainerView.leftAnchor.constraint(equalTo: parentView.leftAnchor).isActive = true
-        searchResponseContainerView.rightAnchor.constraint(equalTo: parentView.rightAnchor).isActive = true
-        searchResponseContainerView.topAnchor.constraint(equalTo: parentView.topAnchor).isActive = true
-        searchResponseContainerView.bottomAnchor.constraint(equalTo: parentView.bottomAnchor).isActive = true
+
+        buildResponseContainerView(parentView: parentView)
         
         searchResponseViewController = SearchResponseViewController(responseString: responseString)
         searchResponseViewController?.delegate = self
-        searchResponseContainerView.addSubview(searchResponseViewController!.view)
+        responseContainerView.addSubview(searchResponseViewController!.view)
         addChild(searchResponseViewController!)
         searchResponseViewController!.didMove(toParent: self)
         
         searchResponseViewController!.view.translatesAutoresizingMaskIntoConstraints = false
-        searchResponseViewController!.view.leftAnchor.constraint(equalTo: searchResponseContainerView.leftAnchor).isActive = true
-        searchResponseViewController!.view.rightAnchor.constraint(equalTo: searchResponseContainerView.rightAnchor).isActive = true
-        searchResponseViewController!.view.topAnchor.constraint(equalTo: searchResponseContainerView.topAnchor).isActive = true
-        searchResponseViewController!.view.bottomAnchor.constraint(equalTo: searchResponseContainerView.bottomAnchor).isActive = true
+        searchResponseViewController!.view.leftAnchor.constraint(equalTo: responseContainerView.leftAnchor).isActive = true
+        searchResponseViewController!.view.rightAnchor.constraint(equalTo: responseContainerView.rightAnchor).isActive = true
+        searchResponseViewController!.view.topAnchor.constraint(equalTo: responseContainerView.topAnchor).isActive = true
+        searchResponseViewController!.view.bottomAnchor.constraint(equalTo: responseContainerView.bottomAnchor).isActive = true
     }
     
+    private func buildSearchQueryResponseContainerView(with responseString:String, placeSearchResponses:[PlaceSearchResponse], parentView:UIView) {
+
+        buildResponseContainerView(parentView: parentView)
+        
+        searchQueryResponseViewController = SearchQueryResponseViewController(responseString: responseString, placeSearchResponses: placeSearchResponses)
+        responseContainerView.addSubview(searchQueryResponseViewController!.view)
+        addChild(searchQueryResponseViewController!)
+        searchQueryResponseViewController!.didMove(toParent: self)
+        
+        searchQueryResponseViewController!.view.translatesAutoresizingMaskIntoConstraints = false
+        searchQueryResponseViewController!.view.leftAnchor.constraint(equalTo: responseContainerView.leftAnchor).isActive = true
+        searchQueryResponseViewController!.view.rightAnchor.constraint(equalTo: responseContainerView.rightAnchor).isActive = true
+        searchQueryResponseViewController!.view.topAnchor.constraint(equalTo: responseContainerView.topAnchor).isActive = true
+        searchQueryResponseViewController!.view.bottomAnchor.constraint(equalTo: responseContainerView.bottomAnchor).isActive = true
+
+    }
+    
+    
     private func removeDetailViewController() {
-        if textResponseContainerView.superview != nil {
+        if responseContainerView.superview != nil {
             if let textResponseViewController = textResponseViewController, textResponseViewController.view.superview != nil {
                 textResponseViewController.willMove(toParent: nil)
                 textResponseViewController.view.removeFromSuperview()
                 textResponseViewController.removeFromParent()
             }
-            textResponseContainerView.removeFromSuperview()
-        }
-        
-        if searchResponseContainerView.superview != nil {
+
             if let searchResponseViewController = searchResponseViewController, searchResponseViewController.view.superview != nil {
                 searchResponseViewController.willMove(toParent: nil)
                 searchResponseViewController.view.removeFromSuperview()
                 searchResponseViewController.removeFromParent()
             }
-            searchResponseContainerView.removeFromSuperview()
+            
+            if let searchQueryResponseViewController = searchQueryResponseViewController, searchQueryResponseViewController.view.superview != nil {
+                searchQueryResponseViewController.willMove(toParent: nil)
+                searchQueryResponseViewController.view.removeFromSuperview()
+                searchQueryResponseViewController.removeFromParent()
+            }            
+            
+            responseContainerView.removeFromSuperview()
         }
     }
 }
 
 extension ChatDetailsViewController {
-    public func update(parameters:AssistiveChatHostQueryParameters, responseString:String? = nil, placeDetailsResponses:[PlaceDetailsResponse] = [PlaceDetailsResponse]() ) {
+    public func update(parameters:AssistiveChatHostQueryParameters, responseString:String? = nil, placeSearchResponses:[PlaceSearchResponse] = [PlaceSearchResponse](), placeDetailsResponses:[PlaceDetailsResponse] = [PlaceDetailsResponse]() ) {
         do {
-            try self.model.updateModel(parameters: parameters, responseString: responseString, placeDetailsResponses: placeDetailsResponses)
+            try self.model.updateModel(parameters: parameters, responseString: responseString, placeSearchResponses: placeSearchResponses, placeDetailsResponses: placeDetailsResponses)
         } catch {
             print(error.localizedDescription)
         }
@@ -132,18 +153,25 @@ extension ChatDetailsViewController {
 
 extension ChatDetailsViewController : ChatDetailsViewModelDelegate {
     public func modelDidUpdate() {
-        
+        removeDetailViewController()
         switch model.currentIntent.intent {
         case .TellDefault, .OpenDefault, .SearchDefault:
             if let response = model.responseString {
-                if !detailsContainerView.subviews.contains(searchResponseContainerView) {
+                if !detailsContainerView.subviews.contains(responseContainerView) {
                     buildSearchResponseContainerView(with: response, parentView:detailsContainerView)
                 }
                 searchResponseViewController?.updateResponseView(with: response, placeDetailsResponses: model.placeDetailsResponses)
             }
+        case .TellQuery:
+            if let response = model.responseString {
+                if !detailsContainerView.subviews.contains(responseContainerView) {
+                    buildSearchQueryResponseContainerView(with: response,placeSearchResponses: model.placeSearchResponses, parentView:detailsContainerView)
+                }
+                searchQueryResponseViewController?.updateResponseView(with: response, placeSearchResponses: model.placeSearchResponses)
+            }
         default:
             if let response = model.responseString {
-                if !detailsContainerView.subviews.contains(textResponseContainerView) {
+                if !detailsContainerView.subviews.contains(responseContainerView) {
                     buildTextResponseContainerView(with: response, parentView:detailsContainerView)
                 }
                 textResponseViewController?.updateResponseView(with: response)

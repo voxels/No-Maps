@@ -8,6 +8,7 @@
 import Foundation
 
 public protocol LanguageGeneratorDelegate {
+   func searchQueryDescription(placeSearchResponses:[PlaceSearchResponse]) async throws -> String
    func placeDescription(searchResponse:PlaceSearchResponse, detailsResponse:PlaceDetailsResponse) async throws -> String
    func fetchSearchQueryParameters( with query:String) async throws -> String
 }
@@ -15,6 +16,13 @@ public protocol LanguageGeneratorDelegate {
 
 open class LanguageGenerator : LanguageGeneratorDelegate {
     private var session:LanguageGeneratorSession = LanguageGeneratorSession()
+
+    public func searchQueryDescription(placeSearchResponses:[PlaceSearchResponse]) async throws -> String {
+        var retval = ""
+        
+        return retval
+    }
+    
     public func placeDescription(searchResponse: PlaceSearchResponse, detailsResponse: PlaceDetailsResponse) async throws -> String {
         var retval = ""
         

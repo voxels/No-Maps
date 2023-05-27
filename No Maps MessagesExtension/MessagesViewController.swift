@@ -202,9 +202,9 @@ extension MessagesViewController {
             chatDetailsContainerView?.addSubview(chatDetailsViewController!.view)
             addChild(chatDetailsViewController!)
             chatDetailsViewController?.didMove(toParent: self)            
-            chatDetailsViewController?.update(parameters: queryParameters, responseString: responseString)
+            chatDetailsViewController?.update(parameters: queryParameters, responseString: responseString, placeSearchResponses:queryParameters.queryIntents.last!.placeSearchResponses)
         } else {
-            chatDetailsViewController?.update(parameters: queryParameters, responseString: responseString)
+            chatDetailsViewController?.update(parameters: queryParameters, responseString: responseString, placeSearchResponses:queryParameters.queryIntents.last!.placeSearchResponses)
         }
         
         guard chatDetailsViewController != nil else {
@@ -224,7 +224,7 @@ extension MessagesViewController {
             case .SaveDefault, .RecallDefault:
                 // Open the drawer and search for a new place
                 break
-            case .SearchDefault, .TellDefault, .OpenDefault, .SearchQuery:
+            case .SearchDefault, .TellDefault, .OpenDefault:
                 let _ = Task.init {
                         let description = lastIntent.caption
                         DispatchQueue.main.async { [unowned self] in
@@ -234,6 +234,22 @@ extension MessagesViewController {
                                 print(error.localizedDescription)
                             }
                         }
+                }
+                
+            case .SearchQuery:
+                let _ = Task.init {
+                    do {
+                        let description = try await self.chatHost.searchQueryDescription(placeSearchResponses: lastIntent.placeSearchResponses)
+                        DispatchQueue.main.async { [unowned self] in
+                            do {
+                                try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description)
+                            } catch{
+                                print(error.localizedDescription)
+                            }
+                        }
+                    } catch {
+                        print(error .localizedDescription)
+                    }
                 }
             case .SearchPlace:
                 // Open Apple Maps

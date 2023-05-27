@@ -76,7 +76,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
         tagger.string = caption
 
         let options: NLTagger.Options = [.omitPunctuation, .omitWhitespace, .joinNames]
-        let tags: [NLTag] = [.personalName, .placeName, .organizationName, .noun, .adjective]
+        let tags: [NLTag] = [.personalName, .placeName, .organizationName]
         var foundName:Bool = false
 
         tagger.enumerateTags(in: caption.startIndex..<caption.endIndex, unit: .word, scheme: .nameTypeOrLexicalClass, options: options) { tag, tokenRange in
@@ -232,6 +232,11 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
 }
 
 extension AssistiveChatHost {
+    
+    public func searchQueryDescription(placeSearchResponses:[PlaceSearchResponse]) async throws -> String {
+        return try await languageDelegate.searchQueryDescription(placeSearchResponses: placeSearchResponses)
+    }
+    
     public func placeDescription(searchResponse:PlaceSearchResponse, detailsResponse:PlaceDetailsResponse) async throws ->String {
         return try await languageDelegate.placeDescription(searchResponse: searchResponse, detailsResponse: detailsResponse)
     }
