@@ -162,10 +162,10 @@ extension ChatDetailsViewController : ChatDetailsViewModelDelegate {
                 }
                 searchResponseViewController?.updateResponseView(with: response, placeDetailsResponses: model.placeDetailsResponses)
             }
-        case .TellQuery:
+        case .SearchQuery:
             if let response = model.responseString {
                 if !detailsContainerView.subviews.contains(responseContainerView) {
-                    buildSearchQueryResponseContainerView(with: response,placeSearchResponses: model.placeSearchResponses, parentView:detailsContainerView)
+                    buildSearchQueryResponseContainerView(with: response, placeSearchResponses: model.placeSearchResponses, parentView:detailsContainerView)
                 }
                 searchQueryResponseViewController?.updateResponseView(with: response, placeSearchResponses: model.placeSearchResponses)
             }

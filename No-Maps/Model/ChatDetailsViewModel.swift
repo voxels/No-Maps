@@ -35,6 +35,7 @@ public class ChatDetailsViewModel {
         self.currentIntent = lastIntent
         self.queryParameters = parameters
         self.responseString = responseString
+        self.placeSearchResponses = placeSearchResponses
         self.placeDetailsResponses = placeDetailsResponses
         delegate?.modelDidUpdate()
     }
