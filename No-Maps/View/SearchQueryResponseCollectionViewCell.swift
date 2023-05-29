@@ -35,8 +35,8 @@ open class SearchQueryResponseCollectionViewCell : UICollectionViewCell {
         textLabel.numberOfLines = 0
         textLabel.leftAnchor.constraint(equalTo: contentView.leftAnchor, constant: textLabelEdgeInsets.left).isActive = true
         textLabel.rightAnchor.constraint(equalTo: contentView.rightAnchor, constant: textLabelEdgeInsets.right).isActive = true
-        textLabel.topAnchor.constraint(equalTo: contentView.topAnchor).isActive = true
-        textLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor).isActive = true
+        textLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: textLabelEdgeInsets.top).isActive = true
+        textLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: textLabelEdgeInsets.bottom).isActive = true
         textLabel.textColor = UIColor.label
     }
     
