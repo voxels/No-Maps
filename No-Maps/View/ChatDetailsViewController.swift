@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import CoreLocation
 
 public enum ChatDetailsViewControllerError : Error {
     case MissingIntent
@@ -42,6 +43,7 @@ open class ChatDetailsViewController : UIViewController {
         super.viewDidLoad()
         buildContainerView()
     }
+    
     
     private func buildContainerView() {
         detailsContainerView.translatesAutoresizingMaskIntoConstraints = false
@@ -98,11 +100,11 @@ open class ChatDetailsViewController : UIViewController {
         searchResponseViewController!.view.bottomAnchor.constraint(equalTo: responseContainerView.bottomAnchor).isActive = true
     }
     
-    private func buildSearchQueryResponseContainerView(with responseString:String, placeSearchResponses:[PlaceSearchResponse], parentView:UIView) {
+    private func buildSearchQueryResponseContainerView(with responseString:String, placeDetailsResponses:[PlaceDetailsResponse], parentView:UIView) {
 
         buildResponseContainerView(parentView: parentView)
         
-        searchQueryResponseViewController = SearchQueryResponseViewController(responseString: responseString, placeSearchResponses: placeSearchResponses)
+        searchQueryResponseViewController = SearchQueryResponseViewController(responseString: responseString, placeDetailsResponses: placeDetailsResponses)
         responseContainerView.addSubview(searchQueryResponseViewController!.view)
         addChild(searchQueryResponseViewController!)
         searchQueryResponseViewController!.didMove(toParent: self)
@@ -142,11 +144,13 @@ open class ChatDetailsViewController : UIViewController {
 }
 
 extension ChatDetailsViewController {
-    public func update(parameters:AssistiveChatHostQueryParameters, responseString:String? = nil, placeSearchResponses:[PlaceSearchResponse] = [PlaceSearchResponse](), placeDetailsResponses:[PlaceDetailsResponse] = [PlaceDetailsResponse]() ) {
-        do {
-            try self.model.updateModel(parameters: parameters, responseString: responseString, placeSearchResponses: placeSearchResponses, placeDetailsResponses: placeDetailsResponses)
-        } catch {
-            print(error.localizedDescription)
+    public func update(parameters:AssistiveChatHostQueryParameters, responseString:String? = nil, placeSearchResponses:[PlaceSearchResponse] = [PlaceSearchResponse](), nearLocation:CLLocation ) {
+        let _ = Task.detached(priority: .userInitiated) {
+            do {
+                try await self.model.updateModel(parameters: parameters, responseString: responseString, placeSearchResponses: placeSearchResponses, nearLocation: nearLocation)
+            } catch {
+                print(error.localizedDescription)
+            }
         }
     }
 }
@@ -165,9 +169,9 @@ extension ChatDetailsViewController : ChatDetailsViewModelDelegate {
         case .SearchQuery:
             if let response = model.responseString {
                 if !detailsContainerView.subviews.contains(responseContainerView) {
-                    buildSearchQueryResponseContainerView(with: response, placeSearchResponses: model.placeSearchResponses, parentView:detailsContainerView)
+                    buildSearchQueryResponseContainerView(with: response, placeDetailsResponses: model.placeDetailsResponses, parentView:detailsContainerView)
                 }
-                searchQueryResponseViewController?.updateResponseView(with: response, placeSearchResponses: model.placeSearchResponses)
+                searchQueryResponseViewController?.updateResponseView(with: response, placeDetailsResponses: model.placeDetailsResponses)
             }
         default:
             if let response = model.responseString {

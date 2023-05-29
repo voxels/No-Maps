@@ -19,4 +19,5 @@ public struct PlaceSearchRequest {
     let openNow:Bool
     let nearLocation:String?
     let sort:String?
+    var limit:Int = 10
 }

@@ -7,10 +7,16 @@
 
 import SwiftUI
 import NaturalLanguage
+import CoreLocation
+
+public protocol ChatResultViewModelDelegate : AnyObject {
+    func didUpdateModel(for location:CLLocation?)
+}
 
 public class ChatResultViewModel : ObservableObject {
+    public weak var delegate:ChatResultViewModelDelegate?
     private let placeSearchSession:PlaceSearchSession = PlaceSearchSession()
-    private let locationProvider:LocationProvider = LocationProvider()
+    public let locationProvider:LocationProvider = LocationProvider()
     private var localPlaceSearchResponses:[PlaceSearchResponse]?
     private let maxChatResults:Int = 30
     
@@ -59,10 +65,10 @@ public class ChatResultViewModel : ObservableObject {
         return retval
     }
     
-    public func receiveMessage(caption: String, parameters: AssistiveChatHostQueryParameters, isLocalParticipant: Bool) async throws {
+    public func receiveMessage(caption: String, parameters: AssistiveChatHostQueryParameters, isLocalParticipant: Bool, nearLocation:CLLocation) async throws {
         queryCaption = caption
         queryParametersHistory.append(parameters)
-        try await applyQuery(caption: queryCaption!, parameters: parameters, history: queryParametersHistory)
+        try await applyQuery(caption: queryCaption!, parameters: parameters, history: queryParametersHistory, nearLocation:nearLocation)
     }
     
     public func didTap(chatResult:ChatResult, parameters:AssistiveChatHostQueryParameters) {
@@ -121,7 +127,7 @@ public class ChatResultViewModel : ObservableObject {
     }
     
     public func
-    applyQuery(caption:String, parameters:AssistiveChatHostQueryParameters, history:[AssistiveChatHostQueryParameters]) async throws {
+    applyQuery(caption:String, parameters:AssistiveChatHostQueryParameters, history:[AssistiveChatHostQueryParameters], nearLocation:CLLocation) async throws {
         print("Applying query: \(caption)")
         print("With parameters:")
         for intent in parameters.queryIntents {
@@ -130,17 +136,17 @@ public class ChatResultViewModel : ObservableObject {
         }
         if let lastParameters = history.last, let lastIntent = lastParameters.queryIntents.last, lastIntent.selectedPlaceSearchResponse == nil {
             do {
-                try await detailIntent(intent: lastIntent, parameters: parameters)
+                try await detailIntent(intent: lastIntent, parameters: parameters, nearLocation:nearLocation)
             } catch {
                 print(error.localizedDescription)
             }
         }
     }
     
-    public func detailIntent(intent:AssistiveChatHostIntent, parameters:AssistiveChatHostQueryParameters) async throws {
-
+    public func detailIntent(intent:AssistiveChatHostIntent, parameters:AssistiveChatHostQueryParameters, nearLocation:CLLocation) async throws {
+        
         var checkResponses = [PlaceSearchResponse]()
-
+        
         if intent.intent == .TellDefault || intent.intent == .SearchDefault {
             return
         }
@@ -237,12 +243,12 @@ public class ChatResultViewModel : ObservableObject {
             
             return true
         }
-                
+        
         for index in 0..<checkResponses.count {
             let response = checkResponses[index]
             var replaceIntents = [AssistiveChatHostIntent]()
             var foundNameComponents = 0
-
+            
             let nameComponents = response.name.lowercased().components(separatedBy: .whitespacesAndNewlines)
             
             for component in nameComponents {
@@ -280,8 +286,8 @@ public class ChatResultViewModel : ObservableObject {
                         for index in 0..<event.queryIntents.count {
                             let intent = event.queryIntents[index]
                             if intent.selectedPlaceSearchResponse == nil || intent.selectedPlaceSearchDetails == nil, foundMatch {
-                                    let newIntent = AssistiveChatHostIntent(caption: intent.caption, intent: intent.intent, selectedPlaceSearchResponse: response, selectedPlaceSearchDetails: detailsResponse, placeSearchResponses:checkResponses)
-                                    replaceIntents.append(newIntent)
+                                let newIntent = AssistiveChatHostIntent(caption: intent.caption, intent: intent.intent, selectedPlaceSearchResponse: response, selectedPlaceSearchDetails: detailsResponse, placeSearchResponses:checkResponses)
+                                replaceIntents.append(newIntent)
                             } else if intent.placeSearchResponses.count == 0, checkResponses.count > 0 {
                                 let newIntent = AssistiveChatHostIntent(caption: intent.caption, intent: intent.intent, selectedPlaceSearchResponse: nil, selectedPlaceSearchDetails: nil, placeSearchResponses:checkResponses)
                                 replaceIntents.append(newIntent)
@@ -353,7 +359,7 @@ public class ChatResultViewModel : ObservableObject {
         }
     }
     
-    public func refreshModel(resultImageSize:CGSize?, queryIntents:[AssistiveChatHostIntent]? = nil, parameters:AssistiveChatHostQueryParameters) {
+    public func refreshModel(resultImageSize:CGSize?, queryIntents:[AssistiveChatHostIntent]? = nil, parameters:AssistiveChatHostQueryParameters, nearLocation:CLLocation) {
         guard let queryIntents = queryIntents else {
             zeroStateModel(resultImageSize: resultImageSize)
             return
@@ -370,14 +376,14 @@ public class ChatResultViewModel : ObservableObject {
             zeroStateModel(resultImageSize: resultImageSize)
         default:
             if let lastIntent = queryIntents.last {
-                model(resultImageSize: resultImageSize, intents: queryIntents, lastIntent:lastIntent, parameters: parameters, localPlaceSearchResponses: localPlaceSearchResponses)
+                model(resultImageSize: resultImageSize, intents: queryIntents, lastIntent:lastIntent, parameters: parameters, localPlaceSearchResponses: localPlaceSearchResponses, nearLocation: nearLocation)
             } else {
                 zeroStateModel(resultImageSize: resultImageSize)
             }
         }
     }
     
-    public func model(resultImageSize:CGSize?, intents:[AssistiveChatHostIntent], lastIntent:AssistiveChatHostIntent, parameters:AssistiveChatHostQueryParameters, localPlaceSearchResponses:[PlaceSearchResponse]? = nil) {
+    public func model(resultImageSize:CGSize?, intents:[AssistiveChatHostIntent], lastIntent:AssistiveChatHostIntent, parameters:AssistiveChatHostQueryParameters, localPlaceSearchResponses:[PlaceSearchResponse]? = nil, nearLocation:CLLocation) {
         
         switch lastIntent.intent {
         case .SaveDefault,  .SearchDefault, .RecallDefault, .OpenDefault:
@@ -390,7 +396,7 @@ public class ChatResultViewModel : ObservableObject {
             DispatchQueue.main.async { [unowned self] in
                 self.results.removeAll()
                 self.results = blendedResults
-                NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "ChatResultViewModelDidUpdate")))
+                self.delegate?.didUpdateModel(for: locationProvider.currentLocation())
             }
         case .TellDefault:
             let _ = Task.init {
@@ -404,7 +410,8 @@ public class ChatResultViewModel : ObservableObject {
                 DispatchQueue.main.async { [unowned self] in
                     self.results.removeAll()
                     self.results = blendedResults
-                    NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "ChatResultViewModelDidUpdate")))
+                    self.delegate?.didUpdateModel(for: locationProvider.currentLocation())
+                    
                 }
             }
         case .TellPlace:
@@ -509,7 +516,8 @@ public class ChatResultViewModel : ObservableObject {
                     DispatchQueue.main.async { [unowned self] in
                         self.results.removeAll()
                         self.results = blendedResults
-                        NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "ChatResultViewModelDidUpdate")))
+                        self.delegate?.didUpdateModel(for: locationProvider.currentLocation())
+                        
                     }
                 }
                 catch {
@@ -519,17 +527,17 @@ public class ChatResultViewModel : ObservableObject {
         case .SearchPlace:
             placeQueryModel(resultImageSize: resultImageSize, query: lastIntent.caption, queryIntents: intents, parameters: parameters)
         case .SearchQuery, .TellQuery:
-            searchQueryModel(resultImageSize: resultImageSize, query: lastIntent.caption, queryIntents: intents, parameters:parameters )
+            searchQueryModel(resultImageSize: resultImageSize, query: lastIntent.caption, queryIntents: intents, parameters:parameters, nearLocation:nearLocation )
         default:
             let _ = Task.init {
                 do {
-
+                    
                     var chatResults = [ChatResult]()
                     var checkResponses = [PlaceSearchResponse]()
                     
                     if let placeResponse = lastIntent.selectedPlaceSearchResponse, let detailsResponse = lastIntent.selectedPlaceSearchDetails, let photosResponses = detailsResponse.photoResponses, let tipsResponses = detailsResponse.tipsResponses {
-                            let results = PlaceResponseFormatter.placeDetailsChatResults(for: placeResponse, details:detailsResponse, photos: photosResponses, tips: tipsResponses, results: [placeResponse], resize:resultImageSize, queryIntents: intents)
-                            chatResults.append(contentsOf:results)
+                        let results = PlaceResponseFormatter.placeDetailsChatResults(for: placeResponse, details:detailsResponse, photos: photosResponses, tips: tipsResponses, results: [placeResponse], resize:resultImageSize, queryIntents: intents)
+                        chatResults.append(contentsOf:results)
                     } else {
                         if lastIntent.placeSearchResponses.count > 0 {
                             checkResponses.append(contentsOf: lastIntent.placeSearchResponses)
@@ -543,7 +551,7 @@ public class ChatResultViewModel : ObservableObject {
                             print("Fetching tips for \(response.name)")
                             let rawTipsResponse = try await placeSearchSession.tips(for: response.fsqID)
                             let placeTipsResponses = try PlaceResponseFormatter.placeTipsResponses(with: rawTipsResponse, for:response.fsqID)
-
+                            
                             let request = PlaceDetailsRequest(fsqID: response.fsqID, description: true, tel: true, fax: false, email: false, website: true, socialMedia: true, verified: false, hours: true, hoursPopular: true, rating: true, stats: false, popularity: true, price: true, menu: true, tastes: true, features: false)
                             print("Fetching details for \(response.name)")
                             let rawDetailsResponse = try await placeSearchSession.details(for: request)
@@ -613,7 +621,8 @@ public class ChatResultViewModel : ObservableObject {
                     DispatchQueue.main.async { [unowned self] in
                         self.results.removeAll()
                         self.results = blendedResults
-                        NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "ChatResultViewModelDidUpdate")))
+                        self.delegate?.didUpdateModel(for: locationProvider.currentLocation())
+                        
                     }
                 }
                 catch {
@@ -628,85 +637,94 @@ public class ChatResultViewModel : ObservableObject {
         
         let _ = Task.init {
             var chatResults = [ChatResult]()
-
-                if let selectedPlaceDetailsResponse = queryIntents?.last?.selectedPlaceSearchDetails {
-                    var allResponses = [PlaceDetailsResponse]()
-
-                    allResponses.append(selectedPlaceDetailsResponse)
-
-                    for index in 0..<min(allResponses.count,maxChatResults) {
-                        
-                        let response = allResponses[index]
-                        let results = PlaceResponseFormatter.placeChatResults(for: response.searchResponse, details:response, resize: resultImageSize)
-                        chatResults.append(contentsOf:results)
-                    }
-                } else if let selectedPlaceResponse = queryIntents?.last?.selectedPlaceSearchResponse {
-                    var allResponses = [PlaceSearchResponse]()
-
-                    allResponses.append(selectedPlaceResponse)
-
-                    for index in 0..<min(allResponses.count,maxChatResults) {
-                        
-                        let response = allResponses[index]
-                        let results = PlaceResponseFormatter.placeChatResults(for: response, resize: resultImageSize)
-                        chatResults.append(contentsOf:results)
-                    }
-                } else if let backupResponses = queryIntents?.last?.placeSearchResponses, backupResponses.count > 0 {
-                    var allResponses = [PlaceSearchResponse]()
-
-                    allResponses.append(contentsOf: backupResponses)
-
-                    for index in 0..<min(allResponses.count,maxChatResults) {
-                        
-                        let response = allResponses[index]
-                        let results = PlaceResponseFormatter.placeChatResults(for: response, resize: resultImageSize)
-
-                        chatResults.append(contentsOf:results)
-                    }
-                }
+            
+            if let selectedPlaceDetailsResponse = queryIntents?.last?.selectedPlaceSearchDetails {
+                var allResponses = [PlaceDetailsResponse]()
                 
-                let blendedResults = blendDefaults(with: chatResults)
-                DispatchQueue.main.async { [unowned self] in
-                    self.localPlaceSearchResponses = queryIntents?.last?.placeSearchResponses
-                    self.results.removeAll()
-                    self.results = blendedResults
-                    NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "ChatResultViewModelDidUpdate")))
+                allResponses.append(selectedPlaceDetailsResponse)
+                
+                for index in 0..<min(allResponses.count,maxChatResults) {
+                    
+                    let response = allResponses[index]
+                    let results = PlaceResponseFormatter.placeChatResults(for: response.searchResponse, details:response, resize: resultImageSize)
+                    chatResults.append(contentsOf:results)
                 }
+            } else if let selectedPlaceResponse = queryIntents?.last?.selectedPlaceSearchResponse {
+                var allResponses = [PlaceSearchResponse]()
+                
+                allResponses.append(selectedPlaceResponse)
+                
+                for index in 0..<min(allResponses.count,maxChatResults) {
+                    
+                    let response = allResponses[index]
+                    let results = PlaceResponseFormatter.placeChatResults(for: response, resize: resultImageSize)
+                    chatResults.append(contentsOf:results)
+                }
+            } else if let backupResponses = queryIntents?.last?.placeSearchResponses, backupResponses.count > 0 {
+                var allResponses = [PlaceSearchResponse]()
+                
+                allResponses.append(contentsOf: backupResponses)
+                
+                for index in 0..<min(allResponses.count,maxChatResults) {
+                    
+                    let response = allResponses[index]
+                    let results = PlaceResponseFormatter.placeChatResults(for: response, resize: resultImageSize)
+                    
+                    chatResults.append(contentsOf:results)
+                }
+            }
+            
+            let blendedResults = blendDefaults(with: chatResults)
+            DispatchQueue.main.async { [unowned self] in
+                self.localPlaceSearchResponses = queryIntents?.last?.placeSearchResponses
+                self.results.removeAll()
+                self.results = blendedResults
+                self.delegate?.didUpdateModel(for: locationProvider.currentLocation())
+                
+            }
         }
     }
     
-    public func searchQueryModel(resultImageSize:CGSize?, query:String,  queryIntents:[AssistiveChatHostIntent]?, parameters:AssistiveChatHostQueryParameters ) {
+    public func searchQueryModel(resultImageSize:CGSize?, query:String,  queryIntents:[AssistiveChatHostIntent]?, parameters:AssistiveChatHostQueryParameters, nearLocation:CLLocation ) {
         print("Refreshing model with search query parameters:\(String(describing: parameters.queryParameters))")
         let _ = Task.init {
-                guard let placeSearchResponses = queryIntents?.last?.placeSearchResponses else {
-                    return
-                }
+            guard let placeSearchResponses = queryIntents?.last?.placeSearchResponses else {
+                return
+            }
+            
+            var allResponses = [PlaceSearchResponse]()
+            if let selectedPlaceResponse = queryIntents?.last?.selectedPlaceSearchResponse {
+                allResponses.append(selectedPlaceResponse)
+            }
+            
+            var sortedPlaceSearchResponses = placeSearchResponses.sorted(by: { firstLocation, checkLocation in
+                let firstLocationCoordinate = CLLocation(latitude: firstLocation.latitude, longitude: firstLocation.longitude)
+                let checkLocationCoordinate = CLLocation(latitude: checkLocation.latitude, longitude: checkLocation.longitude)
                 
-                var allResponses = [PlaceSearchResponse]()
-                if let selectedPlaceResponse = queryIntents?.last?.selectedPlaceSearchResponse {
-                    allResponses.append(selectedPlaceResponse)
-                }
-                allResponses.append(contentsOf: placeSearchResponses)
-                
-                var chatResults = [ChatResult]()
-                for index in 0..<min(allResponses.count,maxChatResults) {
-                    let response = allResponses[index]
-                    let results = PlaceResponseFormatter.placeChatResults(for: response, resize: resultImageSize, queryIntents: queryIntents)
-                    chatResults.append(contentsOf:results)
-                }
-                
-                let blendedResults = blendDefaults(with: chatResults)
-                let finalResponses = allResponses
-                DispatchQueue.main.async { [unowned self] in
-                    self.localPlaceSearchResponses = finalResponses
-                    self.results.removeAll()
-                    self.results = blendedResults
-                    NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "ChatResultViewModelDidUpdate")))
-                }
+                return firstLocationCoordinate.distance(from: nearLocation) < checkLocationCoordinate.distance(from: nearLocation)
+            })
+            
+            allResponses.append(contentsOf: sortedPlaceSearchResponses)
+            
+            var chatResults = [ChatResult]()
+            for index in 0..<min(allResponses.count,maxChatResults) {
+                let response = allResponses[index]
+                let results = PlaceResponseFormatter.placeChatResults(for: response, resize: resultImageSize, queryIntents: queryIntents)
+                chatResults.append(contentsOf:results)
+            }
+            
+            let blendedResults = blendDefaults(with: chatResults)
+            let finalResponses = allResponses
+            DispatchQueue.main.async { [unowned self] in
+                self.localPlaceSearchResponses = finalResponses
+                self.results.removeAll()
+                self.results = blendedResults
+                self.delegate?.didUpdateModel(for: locationProvider.currentLocation())
+            }
         }
-
-    }
         
+    }
+    
     public func zeroStateModel(resultImageSize:CGSize?) {
         let blendedResults = blendDefaults(with: [])
         DispatchQueue.main.async { [unowned self] in
@@ -730,7 +748,7 @@ public class ChatResultViewModel : ObservableObject {
                 return defaults
             case .RecallDefault:
                 return results
-            case  .TellDefault: 
+            case  .TellDefault:
                 defaults.remove(at: 0)
                 results.append(contentsOf: defaults)
                 return results
@@ -749,7 +767,6 @@ public class ChatResultViewModel : ObservableObject {
     
     private func placeSearchRequest(parameters:AssistiveChatHostQueryParameters )->PlaceSearchRequest {
         var query = ""
-
         
         if let caption = parameters.queryIntents.last?.caption {
             let tagger = NLTagger(tagSchemes: [.nameTypeOrLexicalClass])
@@ -784,6 +801,7 @@ public class ChatResultViewModel : ObservableObject {
         var maxPrice = 4
         var radius = 1000
         var sort:String? = nil
+        var limit:Int = 10
         if let rawParameters = parameters.queryParameters?["parameters"] as? NSDictionary {
             if let rawMinPrice = rawParameters["min_price"] as? Int, rawMinPrice > 1 {
                 minPrice = rawMinPrice
@@ -802,13 +820,13 @@ public class ChatResultViewModel : ObservableObject {
             }
             
             /*
-            if let rawCategories = rawParameters["categories"] as? [NSDictionary] {
-                for rawCategory in rawCategories {
-                    if let categoryName = rawCategory["name"] as? String {
-                        //query.append("\(categoryName) ")
-                    }
-                }
-            }
+             if let rawCategories = rawParameters["categories"] as? [NSDictionary] {
+             for rawCategory in rawCategories {
+             if let categoryName = rawCategory["name"] as? String {
+             //query.append("\(categoryName) ")
+             }
+             }
+             }
              */
             
             if let rawTips = rawParameters["tips"] as? [String] {
@@ -839,6 +857,10 @@ public class ChatResultViewModel : ObservableObject {
             if let rawOpenNow = rawParameters["open_now"] as? Bool {
                 openNow = rawOpenNow
             }
+            
+            if let rawLimit = rawParameters["limit"] as? Int {
+                limit = rawLimit
+            }
         }
         
         print("Created query for search request:\(query) near location:\(String(describing: nearLocation))")
@@ -851,7 +873,9 @@ public class ChatResultViewModel : ObservableObject {
             print("Did not find a location in the query, using current location:\(String(describing: ll))")
         }
         
-        let request = PlaceSearchRequest(query:query.trimmingCharacters(in: .whitespacesAndNewlines), ll: ll, radius:radius, categories: nil, fields: nil, minPrice: minPrice, maxPrice: maxPrice, openAt: openAt, openNow: openNow, nearLocation: nearLocation, sort: sort)
+        query = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        let request = PlaceSearchRequest(query:query, ll: ll, radius:radius, categories: nil, fields: nil, minPrice: minPrice, maxPrice: maxPrice, openAt: openAt, openNow: openNow, nearLocation: nearLocation, sort: sort, limit:limit)
         return request
     }
 }

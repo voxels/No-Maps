@@ -102,6 +102,9 @@ open class PlaceSearchSession : ObservableObject {
             components?.queryItems?.append(sortQueryItem)
         }
         
+        let limitQueryItem = URLQueryItem(name: "limit", value: "\(request.limit)")
+        components?.queryItems?.append(limitQueryItem)
+        
         guard let url = components?.url else {
             throw PlaceSearchSessionError.UnsupportedRequest
         }
@@ -232,6 +235,7 @@ open class PlaceSearchSession : ObservableObject {
         }
         
         var ll = ""
+        var limit = 10
         
         if let parameters = parameters, let rawParameters = parameters["parameters"] as? NSDictionary {
             if let nearLocations = rawParameters["near"] as? [String], nearLocations.count > 0, let firstLocation = nearLocations.first, firstLocation.count > 0 {
@@ -239,6 +243,7 @@ open class PlaceSearchSession : ObservableObject {
             } else {
                 ll = "\(currentLocation.latitude),\(currentLocation.longitude)"
             }
+            limit = rawParameters["limit"] as! Int
         }
         
         let tagger = NLTagger(tagSchemes: [.nameTypeOrLexicalClass])
@@ -280,6 +285,9 @@ open class PlaceSearchSession : ObservableObject {
             let radiusQueryItem = URLQueryItem(name: "radius", value: "500")
             queryComponents?.queryItems?.append(radiusQueryItem)
         }
+        
+        let limitQueryItem = URLQueryItem(name: "limit", value: "\(limit)")
+        queryComponents?.queryItems?.append(limitQueryItem)
         
         guard let url = queryComponents?.url else {
             throw PlaceSearchSessionError.UnsupportedRequest

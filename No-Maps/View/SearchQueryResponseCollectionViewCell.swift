@@ -8,9 +8,9 @@
 import UIKit
 
 open class SearchQueryResponseCollectionViewCell : UICollectionViewCell {
-    public var placeSearchResponse:PlaceSearchResponse? {
+    public var placeDetailsResponse:PlaceDetailsResponse? {
         didSet {
-            if let response = placeSearchResponse {
+            if let response = placeDetailsResponse {
                 updateView(with: response)
             }
         }
@@ -45,7 +45,12 @@ open class SearchQueryResponseCollectionViewCell : UICollectionViewCell {
         
     }
     
-    internal func updateView(with placeSearchResponse:PlaceSearchResponse) {
-        textLabel.text = placeSearchResponse.name
+    internal func updateView(with placeDetailsResponse:PlaceDetailsResponse) {
+        let rating = placeDetailsResponse.rating
+        if rating > 0 {
+            textLabel.text = "\(placeDetailsResponse.searchResponse.name) is rated \(placeDetailsResponse.rating)."
+        } else {
+            textLabel.text = "\(placeDetailsResponse.searchResponse.name) is not rated."
+        }
     }
 }

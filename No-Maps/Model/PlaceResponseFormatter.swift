@@ -317,17 +317,17 @@ open class PlaceResponseFormatter {
             hoursPopular = rawHoursPopular
         }
         var rating:Float = 0
-        if let rawRating = response["rating"] as? NSString {
-            rating = rawRating.floatValue
+        if let rawRating = response["rating"] as? Double {
+            rating = Float(rawRating)
         }
         var stats:Bool? = nil
         stats = false
         var popularity:Float = 0
-        if let rawPopularity = response["popularity"] as? NSString {
-            popularity = rawPopularity.floatValue
+        if let rawPopularity = response["popularity"] as? Double {
+            popularity = Float(rawPopularity)
         }
-        var price:String? = nil
-        if let rawPrice = response["price"] as? String {
+        var price:Int? = nil
+        if let rawPrice = response["price"] as? Int {
             price = rawPrice
         }
         var menu:AnyObject? = nil
@@ -481,7 +481,7 @@ open class PlaceResponseFormatter {
             }
             
             if let price = details.price {
-                let placeResultPrice = PlaceResponseFormatter.imageChatResult(title: price, backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs),resize: resize)
+                let placeResultPrice = PlaceResponseFormatter.imageChatResult(title: "\(price)", backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs),resize: resize)
                 placeResults.append(placeResultPrice)
             }
 
@@ -549,7 +549,7 @@ open class PlaceResponseFormatter {
             }
             
             if let price = details.price {
-                let placeResultPrice = PlaceResponseFormatter.imageChatResult(title: price, backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs),resize: resize)
+                let placeResultPrice = PlaceResponseFormatter.imageChatResult(title: "\(price)", backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs),resize: resize)
                 placeResults.append(placeResultPrice)
             }
             
@@ -581,7 +581,7 @@ open class PlaceResponseFormatter {
                 intentResult = response
             case .PlaceDetailsCost:
                 if let price = details.price {
-                    let response = PlaceResponseFormatter.imageChatResult(title: price, backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
+                    let response = PlaceResponseFormatter.imageChatResult(title: "\(price)", backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
                     intentResult = response
                 }
             case .PlaceDetailsMenu:

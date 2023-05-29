@@ -9,5 +9,5 @@ import Foundation
 
 public struct SearchQueryResponseViewModel {
     public var responseString:String
-    public var placeSearchResponses:[PlaceSearchResponse]
+    public var placeDetailsResponses:[PlaceDetailsResponse]
 }

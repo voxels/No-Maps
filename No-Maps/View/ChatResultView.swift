@@ -26,9 +26,13 @@ struct ChatResultView : View {
                     ScrollView(.horizontal) {
                         ChatResultViewHorizontalStack(chatHostingDelegate: chatHostingDelegate, chatHost: chatHost, messagesViewHeight: $messagesViewHeight, model: model).padding(scrollViewPadding).onAppear {
                             model.authorizeLocationProvider()
-                            model.refreshModel(resultImageSize: compactSize(), queryIntents: chatHost.queryIntentParameters.queryIntents, parameters: chatHost.queryIntentParameters)
+                            if let location = model.locationProvider.currentLocation() {
+                                model.refreshModel(resultImageSize: compactSize(), queryIntents: chatHost.queryIntentParameters.queryIntents, parameters: chatHost.queryIntentParameters, nearLocation:location)
+                            }
                         }.refreshable {
-                            model.refreshModel(resultImageSize: compactSize(), queryIntents: chatHost.queryIntentParameters.queryIntents, parameters: chatHost.queryIntentParameters)
+                            if let location = model.locationProvider.currentLocation() {
+                                model.refreshModel(resultImageSize: compactSize(), queryIntents: chatHost.queryIntentParameters.queryIntents, parameters: chatHost.queryIntentParameters, nearLocation:location)
+                            }
                         }
                     }
                 }.frame(height:messagesViewHeight)

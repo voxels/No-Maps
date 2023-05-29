@@ -13,14 +13,14 @@ open class SearchQueryResponseViewController : UIViewController {
     internal var textView = UILabel(frame:.zero)
     internal var model:SearchQueryResponseViewModel
     
-    var dataSource: UICollectionViewDiffableDataSource<Section, PlaceSearchResponse>! = nil
+    var dataSource: UICollectionViewDiffableDataSource<Section, PlaceDetailsResponse>! = nil
     
     enum Section {
         case main
     }
     
-    public init(responseString: String, placeSearchResponses:[PlaceSearchResponse]) {
-        model = SearchQueryResponseViewModel(responseString:responseString, placeSearchResponses: placeSearchResponses)
+    public init(responseString: String, placeDetailsResponses:[PlaceDetailsResponse]) {
+        model = SearchQueryResponseViewModel(responseString:responseString, placeDetailsResponses: placeDetailsResponses)
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -55,11 +55,11 @@ open class SearchQueryResponseViewController : UIViewController {
     public func buildSearchQueryResponseCollectionView() {
         configureHierarchy()
         configureDataSource()
-        updateResponseView(with: model.responseString, placeSearchResponses: model.placeSearchResponses)
+        updateResponseView(with: model.responseString, placeDetailsResponses: model.placeDetailsResponses)
     }
     
-    public func updateResponseView(with responseString:String, placeSearchResponses:[PlaceSearchResponse]) {
-        model = SearchQueryResponseViewModel(responseString: responseString, placeSearchResponses: placeSearchResponses)
+    public func updateResponseView(with responseString:String, placeDetailsResponses:[PlaceDetailsResponse]) {
+        model = SearchQueryResponseViewModel(responseString: responseString, placeDetailsResponses: placeDetailsResponses)
         textView.text = model.responseString
         updateCollectionViewModel()
     }
@@ -82,27 +82,27 @@ extension SearchQueryResponseViewController {
         collectionView.topAnchor.constraint(equalTo: textView.bottomAnchor).isActive = true
         collectionView.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
         collectionView.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
-        collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
         collectionView.delegate = self
     }
     
     private func configureDataSource() {
         
-        let cellRegistration = UICollectionView.CellRegistration<SearchQueryResponseCollectionViewCell, PlaceSearchResponse> { (cell, indexPath, item) in
-            cell.placeSearchResponse = item
+        let cellRegistration = UICollectionView.CellRegistration<SearchQueryResponseCollectionViewCell, PlaceDetailsResponse> { (cell, indexPath, item) in
+            cell.placeDetailsResponse = item
         }
         
-        dataSource = UICollectionViewDiffableDataSource<Section, PlaceSearchResponse>(collectionView: collectionView) {
-            (collectionView: UICollectionView, indexPath: IndexPath, identifier: PlaceSearchResponse) -> UICollectionViewCell? in
+        dataSource = UICollectionViewDiffableDataSource<Section, PlaceDetailsResponse>(collectionView: collectionView) {
+            (collectionView: UICollectionView, indexPath: IndexPath, identifier: PlaceDetailsResponse) -> UICollectionViewCell? in
             
             return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: identifier)
         }
     }
     
     private func updateCollectionViewModel() {
-        var snapshot = NSDiffableDataSourceSnapshot<Section, PlaceSearchResponse>()
+        var snapshot = NSDiffableDataSourceSnapshot<Section, PlaceDetailsResponse>()
         snapshot.appendSections([.main])
-        snapshot.appendItems(model.placeSearchResponses)
+        snapshot.appendItems(model.placeDetailsResponses)
         dataSource.apply(snapshot, animatingDifferences: false)
     }
 }

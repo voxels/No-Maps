@@ -7,6 +7,7 @@
 
 import UIKit
 import NaturalLanguage
+import CoreLocation
 
 public struct AssistiveChatHostIntent : Equatable {
     public let uuid = UUID()
@@ -23,8 +24,8 @@ public struct AssistiveChatHostIntent : Equatable {
 
 public protocol AssistiveChatHostMessagesDelegate : AnyObject {
     func didTap(chatResult:ChatResult, selectedPlaceSearchResponse:PlaceSearchResponse?, selectedPlaceSearchDetails:PlaceDetailsResponse?, intentHistory:[AssistiveChatHostIntent]?)
-    func addReceivedMessage(caption:String, parameters:AssistiveChatHostQueryParameters, isLocalParticipant:Bool) async throws
-    func didUpdateQuery(with parameters:AssistiveChatHostQueryParameters)
+    func addReceivedMessage(caption:String, parameters:AssistiveChatHostQueryParameters, isLocalParticipant:Bool, nearLocation:CLLocation) async throws
+    func didUpdateQuery(with parameters:AssistiveChatHostQueryParameters, nearLocation:CLLocation)
     func send(caption:String, subcaption:String?, image:UIImage?, mediaFileURL:URL?, imageTitle:String?, imageSubtitle:String?, trailingCaption:String?, trailingSubcaption:String?)
 }
 
@@ -170,7 +171,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
                     if let hours = detailsResponse.hours, chatResult.title == hours {
                         return .ShareResult
                     }
-                    if let price = detailsResponse.price, chatResult.title == price {
+                    if let price = detailsResponse.price, chatResult.title == "\(price)" {
                         return .ShareResult
                     }
                 }
@@ -189,31 +190,46 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
     
     public func refreshParameters(for query:String, intent:AssistiveChatHostIntent) async throws {
         switch intent.intent {
-        case .SearchQuery, .TellQuery, .TellPlace, .SearchPlace:
-            var rawParameters = try await languageDelegate.fetchSearchQueryParameters(with: query)
-
-            rawParameters = rawParameters.trimmingCharacters(in: .whitespacesAndNewlines)
-            rawParameters = rawParameters.replacingOccurrences(of: "\n", with: "")
-            guard let data = rawParameters.data(using: .utf8) else {
-                print("Raw parameters could not be encoded into json: \(rawParameters)")
-                return
+        case .TellQuery, .TellPlace, .SearchPlace:
+            queryIntentParameters.queryParameters = try await defaultParameters(for: query)
+        case .SearchQuery:
+            var defaultParameters = try await defaultParameters(for: query)
+            if let embeddedParameters = defaultParameters?["parameters"] as? [String:Any] {
+                var revisedParameters = embeddedParameters
+                revisedParameters["sort"] = "rating"
+                revisedParameters["radius"] = 500
+                revisedParameters["limit"] = 5
+                revisedParameters["open_now"] = true
+                defaultParameters?["parameters"] = revisedParameters
             }
-            
-            do {
-                let json = try JSONSerialization.jsonObject(with: data)
-                if let array = json as? [[String:Any]], let parameterDict = array.first {
-                    queryIntentParameters.queryParameters = parameterDict
-                } else {
-                    print("Found non-dictionary object when attemting to refresh parameters:\(json)")
-                }
-            } catch {
-                queryIntentParameters.queryParameters = nil
-                print(error.localizedDescription)
-            }
-            
+            queryIntentParameters.queryParameters = defaultParameters
         default:
             queryIntentParameters.queryParameters = nil
             break
+        }
+    }
+    
+    internal func defaultParameters(for query:String) async throws -> [String:Any]? {
+        var rawParameters = try await languageDelegate.fetchSearchQueryParameters(with: query)
+
+        rawParameters = rawParameters.trimmingCharacters(in: .whitespacesAndNewlines)
+        rawParameters = rawParameters.replacingOccurrences(of: "\n", with: "")
+        guard let data = rawParameters.data(using: .utf8) else {
+            print("Raw parameters could not be encoded into json: \(rawParameters)")
+            return nil
+        }
+        
+        do {
+            let json = try JSONSerialization.jsonObject(with: data)
+            if let array = json as? [[String:Any]], let parameterDict = array.first {
+                return parameterDict
+            } else {
+                print("Found non-dictionary object when attemting to refresh parameters:\(json)")
+                return nil
+            }
+        } catch {
+            print(error.localizedDescription)
+            return nil
         }
     }
     
@@ -225,16 +241,16 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
         queryIntentParameters.queryIntents = [AssistiveChatHostIntent]()
     }
     
-    public func receiveMessage(caption:String, isLocalParticipant:Bool ) async throws {
-        try await delegate?.addReceivedMessage(caption: caption, parameters: queryIntentParameters, isLocalParticipant: isLocalParticipant)
-        delegate?.didUpdateQuery(with:queryIntentParameters)
+    public func receiveMessage(caption:String, isLocalParticipant:Bool, nearLocation:CLLocation ) async throws {
+        try await delegate?.addReceivedMessage(caption: caption, parameters: queryIntentParameters, isLocalParticipant: isLocalParticipant, nearLocation: nearLocation)
+        delegate?.didUpdateQuery(with:queryIntentParameters, nearLocation: nearLocation)
     }
 }
 
 extension AssistiveChatHost {
     
-    public func searchQueryDescription(placeSearchResponses:[PlaceSearchResponse]) async throws -> String {
-        return try await languageDelegate.searchQueryDescription(placeSearchResponses: placeSearchResponses)
+    public func searchQueryDescription(nearLocation:CLLocation) async throws -> String {
+        return try await languageDelegate.searchQueryDescription(nearLocation:nearLocation)
     }
     
     public func placeDescription(searchResponse:PlaceSearchResponse, detailsResponse:PlaceDetailsResponse) async throws ->String {

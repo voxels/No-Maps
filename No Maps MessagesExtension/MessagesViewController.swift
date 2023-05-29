@@ -8,6 +8,7 @@
 import UIKit
 import Messages
 import SwiftUI
+import CoreLocation
 
 public enum MessagesViewControllerError : Error {
     case NoConversationRecorded
@@ -41,7 +42,8 @@ open class MessagesViewController: MSMessagesAppViewController {
 
         
         chatHost = AssistiveChatHost(delegate:self)
-        chatResultView = UIHostingController(rootView: ChatResultView(chatHostingDelegate:chatHost, chatHost: self.chatHost, messagesViewHeight:.constant(messagesViewHeight), model: self.chatModel))
+        let resultView = ChatResultView(chatHostingDelegate:chatHost, chatHost: self.chatHost, messagesViewHeight:.constant(messagesViewHeight), model: self.chatModel)
+        chatResultView = UIHostingController(rootView: resultView)
         addChild(chatResultView!)
         view.addSubview(chatResultView!.view)
         
@@ -49,9 +51,7 @@ open class MessagesViewController: MSMessagesAppViewController {
         chatResultView?.view.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
         chatResultView?.view.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
         chatResultView?.view.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
-        
-
-        NotificationCenter.default.addObserver(self, selector: #selector(modelDidUpdate), name: Notification.Name("ChatResultViewModelDidUpdate"), object: nil)
+        self.chatModel.delegate = self
     }
     
     open override func viewWillAppear(_ animated: Bool) {
@@ -90,7 +90,9 @@ open class MessagesViewController: MSMessagesAppViewController {
             if let caption = message.summaryText {
                 _ = Task.init {
                     do {
-                        try await self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true)
+                        if let location = chatModel.locationProvider.currentLocation() {
+                            try await self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true, nearLocation: location)
+                        }
                     } catch {
                         print(error.localizedDescription)
                     }
@@ -101,7 +103,9 @@ open class MessagesViewController: MSMessagesAppViewController {
             if let caption = message.summaryText {
                 _ = Task.init {
                     do {
-                        try await self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true)
+                        if let location = chatModel.locationProvider.currentLocation() {
+                            try await self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true, nearLocation: location)
+                        }
                     } catch {
                         print(error.localizedDescription)
                     }
@@ -124,8 +128,8 @@ open class MessagesViewController: MSMessagesAppViewController {
         // Called when the user deletes the message without sending it.
     
         // Use this to clean up state related to the deleted message.
-        if let rootView = chatResultView?.rootView as? ChatResultView {
-            chatModel.refreshModel(resultImageSize:rootView.compactSize(),queryIntents:[AssistiveChatHostIntent](),parameters: self.chatHost.queryIntentParameters)
+        if let rootView = chatResultView?.rootView as? ChatResultView, let location = chatModel.locationProvider.currentLocation() {
+            chatModel.refreshModel(resultImageSize:rootView.compactSize(),queryIntents:[AssistiveChatHostIntent](),parameters: self.chatHost.queryIntentParameters, nearLocation: location)
         }
 
     }
@@ -191,7 +195,7 @@ public extension MessagesViewController {
 }
 
 extension MessagesViewController {
-    public func showDetailsViewController(with queryParameters:AssistiveChatHostQueryParameters, responseString:String) throws {
+    public func showDetailsViewController(with queryParameters:AssistiveChatHostQueryParameters, responseString:String, nearLocation:CLLocation) throws {
         guard let _ = queryParameters.queryIntents.last?.intent else {
             throw MessagesViewControllerError.ShowingDetailsWithNoIntent
         }
@@ -202,9 +206,9 @@ extension MessagesViewController {
             chatDetailsContainerView?.addSubview(chatDetailsViewController!.view)
             addChild(chatDetailsViewController!)
             chatDetailsViewController?.didMove(toParent: self)            
-            chatDetailsViewController?.update(parameters: queryParameters, responseString: responseString, placeSearchResponses:queryParameters.queryIntents.last!.placeSearchResponses)
+            chatDetailsViewController?.update(parameters: queryParameters, responseString: responseString, placeSearchResponses:queryParameters.queryIntents.last!.placeSearchResponses, nearLocation: nearLocation)
         } else {
-            chatDetailsViewController?.update(parameters: queryParameters, responseString: responseString, placeSearchResponses:queryParameters.queryIntents.last!.placeSearchResponses)
+            chatDetailsViewController?.update(parameters: queryParameters, responseString: responseString, placeSearchResponses:queryParameters.queryIntents.last!.placeSearchResponses, nearLocation: nearLocation)
         }
         
         guard chatDetailsViewController != nil else {
@@ -216,7 +220,7 @@ extension MessagesViewController {
 }
 
 extension MessagesViewController {
-    @objc public func modelDidUpdate(){
+    @objc public func modelDidUpdate(nearLocation:CLLocation){
         if let lastIntent = chatModel.lastIntent {
             switch lastIntent.intent {
             case .Unsupported:
@@ -229,7 +233,7 @@ extension MessagesViewController {
                         let description = lastIntent.caption
                         DispatchQueue.main.async { [unowned self] in
                             do {
-                                try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description)
+                                try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description, nearLocation: nearLocation)
                             } catch{
                                 print(error.localizedDescription)
                             }
@@ -239,10 +243,10 @@ extension MessagesViewController {
             case .SearchQuery:
                 let _ = Task.init {
                     do {
-                        let description = try await self.chatHost.searchQueryDescription(placeSearchResponses: lastIntent.placeSearchResponses)
+                        let description = try await self.chatHost.searchQueryDescription(nearLocation: nearLocation)
                         DispatchQueue.main.async { [unowned self] in
                             do {
-                                try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description)
+                                try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description, nearLocation: nearLocation)
                             } catch{
                                 print(error.localizedDescription)
                             }
@@ -259,7 +263,7 @@ extension MessagesViewController {
                             let description = try await self.chatHost.placeDescription(searchResponse: placeResponse, detailsResponse: details)
                             DispatchQueue.main.async { [unowned self] in
                                 do {
-                                    try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description)
+                                    try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description, nearLocation: nearLocation)
                                 } catch{
                                     print(error.localizedDescription)
                                 }
@@ -280,7 +284,7 @@ extension MessagesViewController {
                             let description = try await self.chatHost.placeDescription(searchResponse: placeResponse, detailsResponse: details)
                             DispatchQueue.main.async { [unowned self] in
                                 do {
-                                    try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description)
+                                    try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description, nearLocation: nearLocation)
                                 } catch{
                                     print(error.localizedDescription)
                                 }
@@ -294,7 +298,7 @@ extension MessagesViewController {
                             let description = lastIntent.caption
                             DispatchQueue.main.async { [unowned self] in
                                 do {
-                                    try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description)
+                                    try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description, nearLocation: nearLocation)
                                 } catch{
                                     print(error.localizedDescription)
                                 }
@@ -368,7 +372,7 @@ extension MessagesViewController {
                     let description = ""
                     DispatchQueue.main.async { [unowned self] in
                         do {
-                            try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description)
+                            try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description, nearLocation: nearLocation)
                         } catch{
                             print(error.localizedDescription)
                         }
@@ -396,7 +400,9 @@ extension MessagesViewController : ChatDetailsViewControllerDelegate {
                 try await self.chatHost.refreshParameters(for: query, intent:revisedIntent)
                 chatHost.appendIntentParameters(intent: revisedIntent)
             }
-            try await self.chatHost.receiveMessage(caption: query, isLocalParticipant: true)
+            if let location = chatModel.locationProvider.currentLocation() {
+                try await self.chatHost.receiveMessage(caption: query, isLocalParticipant: true, nearLocation: location)
+            }
         }
     }
 }
@@ -426,12 +432,14 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
                 try await self.chatHost.refreshParameters(for: caption, intent:revisedIntent)
                 chatHost.appendIntentParameters(intent: revisedIntent)
             }
-            try await self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true)
+            if let location = chatModel.locationProvider.currentLocation() {
+                try await self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true, nearLocation: location)
+            }
         }
     }
     
-    public func addReceivedMessage(caption: String, parameters: AssistiveChatHostQueryParameters, isLocalParticipant: Bool) async throws {
-        try await chatModel.receiveMessage(caption: caption, parameters: parameters, isLocalParticipant: isLocalParticipant)
+    public func addReceivedMessage(caption: String, parameters: AssistiveChatHostQueryParameters, isLocalParticipant: Bool, nearLocation:CLLocation) async throws {
+        try await chatModel.receiveMessage(caption: caption, parameters: parameters, isLocalParticipant: isLocalParticipant, nearLocation: nearLocation)
     }
     
     public func send(caption:String, subcaption:String? = nil, image:UIImage? = nil, mediaFileURL:URL? = nil, imageTitle:String? = nil, imageSubtitle:String? = nil, trailingCaption:String? = nil, trailingSubcaption:String? = nil) {
@@ -443,7 +451,7 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
         }
     }
     
-    public func didUpdateQuery(with parameters: AssistiveChatHostQueryParameters) {
+    public func didUpdateQuery(with parameters: AssistiveChatHostQueryParameters, nearLocation:CLLocation) {
         print("Did update query with parameters:")
         for intent in parameters.queryIntents {
             print(intent.intent)
@@ -452,7 +460,7 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
         
         print("Paramaters did update, requesting new chat model")
         if let rootView = chatResultView?.rootView as? ChatResultView {
-            chatModel.refreshModel(resultImageSize:rootView.compactSize(),queryIntents: parameters.queryIntents, parameters: chatHost.queryIntentParameters )
+            chatModel.refreshModel(resultImageSize:rootView.compactSize(),queryIntents: parameters.queryIntents, parameters: chatHost.queryIntentParameters, nearLocation: nearLocation )
         }
     }
     
@@ -516,7 +524,7 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
             }
         case .PlaceDetailsCost:
             if let searchResponse = intent.selectedPlaceSearchResponse, let details = intent.selectedPlaceSearchDetails, let price = details.price {
-                send(caption:price, subcaption:nil, image:nil, mediaFileURL:nil, imageTitle:nil, imageSubtitle:nil, trailingCaption:searchResponse.name, trailingSubcaption:nil)
+                send(caption:"\(price)", subcaption:nil, image:nil, mediaFileURL:nil, imageTitle:nil, imageSubtitle:nil, trailingCaption:searchResponse.name, trailingSubcaption:nil)
             }
         case .PlaceDetailsMenu:
             // compose message and send
@@ -538,6 +546,14 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
                 }
                 send(caption:intent.caption ,subcaption:nil, image:image, mediaFileURL:nil, imageTitle:nil, imageSubtitle:nil, trailingCaption:searchResponse.name, trailingSubcaption:nil)
             }
+        }
+    }
+}
+
+extension MessagesViewController : ChatResultViewModelDelegate {
+    public func didUpdateModel(for location: CLLocation?) {
+        if let location = location {
+            modelDidUpdate(nearLocation: location)
         }
     }
 }

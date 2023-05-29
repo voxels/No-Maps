@@ -6,20 +6,32 @@
 //
 
 import Foundation
+import CoreLocation
 
 public protocol LanguageGeneratorDelegate {
-   func searchQueryDescription(placeSearchResponses:[PlaceSearchResponse]) async throws -> String
-   func placeDescription(searchResponse:PlaceSearchResponse, detailsResponse:PlaceDetailsResponse) async throws -> String
-   func fetchSearchQueryParameters( with query:String) async throws -> String
+    func searchQueryDescription(nearLocation:CLLocation) async throws -> String
+    func placeDescription(searchResponse:PlaceSearchResponse, detailsResponse:PlaceDetailsResponse) async throws -> String
+    func fetchSearchQueryParameters( with query:String) async throws -> String
 }
 
 
 open class LanguageGenerator : LanguageGeneratorDelegate {
     private var session:LanguageGeneratorSession = LanguageGeneratorSession()
-
-    public func searchQueryDescription(placeSearchResponses:[PlaceSearchResponse]) async throws -> String {
-        let retval = "Found \(placeSearchResponses.count) places matching the query:"
-        return retval
+    
+    public func searchQueryDescription(nearLocation:CLLocation) async throws -> String {
+        let retval = "Sorted by distance"
+        
+        let placemark = await withUnsafeContinuation { continuation in
+            lookUpLocation(location: nearLocation) { placemark in
+                continuation.resume(returning: placemark)
+            }
+        }
+        
+        if let name = placemark?.name {
+            return retval.appending(" from \(name):")
+        } else {
+            return retval.appending(":")
+        }
     }
     
     public func placeDescription(searchResponse: PlaceSearchResponse, detailsResponse: PlaceDetailsResponse) async throws -> String {
@@ -285,5 +297,26 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
             }
         }
         return ""
+    }
+}
+
+extension LanguageGenerator {
+    func lookUpLocation(location:CLLocation, completionHandler: @escaping (CLPlacemark?)
+                    -> Void ) {
+        // Use the last reported location.
+        let geocoder = CLGeocoder()
+            
+        // Look up the location and pass it to the completion handler
+        geocoder.reverseGeocodeLocation(location,
+                    completionHandler: { (placemarks, error) in
+            if error == nil {
+                let firstLocation = placemarks?[0]
+                completionHandler(firstLocation)
+            }
+            else {
+             // An error occurred during geocoding.
+                completionHandler(nil)
+            }
+        })
     }
 }

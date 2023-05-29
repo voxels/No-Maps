@@ -6,7 +6,15 @@
 //
 
 import Foundation
-public struct PlaceDetailsResponse  {
+public struct PlaceDetailsResponse: Equatable, Hashable  {
+    public static func == (lhs: PlaceDetailsResponse, rhs: PlaceDetailsResponse) -> Bool {
+        return lhs.searchResponse.uuid == rhs.searchResponse.uuid
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        return hasher.combine(searchResponse.uuid)
+    }
+    
     let searchResponse:PlaceSearchResponse
     let photoResponses:[PlacePhotoResponse]?
     let tipsResponses:[PlaceTipsResponse]?
@@ -23,7 +31,7 @@ public struct PlaceDetailsResponse  {
     let rating:Float
     let stats:Bool?
     let popularity:Float
-    let price:String?
+    let price:Int?
     let menu:AnyObject?
     let dateClosed:String?
     let tastes:[String]?
