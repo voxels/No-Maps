@@ -18,7 +18,7 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
     private var session:LanguageGeneratorSession = LanguageGeneratorSession()
 
     public func searchQueryDescription(placeSearchResponses:[PlaceSearchResponse]) async throws -> String {
-        var retval = ""
+        var retval = "Found \(placeSearchResponses.count) places matching the query:"
         
         return retval
     }
