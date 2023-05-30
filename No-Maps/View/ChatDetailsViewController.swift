@@ -66,11 +66,11 @@ open class ChatDetailsViewController : UIViewController {
     }
 
     
-    private func buildTextResponseContainerView(with responseString:String, parentView:UIView) {
+    private func buildTextResponseContainerView(with responseString:String, placeSearchResponse:PlaceSearchResponse, parentView:UIView) {
 
         buildResponseContainerView(parentView: parentView)
         
-        textResponseViewController = TextResponseViewController(responseString: responseString)
+        textResponseViewController = TextResponseViewController(responseString: responseString, targetLocation:CLLocation(latitude: placeSearchResponse.latitude, longitude: placeSearchResponse.longitude), placeName: placeSearchResponse.name)
         responseContainerView.addSubview(textResponseViewController!.view)
         addChild(textResponseViewController!)
         textResponseViewController!.didMove(toParent: self)
@@ -185,9 +185,9 @@ extension ChatDetailsViewController : ChatDetailsViewModelDelegate {
                 searchQueryResponseViewController?.updateResponseView(with: response, placeDetailsResponses: model.placeDetailsResponses)
             }
         default:
-            if let response = model.responseString {
+            if let response = model.responseString, let selectedPlaceSearchResponse = model.currentIntent.selectedPlaceSearchResponse {
                 if !detailsContainerView.subviews.contains(responseContainerView) {
-                    buildTextResponseContainerView(with: response, parentView:detailsContainerView)
+                    buildTextResponseContainerView(with: response, placeSearchResponse: selectedPlaceSearchResponse, parentView:detailsContainerView)
                 }
                 textResponseViewController?.updateResponseView(with: response)
             }

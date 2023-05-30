@@ -39,20 +39,11 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
         
         if let description = detailsResponse.description {
             retval = description
-            retval.append("\n")
+            retval.append(" ")
         }
-        
-        var tastesSummary = ""
-        if let tastes = detailsResponse.tastes {
-            let summary = try await fetchTastesSummary(with: searchResponse.name, tastes: tastes)
-            tastesSummary.append(summary)
-            print("Tastes Summary")
-            print(summary)
-        }
-        
-        try await Task.sleep(nanoseconds: 2_000_000_000)
         
         var tipsSummary = ""
+
         if let tips = detailsResponse.tipsResponses {
             let tipsText = tips.compactMap { response in
                 return response.text
@@ -64,16 +55,30 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
             tipsSummary.append(summary)
         }
         
-        retval.append(tastesSummary)
-        if tastesSummary.count > 0 {
-            retval.append("\n")
-        }
-        
         if tipsSummary.count > 0 {
-            retval.append("\n")
+            retval.append(tipsSummary)
+        } else {
+            var tastesSummary = ""
+
+            try await Task.sleep(nanoseconds: 2_000_000_000)
+
+            if let tastes = detailsResponse.tastes {
+                let summary = try await fetchTastesSummary(with: searchResponse.name, tastes: tastes)
+                tastesSummary.append(summary)
+                print("Tastes Summary")
+                print(summary)
+            }
+            
+            if tastesSummary.count > 0 {
+                retval.append("\n")
+                retval.append(tastesSummary)
+            }
         }
-        retval.append(tipsSummary)
         
+        if retval.count == 0 {
+            retval = "No description, tips, or tastes for \(searchResponse.name) are recorded."
+        }
+
         return retval
     }
     
@@ -168,7 +173,7 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
                 {
                 "query":"Where can I take my parents for dinner on Saturday that has Michelin star rated sushi?",
                 "parameters":{
-                 "near": ["Manhattan"],
+                 "near": [],
                  "radius":2000,
                  "min_price":2,
                  "max_price":4,
