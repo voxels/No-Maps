@@ -23,6 +23,7 @@ public class ChatDetailsViewModel {
     public var placeSearchResponses:[PlaceSearchResponse] = [PlaceSearchResponse]()
     public var placeDetailsResponses:[PlaceDetailsResponse] = [PlaceDetailsResponse]()
     public weak var delegate:ChatDetailsViewModelDelegate?
+    internal var maxChatResults = 8
     
     private var placeSearchSession = PlaceSearchSession()
     
@@ -44,14 +45,7 @@ public class ChatDetailsViewModel {
         placeDetailsResponses.removeAll()
 
         switch lastIntent.intent {
-        case .SearchQuery:
-            self.placeSearchResponses = placeSearchResponses.sorted(by: { firstLocation, checkLocation in
-                let firstLocationCoordinate = CLLocation(latitude: firstLocation.latitude, longitude: firstLocation.longitude)
-                let checkLocationCoordinate = CLLocation(latitude: checkLocation.latitude, longitude: checkLocation.longitude)
-                
-                return firstLocationCoordinate.distance(from: nearLocation) < checkLocationCoordinate.distance(from: nearLocation)
-            })
-            
+        case .SearchQuery:            
             try await fetchDetails(for: self.placeSearchResponses)
         default:
             break
@@ -63,8 +57,8 @@ public class ChatDetailsViewModel {
     }
     
     internal func fetchDetails(for responses:[PlaceSearchResponse]) async throws {
-        for response in responses {
-            
+        for index in 0..<(min(responses.count, maxChatResults)) {
+            let response = responses[index]
             print("Fetching photos for \(response.name)")
             do {
                 let rawPhotosResponse = try await placeSearchSession.photos(for: response.fsqID)

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import NaturalLanguage
+import CoreLocation
 
 public enum PlaceResponseFormatterError : Error {
     case InvalidRawResponseType
@@ -135,7 +136,7 @@ open class PlaceResponseFormatter {
         return retVal
     }
     
-    public class func placeSearchResponses(with response:Any) throws ->[PlaceSearchResponse] {
+    public class func placeSearchResponses(with response:Any, nearLocation:CLLocation) throws ->[PlaceSearchResponse] {
         var retVal = [PlaceSearchResponse]()
         
         guard let response = response as? NSDictionary else {
@@ -250,6 +251,13 @@ open class PlaceResponseFormatter {
                 }
             }
         }
+        
+        let sortedPlaceSearchResponses = retVal.sorted(by: { firstLocation, checkLocation in
+            let firstLocationCoordinate = CLLocation(latitude: firstLocation.latitude, longitude: firstLocation.longitude)
+            let checkLocationCoordinate = CLLocation(latitude: checkLocation.latitude, longitude: checkLocation.longitude)
+            
+            return firstLocationCoordinate.distance(from: nearLocation) < checkLocationCoordinate.distance(from: nearLocation)
+        })
 
         return retVal
     }
@@ -673,17 +681,9 @@ open class PlaceResponseFormatter {
                 let placeResultPopularity =  PlaceResponseFormatter.imageChatResult(title: "How popular is \(place.name)?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
                 placeResults.append(placeResultPopularity)
             }
-            if let _ = details.price, lastIntent.intent != .PlaceDetailsCost {
-                let placeResultCost = PlaceResponseFormatter.imageChatResult(title: "How much does \(place.name) cost?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
-                placeResults.append(placeResultCost)
-            }
             if let _ = details.menu as? NSDictionary, lastIntent.intent != .PlaceDetailsMenu {
                 let placeResultMenu = PlaceResponseFormatter.imageChatResult(title: "What's does \(place.name) have?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
                 placeResults.append(placeResultMenu)
-            }
-            if let _ = details.tel, lastIntent.intent != .PlaceDetailsPhone {
-                let placeResultPhone = PlaceResponseFormatter.imageChatResult(title: "What is \(place.name)'s phone number?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
-                placeResults.append(placeResultPhone)
             }
             
             return placeResults
@@ -730,8 +730,7 @@ open class PlaceResponseFormatter {
         let placeChatResult:()->[ChatResult] = {
             var placeResults = [ChatResult]()
             let placeResultDirections = PlaceResponseFormatter.imageChatResult(title: "How do I get to \(place.name)?", backgroundColor: Color.red, backgroundImageUrl: nil,placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
-            let placeResultPhone = PlaceResponseFormatter.imageChatResult(title: "What is \(place.name)'s phone number?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: nil, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
-            placeResults.append(contentsOf:[placeResultDirections,placeResultPhone])
+            placeResults.append(contentsOf:[placeResultDirections])
             
             return placeResults
         }

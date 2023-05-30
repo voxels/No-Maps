@@ -19,7 +19,7 @@ public protocol ChatDetailsViewControllerDelegate : AnyObject {
 
 open class ChatDetailsViewController : UIViewController {
     weak public var delegate:ChatDetailsViewControllerDelegate?
-    private var model:ChatDetailsViewModel
+    public var model:ChatDetailsViewModel
     private var detailsContainerView = UIView(frame:.zero)
     private var responseContainerView = UIView(frame:.zero)
     private var textResponseViewController:TextResponseViewController?
@@ -144,6 +144,18 @@ open class ChatDetailsViewController : UIViewController {
 }
 
 extension ChatDetailsViewController {
+    
+    public func willUpdateModel() {
+        if !Thread.isMainThread {
+            DispatchQueue.main.async { [unowned self] in
+                self.willUpdateModel()
+            }
+            return
+        }
+        
+        removeDetailViewController()
+    }
+    
     public func update(parameters:AssistiveChatHostQueryParameters, responseString:String? = nil, placeSearchResponses:[PlaceSearchResponse] = [PlaceSearchResponse](), nearLocation:CLLocation ) {
         let _ = Task.detached(priority: .userInitiated) {
             do {
@@ -157,7 +169,6 @@ extension ChatDetailsViewController {
 
 extension ChatDetailsViewController : ChatDetailsViewModelDelegate {
     public func modelDidUpdate() {
-        removeDetailViewController()
         switch model.currentIntent.intent {
         case .TellDefault, .OpenDefault, .SearchDefault:
             if let response = model.responseString {

@@ -427,7 +427,7 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
                 }
             }
             
-            let newIntent = AssistiveChatHostIntent(caption: caption, intent: chatHost.determineIntent(for: caption, parameters: nil, chatResult: chatResult, lastIntent: intentHistory?.last), selectedPlaceSearchResponse: selectedPlaceSearchResponse, selectedPlaceSearchDetails: selectedPlaceSearchDetails, placeSearchResponses: chatModel.placeSearchResponses(for: caption))
+            let newIntent = AssistiveChatHostIntent(caption: caption, intent: chatHost.determineIntent(for: caption, parameters: nil, chatResult: chatResult, lastIntent: intentHistory?.last), selectedPlaceSearchResponse: selectedPlaceSearchResponse, selectedPlaceSearchDetails: selectedPlaceSearchDetails, placeSearchResponses: [PlaceSearchResponse]())
             try await self.chatHost.refreshParameters(for: caption, intent:newIntent)
             let checkIntentWithParameters = chatHost.determineIntent(for: caption, parameters: chatHost.queryIntentParameters.queryParameters, chatResult: chatResult, lastIntent: newIntent)
             if checkIntentWithParameters == newIntent.intent {
@@ -466,6 +466,10 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
         print("Paramaters did update, requesting new chat model")
         if let rootView = chatResultView?.rootView as? ChatResultView {
             chatModel.refreshModel(resultImageSize:rootView.compactSize(),queryIntents: parameters.queryIntents, parameters: chatHost.queryIntentParameters, nearLocation: nearLocation )
+        }
+        
+        if let chatDetailsViewController = chatDetailsViewController, chatDetailsViewController.model.currentIntent != parameters.queryIntents.last {
+            chatDetailsViewController.willUpdateModel()
         }
     }
     

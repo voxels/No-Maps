@@ -17,8 +17,7 @@ public class ChatResultViewModel : ObservableObject {
     public weak var delegate:ChatResultViewModelDelegate?
     private let placeSearchSession:PlaceSearchSession = PlaceSearchSession()
     public let locationProvider:LocationProvider = LocationProvider()
-    private var localPlaceSearchResponses:[PlaceSearchResponse]?
-    private let maxChatResults:Int = 30
+    private let maxChatResults:Int = 8
     
     private var queryCaption:String?
     private var queryParametersHistory = [AssistiveChatHostQueryParameters]()
@@ -49,22 +48,7 @@ public class ChatResultViewModel : ObservableObject {
     public func authorizeLocationProvider() {
         locationProvider.authorize()
     }
-    
-    public func placeSearchResponses(for caption:String)->[PlaceSearchResponse] {
-        var retval = [PlaceSearchResponse]()
-        guard let localPlaceSearchResponses = localPlaceSearchResponses else {
-            return retval
-        }
         
-        for response in localPlaceSearchResponses {
-            if caption.contains(response.name.suffix(10)) || caption.contains(response.name) {
-                retval.append(response)
-            }
-        }
-        
-        return retval
-    }
-    
     public func receiveMessage(caption: String, parameters: AssistiveChatHostQueryParameters, isLocalParticipant: Bool, nearLocation:CLLocation) async throws {
         queryCaption = caption
         queryParametersHistory.append(parameters)
@@ -161,7 +145,7 @@ public class ChatResultViewModel : ObservableObject {
             }
             let request = placeSearchRequest(parameters: parameters)
             let rawQueryResponse = try await placeSearchSession.query(request:request)
-            let placeSearchResponses = try PlaceResponseFormatter.placeSearchResponses(with: rawQueryResponse)
+            let placeSearchResponses = try PlaceResponseFormatter.placeSearchResponses(with: rawQueryResponse, nearLocation: nearLocation)
             checkResponses.append(contentsOf:placeSearchResponses)
         }
         
@@ -257,7 +241,7 @@ public class ChatResultViewModel : ObservableObject {
                     foundNameComponents += 1
                 }
             }
-            let foundMatch = foundNameComponents >= 2 || (nameComponents.count == 1 && foundNameComponents == 1)
+            let foundMatch = (nameComponents.count > 1 && foundNameComponents > nameComponents.count - 1) || (nameComponents.count == 1 && foundNameComponents == 1)
             print(foundNameComponents)
             print(nameComponents.count)
             print(foundMatch)
@@ -344,7 +328,7 @@ public class ChatResultViewModel : ObservableObject {
                                     print(queryIntent.selectedPlaceSearchDetails == nil)
                                 }
                             } else {
-                                print("Skipping swap of details")
+                                //print("Skipping swap of details")
                             }
                         }
                     }
@@ -376,14 +360,14 @@ public class ChatResultViewModel : ObservableObject {
             zeroStateModel(resultImageSize: resultImageSize)
         default:
             if let lastIntent = queryIntents.last {
-                model(resultImageSize: resultImageSize, intents: queryIntents, lastIntent:lastIntent, parameters: parameters, localPlaceSearchResponses: localPlaceSearchResponses, nearLocation: nearLocation)
+                model(resultImageSize: resultImageSize, intents: queryIntents, lastIntent:lastIntent, parameters: parameters, placeSearchResponses: lastIntent.placeSearchResponses, nearLocation: nearLocation)
             } else {
                 zeroStateModel(resultImageSize: resultImageSize)
             }
         }
     }
     
-    public func model(resultImageSize:CGSize?, intents:[AssistiveChatHostIntent], lastIntent:AssistiveChatHostIntent, parameters:AssistiveChatHostQueryParameters, localPlaceSearchResponses:[PlaceSearchResponse]? = nil, nearLocation:CLLocation) {
+    public func model(resultImageSize:CGSize?, intents:[AssistiveChatHostIntent], lastIntent:AssistiveChatHostIntent, parameters:AssistiveChatHostQueryParameters, placeSearchResponses:[PlaceSearchResponse]? = nil, nearLocation:CLLocation) {
         
         switch lastIntent.intent {
         case .SaveDefault,  .SearchDefault, .RecallDefault, .OpenDefault:
@@ -434,7 +418,7 @@ public class ChatResultViewModel : ObservableObject {
                             }
                             let request = placeSearchRequest(parameters: parameters)
                             let rawQueryResponse = try await placeSearchSession.query(request:request)
-                            let placeSearchResponses = try PlaceResponseFormatter.placeSearchResponses(with: rawQueryResponse)
+                            let placeSearchResponses = try PlaceResponseFormatter.placeSearchResponses(with: rawQueryResponse, nearLocation:nearLocation)
                             checkResponses.append(contentsOf:placeSearchResponses)
                         }
                         
@@ -499,7 +483,7 @@ public class ChatResultViewModel : ObservableObject {
                                                         print(queryIntent.selectedPlaceSearchDetails == nil)
                                                     }
                                                 } else {
-                                                    print("Skipping swap of details")
+                                                    //print("Skipping swap of details")
                                                 }
                                             }
                                         }
@@ -603,7 +587,7 @@ public class ChatResultViewModel : ObservableObject {
                                                         print(queryIntent.selectedPlaceSearchDetails == nil)
                                                     }
                                                 } else {
-                                                    print("Skipping swap of details")
+                                                    //print("Skipping swap of details")
                                                 }
                                             }
                                         }
@@ -676,7 +660,6 @@ public class ChatResultViewModel : ObservableObject {
             
             let blendedResults = blendDefaults(with: chatResults)
             DispatchQueue.main.async { [unowned self] in
-                self.localPlaceSearchResponses = queryIntents?.last?.placeSearchResponses
                 self.results.removeAll()
                 self.results = blendedResults
                 self.delegate?.didUpdateModel(for: locationProvider.currentLocation())
@@ -697,14 +680,7 @@ public class ChatResultViewModel : ObservableObject {
                 allResponses.append(selectedPlaceResponse)
             }
             
-            let sortedPlaceSearchResponses = placeSearchResponses.sorted(by: { firstLocation, checkLocation in
-                let firstLocationCoordinate = CLLocation(latitude: firstLocation.latitude, longitude: firstLocation.longitude)
-                let checkLocationCoordinate = CLLocation(latitude: checkLocation.latitude, longitude: checkLocation.longitude)
-                
-                return firstLocationCoordinate.distance(from: nearLocation) < checkLocationCoordinate.distance(from: nearLocation)
-            })
-            
-            allResponses.append(contentsOf: sortedPlaceSearchResponses)
+            allResponses.append(contentsOf: placeSearchResponses)
             
             var chatResults = [ChatResult]()
             for index in 0..<min(allResponses.count,maxChatResults) {
@@ -714,9 +690,7 @@ public class ChatResultViewModel : ObservableObject {
             }
             
             let blendedResults = blendDefaults(with: chatResults)
-            let finalResponses = allResponses
             DispatchQueue.main.async { [unowned self] in
-                self.localPlaceSearchResponses = finalResponses
                 self.results.removeAll()
                 self.results = blendedResults
                 self.delegate?.didUpdateModel(for: locationProvider.currentLocation())

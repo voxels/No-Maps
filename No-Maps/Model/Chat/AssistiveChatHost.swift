@@ -227,7 +227,6 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
                 revisedParameters["sort"] = "distance"
                 revisedParameters["radius"] = 1000
                 revisedParameters["limit"] = 8
-                revisedParameters["open_now"] = true
                 defaultParameters?["parameters"] = revisedParameters
             }
             queryIntentParameters.queryParameters = defaultParameters
@@ -242,7 +241,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
             var revisedCategories = categories
             for index in 0..<categories.count {
                 let category = categories[index]
-                var revisedCategory:NSMutableDictionary = category.mutableCopy() as! NSMutableDictionary
+                let revisedCategory:NSMutableDictionary = category.mutableCopy() as! NSMutableDictionary
                 if let name = category["name"] as? String, let code = categoryCodes[name] {
                     revisedCategory["naics_code"] = code
                 }

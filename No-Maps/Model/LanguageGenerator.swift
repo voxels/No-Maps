@@ -46,7 +46,11 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
         if let tastes = detailsResponse.tastes {
             let summary = try await fetchTastesSummary(with: searchResponse.name, tastes: tastes)
             tastesSummary.append(summary)
+            print("Tastes Summary")
+            print(summary)
         }
+        
+        try await Task.sleep(nanoseconds: 2_000_000_000)
         
         var tipsSummary = ""
         if let tips = detailsResponse.tipsResponses {
@@ -55,6 +59,8 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
             }
             
             let summary = try await fetchTipsSummary(with:searchResponse.name,tips:tipsText)
+            print("Tips Summary")
+            print(summary)
             tipsSummary.append(summary)
         }
         
@@ -73,9 +79,9 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
     
     
     public func fetchTastesSummary(with placeName:String, tastes:[String]) async throws -> String {
-        var prompt = "Write the description of a place that has these things:"
+        var prompt = "Write a description of \(placeName) that is known for "
         for taste in tastes {
-            prompt.append("\n\(taste)")
+            prompt.append(" \(taste),")
         }
         prompt.append("\(placeName) is")
         let request = LanguageGeneratorRequest(model: "text-davinci-003", prompt: prompt, maxTokens: 200, temperature: 0, stop: nil, user: nil)
@@ -84,6 +90,8 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
             if let firstChoice = choices.first, let text = firstChoice["text"] as? String {
                 return "\(placeName) is\(text)"
             }
+        } else {
+            print("error fetching tastes summary:\(String(describing: rawResponse))")
         }
         return ""
     }
@@ -93,7 +101,7 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
             return tips.first!
         }
         
-        var prompt = "Combine these reviews into an appealing description:"
+        var prompt = "Combine these reviews into an honest description:"
         for tip in tips {
             prompt.append("\n\(tip)")
         }
@@ -104,6 +112,8 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
             if let firstChoice = choices.first, let text = firstChoice["text"] as? String {
                 return "\(placeName) is\(text)"
             }
+        } else {
+            print("error fetching tips summary:\(String(describing: rawResponse))")
         }
         return ""
     }
@@ -112,7 +122,7 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
         var prompt = """
         Specify these queries as a JSON dictionary of Foursquare API search parameters:
                 [{
-                "query":"I want an Italian or Seafood place near Lake Como, Italy that is not that expensive for lunch which has a view of the lake.",
+                "query":"I want a Seafood place near Lake Como, Italy that is not that expensive for lunch which has a view of the lake.",
                 "parameters":{
                  "near": ["Lake Como, Italy"],
                  "radius":2000,
@@ -121,7 +131,7 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
                  "open_at":"0T1200",
                  "open_now":false,
                  "sort":"distance",
-                 "tips":["view of the lake"],
+                 "tips":[],
                  "tastes":[],
                  "categories": [
                         {
@@ -145,7 +155,7 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
                  "open_at":"",
                  "open_now":true,
                  "sort":"relevance",
-                 "tips":[""],
+                 "tips":[],
                  "tastes":["prosecco","olives"],
                  "categories": [
                         {
@@ -165,7 +175,7 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
                  "open_at":"6T1600",
                  "open_now":false,
                  "sort":"rating",
-                 "tips":["Michelin star"],
+                 "tips":[],
                  "tastes":["sushi"],
                  "categories": [
                         {
@@ -205,8 +215,8 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
                  "open_at":"",
                  "open_now":false,
                  "sort":"rating",
-                 "tips":["fireplace"],
-                 "tastes":[],
+                 "tips":[],
+                 "tastes":["fireplace"],
                  "categories": [
                         {
                           "naics_code": 13009,
@@ -224,8 +234,8 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
                  "open_at":"0T1500",
                  "open_now":false,
                  "sort":"rating",
-                 "tips":["park", "kids"],
-                 "tastes":[],
+                 "tips":[],
+                 "tastes":["park", "kids"],
                  "categories": [
                         {
                           "naics_code": 16037,
@@ -248,8 +258,8 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
                  "open_at":"0T1200",
                  "open_now":false,
                  "sort":"relevance",
-                 "tips":["neopolitan"],
-                 "tastes":["pizza"],
+                 "tips":[],
+                 "tastes":["neopolitan", "pizza"],
                  "categories": [
                         {
                           "naics_code": 13064,
@@ -268,8 +278,8 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
                  "open_at":"",
                  "open_now":false,
                  "sort":"rating",
-                 "tips":["new media", "installations"],
-                 "tastes":[],
+                 "tips":[],
+                 "tastes":["new media", "installations"],
                  "categories": [
                         {
                           "naics_code": 10028,

@@ -243,7 +243,9 @@ open class PlaceSearchSession : ObservableObject {
             } else {
                 ll = "\(currentLocation.latitude),\(currentLocation.longitude)"
             }
-            limit = rawParameters["limit"] as! Int
+            if let rawLimit = rawParameters["limit"] as? Int {
+                limit = rawLimit
+            }
         }
         
         let tagger = NLTagger(tagSchemes: [.nameTypeOrLexicalClass])
