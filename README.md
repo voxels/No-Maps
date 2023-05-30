@@ -1,20 +1,20 @@
 ### TODO:
 
-1. Query History, Result Cacheing
-2. Tastes vs Place Names
-3. Where am I results, Directions in Words
-4. Tell me about streaming results
-5. Near Place lookup, conversion to LL
-6. NAICS code lookup
-7. Tappable, sharable descriptions
-8. Unity Ads
-9. Apple Maps integration
-10. Call integration
-11. Google Programmable Search Engine
-12. Session tokens
-13. Crash reporting
-14. Logging
-15. Subscription
-16. Save place in iCloud database
-17. See places you have saved
+1. Where am I results, Directions in Words
+2. Tell me about streaming results
+3. NAICS code lookup
+4. Query History, Result Cacheing
+5. Tastes vs Place Names
+6. Tappable, sharable descriptions
+7. Near Place lookup, conversion to LL
+11. Unity Ads
+12. Apple Maps integration
+13. Call integration
+15. Session tokens
+16. Crash reporting
+17. Logging
+18. Subscription
+19. Save place in iCloud database
+20. Recall places you have saved
+21. Google Programmable Search Engine
 
