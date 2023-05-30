@@ -398,7 +398,7 @@ public class ChatResultViewModel : ObservableObject {
                     
                 }
             }
-        case .TellPlace:
+        case .TellPlace, .TellQuery:
             let _ = Task.init {
                 do {
                     var chatResults = [ChatResult]()
@@ -510,7 +510,7 @@ public class ChatResultViewModel : ObservableObject {
             }
         case .SearchPlace:
             placeQueryModel(resultImageSize: resultImageSize, query: lastIntent.caption, queryIntents: intents, parameters: parameters)
-        case .SearchQuery, .TellQuery:
+        case .SearchQuery:
             searchQueryModel(resultImageSize: resultImageSize, query: lastIntent.caption, queryIntents: intents, parameters:parameters, nearLocation:nearLocation )
         default:
             let _ = Task.init {
@@ -625,8 +625,6 @@ public class ChatResultViewModel : ObservableObject {
             if let selectedPlaceDetailsResponse = queryIntents?.last?.selectedPlaceSearchDetails {
                 var allResponses = [PlaceDetailsResponse]()
                 
-                allResponses.append(selectedPlaceDetailsResponse)
-                
                 for index in 0..<min(allResponses.count,maxChatResults) {
                     
                     let response = allResponses[index]
@@ -676,7 +674,7 @@ public class ChatResultViewModel : ObservableObject {
             }
             
             var allResponses = [PlaceSearchResponse]()
-            if let selectedPlaceResponse = queryIntents?.last?.selectedPlaceSearchResponse {
+            if let selectedPlaceResponse = queryIntents?.last?.selectedPlaceSearchResponse, placeSearchResponses.first?.name != selectedPlaceResponse.name {
                 allResponses.append(selectedPlaceResponse)
             }
             

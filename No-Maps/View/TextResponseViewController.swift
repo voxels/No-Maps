@@ -75,7 +75,7 @@ open class TextResponseViewController : UIViewController {
         mapView.leftAnchor.constraint(equalTo: scrollView.leftAnchor, constant: edgeInsets.left).isActive = true
         mapView.rightAnchor.constraint(equalTo: scrollView.rightAnchor, constant: edgeInsets.right).isActive = true
         mapView.topAnchor.constraint(equalTo: textView.bottomAnchor, constant: edgeInsets.top).isActive = true
-        mapView.heightAnchor.constraint(equalToConstant: view.frame.size.width - edgeInsets.left + edgeInsets.right).isActive = true
+        mapView.heightAnchor.constraint(equalToConstant: (view.frame.size.width - edgeInsets.left + edgeInsets.right) * 2.0 / 3.0).isActive = true
         mapView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor, constant: edgeInsets.bottom).isActive = true
         
         mapView.isScrollEnabled = false

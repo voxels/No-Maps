@@ -749,13 +749,15 @@ open class PlaceResponseFormatter {
             return [tellChatResult()]
         case .SearchPlace:
             return [tellChatResult()]
+        case .TellQuery:
+            return [tellChatResult()]
         case .SavePlace:
             fallthrough
         case .TellPlace:
             fallthrough
         case .RecallPlace:
             fallthrough
-        case .TellQuery, .PlaceDetailsDirections, .PlaceDetailsPhotos, .PlaceDetailsPhone, .PlaceDetailsTips, .PlaceDetailsMenu, .PlaceDetailsCost, .PlaceDetailsInstagram, .PlaceDetailsOpenHours, .PlaceDetailsPopularity, .PlaceDetailsBusyHours, .OpenDefault, .ShareResult:
+        case .PlaceDetailsDirections, .PlaceDetailsPhotos, .PlaceDetailsPhone, .PlaceDetailsTips, .PlaceDetailsMenu, .PlaceDetailsCost, .PlaceDetailsInstagram, .PlaceDetailsOpenHours, .PlaceDetailsPopularity, .PlaceDetailsBusyHours, .OpenDefault, .ShareResult:
             return placeChatResult()
         case .Unsupported:
             return [ChatResult]()
