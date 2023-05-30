@@ -15,8 +15,10 @@ open class SearchQueryResponseCollectionViewCell : UICollectionViewCell {
             }
         }
     }
-    public var textLabel:UILabel = UILabel(frame:.zero)
-    internal var textLabelEdgeInsets = UIEdgeInsets(top: 8, left: 56.0, bottom: -8, right: -20.0)
+    
+    internal var textLabel:UILabel = UILabel(frame:.zero)
+    internal var textLabelEdgeInsets = UIEdgeInsets(top: 8, left: 44.0, bottom: -8, right: -20.0)
+    internal var imageView = UIImageView(frame:.zero)
 
     override public init(frame: CGRect) {
         super.init(frame: frame)
@@ -38,6 +40,13 @@ open class SearchQueryResponseCollectionViewCell : UICollectionViewCell {
         textLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: textLabelEdgeInsets.top).isActive = true
         textLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: textLabelEdgeInsets.bottom).isActive = true
         textLabel.textColor = UIColor.label
+        
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.image = UIImage(systemName: "map")
+        imageView.tintColor = UIColor.systemBlue
+        contentView.addSubview(imageView)
+        imageView.leftAnchor.constraint(equalTo: contentView.leftAnchor, constant: 8).isActive = true
+        imageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor).isActive = true
     }
     
     public override func prepareForReuse() {

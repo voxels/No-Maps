@@ -139,7 +139,7 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
                 "query":"Where is a place in Hudson Yards that we can get a glass of prosecco and some olives right now?",
                 "parameters":{
                  "near": ["Manhattan","Hudson Yards"],
-                 "radius":500,
+                 "radius":1000,
                  "min_price":1,
                  "max_price":4,
                  "open_at":"",

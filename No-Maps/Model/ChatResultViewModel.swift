@@ -697,7 +697,7 @@ public class ChatResultViewModel : ObservableObject {
                 allResponses.append(selectedPlaceResponse)
             }
             
-            var sortedPlaceSearchResponses = placeSearchResponses.sorted(by: { firstLocation, checkLocation in
+            let sortedPlaceSearchResponses = placeSearchResponses.sorted(by: { firstLocation, checkLocation in
                 let firstLocationCoordinate = CLLocation(latitude: firstLocation.latitude, longitude: firstLocation.longitude)
                 let checkLocationCoordinate = CLLocation(latitude: checkLocation.latitude, longitude: checkLocation.longitude)
                 

@@ -70,7 +70,7 @@ struct ChatResultViewHorizontalStack : View  {
                         VStack{
                             Spacer()
                             ZStack{
-                                let showBackgroundImage = column.0.backgroundImageURL != nil
+                                let showBackgroundImage = false
                                 HStack{
                                     Spacer()
                                     showBackgroundImage ?                      Text(column.0.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style:.circular)).backgroundStyle(column.0.backgroundColor).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 1.5).onTapGesture {
@@ -95,7 +95,7 @@ struct ChatResultViewHorizontalStack : View  {
                                 }
                             }.id(column.0.id)
                             ZStack {
-                                let showBackgroundImage = column.1.backgroundImageURL != nil
+                                let showBackgroundImage = false
                                 HStack{
                                     Spacer()
                                     showBackgroundImage ?                                                                  Text(column.1.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style:.circular)).backgroundStyle(column.1.backgroundColor).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 1.5).onTapGesture {

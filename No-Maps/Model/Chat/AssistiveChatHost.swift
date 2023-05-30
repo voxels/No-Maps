@@ -61,8 +61,36 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
     private var languageDelegate:LanguageGeneratorDelegate = LanguageGenerator()
     private var placeSearchSession = PlaceSearchSession()
     @Published public var queryIntentParameters = AssistiveChatHostQueryParameters()
+    private var categoryCodes:[String:String] = [String:String]()
+    
     public init(delegate:AssistiveChatHostMessagesDelegate? = nil) {
         self.delegate = delegate
+
+        _ = Task.init{
+            do {
+                try organizeCategoryCodeList()
+            } catch {
+                print(error)
+            }
+        }
+    }
+    
+    internal func organizeCategoryCodeList() throws {
+        if let path = Bundle.main.path(forResource: "integrated_category_taxonomy", ofType: "json")
+        {
+            let url = URL(filePath: path)
+            let data = try Data(contentsOf: url)
+            let result = try JSONSerialization.jsonObject(with: data, options: .mutableContainers)
+            if let dict = result as? NSDictionary {
+                for key in dict.allKeys {
+                    if let valueDict = dict[key] as? NSDictionary {
+                        if let labelsDict = valueDict["labels"] as? NSDictionary, let englishLabel = labelsDict["en"] as? String, let keyString = key as? String {
+                            categoryCodes[englishLabel] = keyString
+                        }
+                    }
+                }
+            }
+        }
     }
     
     public func didTap(chatResult: ChatResult) {
@@ -196,9 +224,9 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
             var defaultParameters = try await defaultParameters(for: query)
             if let embeddedParameters = defaultParameters?["parameters"] as? [String:Any] {
                 var revisedParameters = embeddedParameters
-                revisedParameters["sort"] = "rating"
-                revisedParameters["radius"] = 500
-                revisedParameters["limit"] = 5
+                revisedParameters["sort"] = "distance"
+                revisedParameters["radius"] = 1000
+                revisedParameters["limit"] = 8
                 revisedParameters["open_now"] = true
                 defaultParameters?["parameters"] = revisedParameters
             }
@@ -207,6 +235,25 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
             queryIntentParameters.queryParameters = nil
             break
         }
+        
+        print("Pre-NAICS code revision parameters")
+        print(queryIntentParameters.queryParameters ?? "")
+        if let parameters = queryIntentParameters.queryParameters?["parameters"] as? [String:Any], let categories = parameters["categories"] as? [NSDictionary]  {
+            var revisedCategories = categories
+            for index in 0..<categories.count {
+                let category = categories[index]
+                var revisedCategory:NSMutableDictionary = category.mutableCopy() as! NSMutableDictionary
+                if let name = category["name"] as? String, let code = categoryCodes[name] {
+                    revisedCategory["naics_code"] = code
+                }
+                revisedCategories[index] = revisedCategory
+            }
+            var revisedParameters = parameters
+            revisedParameters["categories"] = revisedCategories
+            queryIntentParameters.queryParameters?["parameters"] = revisedParameters
+        }
+        print("Revised NAICS code parameters")
+        print(queryIntentParameters.queryParameters ?? "")
     }
     
     internal func defaultParameters(for query:String) async throws -> [String:Any]? {

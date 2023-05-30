@@ -476,12 +476,26 @@ open class PlaceResponseFormatter {
             placeResults.append(placeResultAddress)
             
             if let tel = details.tel {
-                let placeResultTel = PlaceResponseFormatter.imageChatResult(title: tel, backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
+                let placeResultTel = PlaceResponseFormatter.imageChatResult(title: "Phone: \(tel)" , backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
                 placeResults.append(placeResultTel)
             }
             
             if let price = details.price {
-                let placeResultPrice = PlaceResponseFormatter.imageChatResult(title: "\(price)", backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs),resize: resize)
+                var description = ""
+                switch price {
+                case 1:
+                    description = "Cheap"
+                case 2:
+                    description = "Moderately Priced"
+                case 3:
+                    description = "Expensive"
+                case 4:
+                    description = "Very Expensive"
+                default:
+                    description = "Price Not Listed"
+                }
+                
+                let placeResultPrice = PlaceResponseFormatter.imageChatResult(title: "Price: \(description)" , backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs),resize: resize)
                 placeResults.append(placeResultPrice)
             }
 
@@ -513,10 +527,6 @@ open class PlaceResponseFormatter {
                 placeResults.append(placeResultPopularity)
             }
 
-            if let _ = details.price{
-                let placeResultCost = PlaceResponseFormatter.imageChatResult(title: "How much does \(place.name) cost?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
-                placeResults.append(placeResultCost)
-            }
             if let _ = details.menu  as? NSDictionary {
                 let placeResultMenu = PlaceResponseFormatter.imageChatResult(title: "What's does \(place.name) have?", backgroundColor: Color.red, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize:resize)
                 placeResults.append(placeResultMenu)
@@ -544,12 +554,26 @@ open class PlaceResponseFormatter {
             placeResults.append(placeResultAddress)
             
             if let tel = details.tel {
-                let placeResultTel = PlaceResponseFormatter.imageChatResult(title: tel, backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
+                let placeResultTel = PlaceResponseFormatter.imageChatResult(title: "Phone: \(tel)" , backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
                 placeResults.append(placeResultTel)
             }
             
             if let price = details.price {
-                let placeResultPrice = PlaceResponseFormatter.imageChatResult(title: "\(price)", backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs),resize: resize)
+                var description = ""
+                switch price {
+                case 1:
+                    description = "Cheap"
+                case 2:
+                    description = "Moderately Priced"
+                case 3:
+                    description = "Expensive"
+                case 4:
+                    description = "Very Expensive"
+                default:
+                    description = "Price Not Listed"
+                }
+                
+                let placeResultPrice = PlaceResponseFormatter.imageChatResult(title: "Price: \(description)" , backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs),resize: resize)
                 placeResults.append(placeResultPrice)
             }
             
@@ -581,7 +605,22 @@ open class PlaceResponseFormatter {
                 intentResult = response
             case .PlaceDetailsCost:
                 if let price = details.price {
-                    let response = PlaceResponseFormatter.imageChatResult(title: "\(price)", backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs), resize: resize)
+                    
+                    var description = ""
+                    switch price {
+                    case 1:
+                        description = "Cheap"
+                    case 2:
+                        description = "Moderately Priced"
+                    case 3:
+                        description = "Expensive"
+                    case 4:
+                        description = "Very Expensive"
+                    default:
+                        description = "Price Not Listed"
+                    }
+
+                    let response = PlaceResponseFormatter.imageChatResult(title: "Price: \(description)" , backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs),resize: resize)
                     intentResult = response
                 }
             case .PlaceDetailsMenu:

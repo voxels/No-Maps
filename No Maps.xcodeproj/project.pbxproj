@@ -7,8 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1E0CA34A29E6ECB800F260D6 /* integrated_category_taxonomy.json in Resources */ = {isa = PBXBuildFile; fileRef = 1E0CA34929E6ECB800F260D6 /* integrated_category_taxonomy.json */; };
-		1E0CA34B29E6ECB800F260D6 /* integrated_category_taxonomy.json in Resources */ = {isa = PBXBuildFile; fileRef = 1E0CA34929E6ECB800F260D6 /* integrated_category_taxonomy.json */; };
 		1E0CA34D29E8287400F260D6 /* SearchResponseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E0CA34C29E8287400F260D6 /* SearchResponseViewController.swift */; };
 		1E0CA34E29E8287400F260D6 /* SearchResponseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E0CA34C29E8287400F260D6 /* SearchResponseViewController.swift */; };
 		1E0CA35029E97AFC00F260D6 /* NaturalLanguage.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E0CA34F29E97AFC00F260D6 /* NaturalLanguage.framework */; };
@@ -24,6 +22,8 @@
 		1E3EFC052A2495EE00F48D16 /* SearchQueryResponseCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E3EFC032A2495EE00F48D16 /* SearchQueryResponseCollectionViewCell.swift */; };
 		1E3EFC072A24962900F48D16 /* SearchQueryResponseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E3EFC062A24962900F48D16 /* SearchQueryResponseViewModel.swift */; };
 		1E3EFC082A24962900F48D16 /* SearchQueryResponseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E3EFC062A24962900F48D16 /* SearchQueryResponseViewModel.swift */; };
+		1E3EFC0D2A25CD7A00F48D16 /* integrated_category_taxonomy.json in Resources */ = {isa = PBXBuildFile; fileRef = 1E3EFC0C2A25CD7A00F48D16 /* integrated_category_taxonomy.json */; };
+		1E3EFC0E2A25CD7A00F48D16 /* integrated_category_taxonomy.json in Resources */ = {isa = PBXBuildFile; fileRef = 1E3EFC0C2A25CD7A00F48D16 /* integrated_category_taxonomy.json */; };
 		1ECCCD3D29D2F1270081035C /* AssistiveChatHostQueryParameters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ECCCD3C29D2F1270081035C /* AssistiveChatHostQueryParameters.swift */; };
 		1ECCCD3E29D2F1270081035C /* AssistiveChatHostQueryParameters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ECCCD3C29D2F1270081035C /* AssistiveChatHostQueryParameters.swift */; };
 		1ECCCD4029D847B60081035C /* PlaceDetailsRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ECCCD3F29D847B60081035C /* PlaceDetailsRequest.swift */; };
@@ -113,7 +113,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		1E0CA34929E6ECB800F260D6 /* integrated_category_taxonomy.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = integrated_category_taxonomy.json; sourceTree = "<group>"; };
 		1E0CA34C29E8287400F260D6 /* SearchResponseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchResponseViewController.swift; sourceTree = "<group>"; };
 		1E0CA34F29E97AFC00F260D6 /* NaturalLanguage.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NaturalLanguage.framework; path = System/Library/Frameworks/NaturalLanguage.framework; sourceTree = SDKROOT; };
 		1E16D16029C1F56300B2559E /* No Maps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "No Maps.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -127,6 +126,7 @@
 		1E3EFC002A2211CF00F48D16 /* SearchQueryResponseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchQueryResponseViewController.swift; sourceTree = "<group>"; };
 		1E3EFC032A2495EE00F48D16 /* SearchQueryResponseCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchQueryResponseCollectionViewCell.swift; sourceTree = "<group>"; };
 		1E3EFC062A24962900F48D16 /* SearchQueryResponseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchQueryResponseViewModel.swift; sourceTree = "<group>"; };
+		1E3EFC0C2A25CD7A00F48D16 /* integrated_category_taxonomy.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = integrated_category_taxonomy.json; sourceTree = "<group>"; };
 		1ECCCD3C29D2F1270081035C /* AssistiveChatHostQueryParameters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistiveChatHostQueryParameters.swift; sourceTree = "<group>"; };
 		1ECCCD3F29D847B60081035C /* PlaceDetailsRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceDetailsRequest.swift; sourceTree = "<group>"; };
 		1ECCCD4229D85A740081035C /* PlaceDetailsResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceDetailsResponse.swift; sourceTree = "<group>"; };
@@ -292,6 +292,7 @@
 		1ED9133829C72C4A002D9172 /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				1E3EFC0C2A25CD7A00F48D16 /* integrated_category_taxonomy.json */,
 				1ED9139529C9F77A002D9172 /* Chat */,
 				1ED9133B29C72C73002D9172 /* ChatResult.swift */,
 				1ED9133E29C73DB3002D9172 /* PlaceSearchRequest.swift */,
@@ -308,7 +309,6 @@
 				1ECCCD4829DAFF6E0081035C /* LanguageGeneratorSession.swift */,
 				1ECCCD4B29DB01330081035C /* LanguageGeneratorRequest.swift */,
 				1ECCCD5129DC384F0081035C /* ChatDetailsViewModel.swift */,
-				1E0CA34929E6ECB800F260D6 /* integrated_category_taxonomy.json */,
 				1E3EFC062A24962900F48D16 /* SearchQueryResponseViewModel.swift */,
 			);
 			path = Model;
@@ -492,8 +492,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				1E16D17729C1F56400B2559E /* Assets.xcassets in Resources */,
+				1E3EFC0D2A25CD7A00F48D16 /* integrated_category_taxonomy.json in Resources */,
 				1E16D17529C1F56400B2559E /* MainInterface.storyboard in Resources */,
-				1E0CA34A29E6ECB800F260D6 /* integrated_category_taxonomy.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -502,8 +502,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				1ED9131529C716E2002D9172 /* Preview Assets.xcassets in Resources */,
+				1E3EFC0E2A25CD7A00F48D16 /* integrated_category_taxonomy.json in Resources */,
 				1ED9131229C716E2002D9172 /* Assets.xcassets in Resources */,
-				1E0CA34B29E6ECB800F260D6 /* integrated_category_taxonomy.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

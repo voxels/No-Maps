@@ -31,15 +31,6 @@ open class MessagesViewController: MSMessagesAppViewController {
     
     open override func viewDidLoad() {
         super.viewDidLoad()
-
-        chatDetailsContainerView = UIView(frame: .zero)
-        chatDetailsContainerView?.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(chatDetailsContainerView!)
-        chatDetailsContainerView?.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
-        chatDetailsContainerView?.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
-        chatDetailsContainerView?.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
-        chatDetailsContainerView?.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
-
         
         chatHost = AssistiveChatHost(delegate:self)
         let resultView = ChatResultView(chatHostingDelegate:chatHost, chatHost: self.chatHost, messagesViewHeight:.constant(messagesViewHeight), model: self.chatModel)
@@ -48,10 +39,18 @@ open class MessagesViewController: MSMessagesAppViewController {
         view.addSubview(chatResultView!.view)
         
         chatResultView?.view.translatesAutoresizingMaskIntoConstraints = false
-        chatResultView?.view.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        chatResultView?.view.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
         chatResultView?.view.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
         chatResultView?.view.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
         self.chatModel.delegate = self
+        
+        chatDetailsContainerView = UIView(frame: .zero)
+        chatDetailsContainerView?.translatesAutoresizingMaskIntoConstraints = false
+        view.insertSubview(chatDetailsContainerView!, belowSubview: chatResultView!.view)
+        chatDetailsContainerView?.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
+        chatDetailsContainerView?.bottomAnchor.constraint(equalTo: chatResultView!.view.safeAreaLayoutGuide.topAnchor).isActive = true
+        chatDetailsContainerView?.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
+        chatDetailsContainerView?.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
     }
     
     open override func viewWillAppear(_ animated: Bool) {
@@ -205,7 +204,13 @@ extension MessagesViewController {
             chatDetailsViewController?.delegate = self
             chatDetailsContainerView?.addSubview(chatDetailsViewController!.view)
             addChild(chatDetailsViewController!)
-            chatDetailsViewController?.didMove(toParent: self)            
+            chatDetailsViewController?.view.translatesAutoresizingMaskIntoConstraints = false
+            chatDetailsViewController?.view.leftAnchor.constraint(equalTo: chatDetailsContainerView!.leftAnchor).isActive = true
+            chatDetailsViewController?.view.rightAnchor.constraint(equalTo: chatDetailsContainerView!.rightAnchor).isActive = true
+            chatDetailsViewController?.view.topAnchor.constraint(equalTo: chatDetailsContainerView!.topAnchor).isActive = true
+            chatDetailsViewController?.view.bottomAnchor.constraint(equalTo: chatDetailsContainerView!.bottomAnchor).isActive = true
+
+            chatDetailsViewController?.didMove(toParent: self)
             chatDetailsViewController?.update(parameters: queryParameters, responseString: responseString, placeSearchResponses:queryParameters.queryIntents.last!.placeSearchResponses, nearLocation: nearLocation)
         } else {
             chatDetailsViewController?.update(parameters: queryParameters, responseString: responseString, placeSearchResponses:queryParameters.queryIntents.last!.placeSearchResponses, nearLocation: nearLocation)
