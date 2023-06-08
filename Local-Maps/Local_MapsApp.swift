@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct No_MapsApp: App {
+struct Local_MapsApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

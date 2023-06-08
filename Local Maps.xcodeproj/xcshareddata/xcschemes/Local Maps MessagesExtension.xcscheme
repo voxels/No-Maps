@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "1E16D16829C1F56400B2559E"
-               BuildableName = "No Maps MessagesExtension.appex"
-               BlueprintName = "No Maps MessagesExtension"
-               ReferencedContainer = "container:Walking Map.xcodeproj">
+               BuildableName = "Local Maps MessagesExtension.appex"
+               BlueprintName = "Local Maps MessagesExtension"
+               ReferencedContainer = "container:Local Maps.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -30,9 +30,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "1E16D15F29C1F56300B2559E"
-               BuildableName = "No Maps.app"
-               BlueprintName = "No Maps"
-               ReferencedContainer = "container:Walking Map.xcodeproj">
+               BuildableName = "Local Maps.app"
+               BlueprintName = "Local Maps"
+               ReferencedContainer = "container:Local Maps.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -58,22 +58,16 @@
       launchAutomaticallySubstyle = "2">
       <RemoteRunnable
          runnableDebuggingMode = "1"
-         BundleIdentifier = "com.apple.MobileSMS">
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "1E16D16829C1F56400B2559E"
-            BuildableName = "No Maps MessagesExtension.appex"
-            BlueprintName = "No Maps MessagesExtension"
-            ReferencedContainer = "container:Walking Map.xcodeproj">
-         </BuildableReference>
+         BundleIdentifier = "com.apple.MobileSMS"
+         RemotePath = "/Applications/MobileSMS.app">
       </RemoteRunnable>
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1E16D15F29C1F56300B2559E"
-            BuildableName = "No Maps.app"
-            BlueprintName = "No Maps"
-            ReferencedContainer = "container:Walking Map.xcodeproj">
+            BuildableName = "Local Maps.app"
+            BlueprintName = "Local Maps"
+            ReferencedContainer = "container:Local Maps.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
    </LaunchAction>
@@ -90,9 +84,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1E16D15F29C1F56300B2559E"
-            BuildableName = "No Maps.app"
-            BlueprintName = "No Maps"
-            ReferencedContainer = "container:Walking Map.xcodeproj">
+            BuildableName = "Local Maps.app"
+            BlueprintName = "Local Maps"
+            ReferencedContainer = "container:Local Maps.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
