@@ -27,11 +27,11 @@ struct ChatResultView : View {
                         ChatResultViewHorizontalStack(chatHostingDelegate: chatHostingDelegate, chatHost: chatHost, messagesViewHeight: $messagesViewHeight, model: model).padding(scrollViewPadding).onAppear {
                             model.authorizeLocationProvider()
                             if let location = model.locationProvider.currentLocation() {
-                                model.refreshModel(resultImageSize: compactSize(), queryIntents: chatHost.queryIntentParameters.queryIntents, parameters: chatHost.queryIntentParameters, nearLocation:location)
+                                model.refreshModel( queryIntents: chatHost.queryIntentParameters.queryIntents, parameters: chatHost.queryIntentParameters, nearLocation:location)
                             }
                         }.refreshable {
                             if let location = model.locationProvider.currentLocation() {
-                                model.refreshModel(resultImageSize: compactSize(), queryIntents: chatHost.queryIntentParameters.queryIntents, parameters: chatHost.queryIntentParameters, nearLocation:location)
+                                model.refreshModel( queryIntents: chatHost.queryIntentParameters.queryIntents, parameters: chatHost.queryIntentParameters, nearLocation:location)
                             }
                         }
                     }
@@ -70,54 +70,21 @@ struct ChatResultViewHorizontalStack : View  {
                         VStack{
                             Spacer()
                             ZStack{
-                                let showBackgroundImage = false
                                 HStack{
                                     Spacer()
-                                    showBackgroundImage ?                      Text(column.0.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style:.circular)).backgroundStyle(column.0.backgroundColor).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 1.5).onTapGesture {
+                                    Text(column.0.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style: .circular)).backgroundStyle(column.0.backgroundColor).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 1.5).onTapGesture {
                                         chatHostingDelegate.didTap(chatResult: column.0)
-                                    } : Text(column.0.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style: .circular)).backgroundStyle(column.0.backgroundColor).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 1.5).onTapGesture {
-                                        chatHostingDelegate.didTap(chatResult: column.0)
-                                        if let firstColumnID = columns.first?.0.id {
-                                            proxy.scrollTo(firstColumnID)
-                                        }
                                     }
-                                    if showBackgroundImage {
-                                        //                                                    let _ = print(column.0.backgroundImageURL)
-                                        AsyncImage(url: column.0.backgroundImageURL).cornerRadius(16.0).padding(4).onTapGesture {
-                                            chatHostingDelegate.didTap(chatResult: column.0)
-                                            if let firstColumnID = columns.first?.0.id {
-                                                proxy.scrollTo(firstColumnID)
-                                            }
-                                        }
-                                    } else {
-                                        Spacer()
-                                    }
+                                    Spacer()
                                 }
                             }.id(column.0.id)
-                            ZStack {
-                                let showBackgroundImage = false
+                            ZStack{
                                 HStack{
                                     Spacer()
-                                    showBackgroundImage ?                                                                  Text(column.1.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style:.circular)).backgroundStyle(column.1.backgroundColor).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 1.5).onTapGesture {
+                                    Text(column.1.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style: .circular)).backgroundStyle(column.1.backgroundColor).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 1.5).onTapGesture {
                                         chatHostingDelegate.didTap(chatResult: column.1)
-                                    } : Text(column.1.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style: .circular)).backgroundStyle(column.1.backgroundColor).frame(maxWidth:(UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 1.5).onTapGesture {
-                                        chatHostingDelegate.didTap(chatResult: column.1)
-                                        if let firstColumnID = columns.first?.0.id {
-                                            proxy.scrollTo(firstColumnID)
-                                        }
                                     }
-
-                                    if showBackgroundImage {
-                                        //                                                    let _ = print(column.1.backgroundImageURL)
-                                        AsyncImage(url: column.1.backgroundImageURL).cornerRadius(16.0).padding(4).onTapGesture {
-                                            chatHostingDelegate.didTap(chatResult: column.1)
-                                            if let firstColumnID = columns.first?.0.id {
-                                                proxy.scrollTo(firstColumnID)
-                                            }
-                                        }
-                                    } else {
-                                        Spacer()
-                                    }
+                                    Spacer()
                                 }
                             }.id(column.1.id)
                             Spacer()
@@ -131,14 +98,6 @@ struct ChatResultViewHorizontalStack : View  {
             )) { _ in
             }
         }
-    }
-    
-    
-    private func compactSize()->CGSize {
-        let height = 253 / 2.0 - interitemDistance - scrollViewPadding
-        let width = (UIScreen.main.bounds.width - scrollViewPadding - interitemDistance) / 4.0
-        let size = CGSize(width: width, height: height)
-        return size
     }
     
     private func createColumns(from

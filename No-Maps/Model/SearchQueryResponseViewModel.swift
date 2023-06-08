@@ -6,8 +6,10 @@
 //
 
 import Foundation
+import CoreLocation
 
 public struct SearchQueryResponseViewModel {
-    public var responseString:String
-    public var placeDetailsResponses:[PlaceDetailsResponse]
+    public let responseString:String
+    public let placeDetailsResponses:[PlaceDetailsResponse]
+    public let targetLocation:CLLocation
 }

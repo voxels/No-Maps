@@ -8,17 +8,11 @@
 import UIKit
 
 open class SearchQueryResponseCollectionViewCell : UICollectionViewCell {
-    public var placeDetailsResponse:PlaceDetailsResponse? {
-        didSet {
-            if let response = placeDetailsResponse {
-                updateView(with: response)
-            }
-        }
-    }
+    public var placeDetailsResponse:PlaceDetailsResponse?
     
     internal var textLabel:UILabel = UILabel(frame:.zero)
-    internal var textLabelEdgeInsets = UIEdgeInsets(top: 8, left: 44.0, bottom: -8, right: -20.0)
-    internal var imageView = UIImageView(frame:.zero)
+    internal var textLabelEdgeInsets = UIEdgeInsets(top: 8, left: 20.0, bottom: -8, right: -20.0)
+    internal var indexLabel:UILabel = UILabel(frame:.zero)
 
     override public init(frame: CGRect) {
         super.init(frame: frame)
@@ -41,25 +35,29 @@ open class SearchQueryResponseCollectionViewCell : UICollectionViewCell {
         textLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: textLabelEdgeInsets.bottom).isActive = true
         textLabel.textColor = UIColor.label
         
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.image = UIImage(systemName: "map")
-        imageView.tintColor = UIColor.systemBlue
-        contentView.addSubview(imageView)
-        imageView.leftAnchor.constraint(equalTo: contentView.leftAnchor, constant: 8).isActive = true
-        imageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor).isActive = true
+        indexLabel.translatesAutoresizingMaskIntoConstraints = false
+        indexLabel.font = UIFont.boldSystemFont(ofSize: 14.0)
+        indexLabel.textColor = .black
+        contentView.addSubview(indexLabel)
+        indexLabel.leftAnchor.constraint(equalTo: contentView.leftAnchor, constant: 8).isActive = true
+        indexLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor).isActive = true
     }
     
     public override func prepareForReuse() {
         super.prepareForReuse()
+        textLabel.text = ""
+        indexLabel.text = ""
         
     }
     
-    internal func updateView(with placeDetailsResponse:PlaceDetailsResponse) {
+    internal func updateView(with placeDetailsResponse:PlaceDetailsResponse, index:Int) {
         let rating = placeDetailsResponse.rating
         if rating > 0 {
             textLabel.text = "\(placeDetailsResponse.searchResponse.name) is rated \(placeDetailsResponse.rating)."
         } else {
             textLabel.text = "\(placeDetailsResponse.searchResponse.name) is not rated."
         }
+        
+        indexLabel.text = "\(index + 1)"
     }
 }

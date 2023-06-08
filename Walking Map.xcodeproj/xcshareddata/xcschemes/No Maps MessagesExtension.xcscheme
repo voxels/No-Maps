@@ -18,7 +18,7 @@
                BlueprintIdentifier = "1E16D16829C1F56400B2559E"
                BuildableName = "No Maps MessagesExtension.appex"
                BlueprintName = "No Maps MessagesExtension"
-               ReferencedContainer = "container:No Maps.xcodeproj">
+               ReferencedContainer = "container:Walking Map.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -32,7 +32,7 @@
                BlueprintIdentifier = "1E16D15F29C1F56300B2559E"
                BuildableName = "No Maps.app"
                BlueprintName = "No Maps"
-               ReferencedContainer = "container:No Maps.xcodeproj">
+               ReferencedContainer = "container:Walking Map.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -64,7 +64,7 @@
             BlueprintIdentifier = "1E16D16829C1F56400B2559E"
             BuildableName = "No Maps MessagesExtension.appex"
             BlueprintName = "No Maps MessagesExtension"
-            ReferencedContainer = "container:No Maps.xcodeproj">
+            ReferencedContainer = "container:Walking Map.xcodeproj">
          </BuildableReference>
       </RemoteRunnable>
       <MacroExpansion>
@@ -73,7 +73,7 @@
             BlueprintIdentifier = "1E16D15F29C1F56300B2559E"
             BuildableName = "No Maps.app"
             BlueprintName = "No Maps"
-            ReferencedContainer = "container:No Maps.xcodeproj">
+            ReferencedContainer = "container:Walking Map.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
    </LaunchAction>
@@ -92,7 +92,7 @@
             BlueprintIdentifier = "1E16D15F29C1F56300B2559E"
             BuildableName = "No Maps.app"
             BlueprintName = "No Maps"
-            ReferencedContainer = "container:No Maps.xcodeproj">
+            ReferencedContainer = "container:Walking Map.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

@@ -6,11 +6,12 @@
 //
 
 import UIKit
+import MapKit
 
 open class SearchQueryResponseViewController : UIViewController {
-    
     internal var collectionView: UICollectionView! = nil
     internal var textView = UILabel(frame:.zero)
+    internal var mapView = MKMapView(frame: .zero)
     internal var model:SearchQueryResponseViewModel
     
     var dataSource: UICollectionViewDiffableDataSource<Section, PlaceDetailsResponse>! = nil
@@ -19,8 +20,8 @@ open class SearchQueryResponseViewController : UIViewController {
         case main
     }
     
-    public init(responseString: String, placeDetailsResponses:[PlaceDetailsResponse]) {
-        model = SearchQueryResponseViewModel(responseString:responseString, placeDetailsResponses: placeDetailsResponses)
+    public init(responseString: String, placeDetailsResponses:[PlaceDetailsResponse], targetLocation:CLLocation) {
+        model = SearchQueryResponseViewModel(responseString:responseString, placeDetailsResponses: placeDetailsResponses, targetLocation: targetLocation)
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -31,8 +32,14 @@ open class SearchQueryResponseViewController : UIViewController {
     
     public override func viewDidLoad() {
         super.viewDidLoad()
-        buildTextResponseView(with: model.responseString)
+        buildMapView()
         buildSearchQueryResponseCollectionView()
+        buildTextResponseView(with: model.responseString)
+    }
+    
+    public override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        mapView.setUserTrackingMode(.followWithHeading, animated: true)
     }
     
     public func buildTextResponseView(with responseString:String) {
@@ -40,10 +47,10 @@ open class SearchQueryResponseViewController : UIViewController {
         textView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(textView)
         
-        textView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 20).isActive = true
+        textView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 30).isActive = true
         textView.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -20).isActive = true
-        textView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20).isActive = true
-        textView.heightAnchor.constraint(equalToConstant: 44.0).isActive = true
+        textView.topAnchor.constraint(equalTo: mapView.topAnchor, constant: 20).isActive = true
+        textView.heightAnchor.constraint(equalToConstant: 30.0).isActive = true
         textView.text = responseString
         
         textView.font = UIFont.systemFont(ofSize: 14)
@@ -51,15 +58,46 @@ open class SearchQueryResponseViewController : UIViewController {
         textView.backgroundColor = UIColor.systemBackground
         textView.text = responseString
     }
+        
+    public func buildMapView() {
+        mapView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(mapView)
+        
+        mapView.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
+        mapView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
+        mapView.heightAnchor.constraint(equalToConstant: view.frame.size.width * 2.0 / 3.0).isActive = true
+        mapView.widthAnchor.constraint(equalToConstant: view.frame.size.width).isActive = true
+        
+        updateMapView(with: model.placeDetailsResponses, targetLocation: model.targetLocation)
+    }
+
+    public func updateMapView(with placeDetailsResponses:[PlaceDetailsResponse], targetLocation:CLLocation) {
+        mapView.isScrollEnabled = true
+        mapView.isPitchEnabled = false
+        mapView.isZoomEnabled = true
+        mapView.isRotateEnabled = false
+        mapView.showsUserLocation = true
+        mapView.showsCompass = false
+
+        mapView.setRegion(MKCoordinateRegion(center: targetLocation.coordinate, latitudinalMeters: 1000, longitudinalMeters: 1000), animated: false)
+                
+        for index in 0..<placeDetailsResponses.count {
+            let response = placeDetailsResponses[index]
+            let pin = MKPointAnnotation()
+            pin.title = "\(index + 1)"
+            pin.coordinate = CLLocationCoordinate2D(latitude: response.searchResponse.latitude, longitude: response.searchResponse.longitude)
+            mapView.addAnnotation(pin)
+        }
+    }
     
     public func buildSearchQueryResponseCollectionView() {
         configureHierarchy()
         configureDataSource()
-        updateResponseView(with: model.responseString, placeDetailsResponses: model.placeDetailsResponses)
+        updateResponseView(with: model.responseString, placeDetailsResponses: model.placeDetailsResponses, targetLocation: model.targetLocation)
     }
     
-    public func updateResponseView(with responseString:String, placeDetailsResponses:[PlaceDetailsResponse]) {
-        model = SearchQueryResponseViewModel(responseString: responseString, placeDetailsResponses: placeDetailsResponses)
+    public func updateResponseView(with responseString:String, placeDetailsResponses:[PlaceDetailsResponse], targetLocation:CLLocation) {
+        model = SearchQueryResponseViewModel(responseString: responseString, placeDetailsResponses: placeDetailsResponses, targetLocation: targetLocation)
         textView.text = model.responseString
         updateCollectionViewModel()
     }
@@ -67,7 +105,7 @@ open class SearchQueryResponseViewController : UIViewController {
 
 extension SearchQueryResponseViewController {
     private func createLayout() -> UICollectionViewLayout {
-        let config = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
+        let config = UICollectionLayoutListConfiguration(appearance:.plain)
         return UICollectionViewCompositionalLayout.list(using: config)
     }
 }
@@ -79,17 +117,19 @@ extension SearchQueryResponseViewController {
         collectionView.translatesAutoresizingMaskIntoConstraints  = false
         view.addSubview(collectionView)
         collectionView.backgroundColor = UIColor.systemBackground
-        collectionView.topAnchor.constraint(equalTo: textView.bottomAnchor).isActive = true
+        collectionView.topAnchor.constraint(equalTo: mapView.bottomAnchor, constant: 8.0).isActive = true
         collectionView.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
         collectionView.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
-        collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
+        collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
         collectionView.delegate = self
+        collectionView.isScrollEnabled = true
     }
     
     private func configureDataSource() {
         
         let cellRegistration = UICollectionView.CellRegistration<SearchQueryResponseCollectionViewCell, PlaceDetailsResponse> { (cell, indexPath, item) in
             cell.placeDetailsResponse = item
+            cell.updateView(with: item, index: indexPath.item)
         }
         
         dataSource = UICollectionViewDiffableDataSource<Section, PlaceDetailsResponse>(collectionView: collectionView) {

@@ -22,12 +22,7 @@ public struct PlacePhotoResponse {
     let prefix:String
     let suffix:String
     
-    func photoUrl(resize:CGSize? = nil) ->URL? {
-        
-        guard let resize = resize else {
-            return URL(string:"\(prefix)\(Int(floor(width)))x\(Int(floor(height)))\(suffix)")
-        }
-        
-        return URL(string:"\(prefix)\(Int(floor(resize.width)))x\(Int(floor(resize.height)))\(suffix)")
+    func photoUrl() ->URL? {
+        return URL(string:"\(prefix)\(Int(floor(width)))x\(Int(floor(height)))\(suffix)")
     }
 }

@@ -15,6 +15,7 @@ public enum ChatDetailsViewControllerError : Error {
 public protocol ChatDetailsViewControllerDelegate : AnyObject {
     func didTap(textResponse:String)
     func didRequestSearch(for query:String)
+    func detailsViewTargetLocation()->CLLocation
 }
 
 open class ChatDetailsViewController : UIViewController {
@@ -100,11 +101,11 @@ open class ChatDetailsViewController : UIViewController {
         searchResponseViewController!.view.bottomAnchor.constraint(equalTo: responseContainerView.bottomAnchor).isActive = true
     }
     
-    private func buildSearchQueryResponseContainerView(with responseString:String, placeDetailsResponses:[PlaceDetailsResponse], parentView:UIView) {
+    private func buildSearchQueryResponseContainerView(with responseString:String, placeDetailsResponses:[PlaceDetailsResponse], targetLocation:CLLocation, parentView:UIView) {
 
         buildResponseContainerView(parentView: parentView)
         
-        searchQueryResponseViewController = SearchQueryResponseViewController(responseString: responseString, placeDetailsResponses: placeDetailsResponses)
+        searchQueryResponseViewController = SearchQueryResponseViewController(responseString: responseString, placeDetailsResponses: placeDetailsResponses, targetLocation:targetLocation )
         responseContainerView.addSubview(searchQueryResponseViewController!.view)
         addChild(searchQueryResponseViewController!)
         searchQueryResponseViewController!.didMove(toParent: self)
@@ -169,6 +170,9 @@ extension ChatDetailsViewController {
 
 extension ChatDetailsViewController : ChatDetailsViewModelDelegate {
     public func modelDidUpdate() {
+        guard let delegate = delegate else {
+            return
+        }
         switch model.currentIntent.intent {
         case .TellDefault, .OpenDefault, .SearchDefault:
             if let response = model.responseString {
@@ -180,9 +184,9 @@ extension ChatDetailsViewController : ChatDetailsViewModelDelegate {
         case .SearchQuery:
             if let response = model.responseString {
                 if !detailsContainerView.subviews.contains(responseContainerView) {
-                    buildSearchQueryResponseContainerView(with: response, placeDetailsResponses: model.placeDetailsResponses, parentView:detailsContainerView)
+                    buildSearchQueryResponseContainerView(with: response, placeDetailsResponses: model.placeDetailsResponses, targetLocation: delegate.detailsViewTargetLocation(), parentView:detailsContainerView)
                 }
-                searchQueryResponseViewController?.updateResponseView(with: response, placeDetailsResponses: model.placeDetailsResponses)
+                searchQueryResponseViewController?.updateResponseView(with: response, placeDetailsResponses: model.placeDetailsResponses, targetLocation: delegate.detailsViewTargetLocation())
             }
         default:
             if let response = model.responseString, let selectedPlaceSearchResponse = model.currentIntent.selectedPlaceSearchResponse {

@@ -127,8 +127,8 @@ open class MessagesViewController: MSMessagesAppViewController {
         // Called when the user deletes the message without sending it.
     
         // Use this to clean up state related to the deleted message.
-        if let rootView = chatResultView?.rootView as? ChatResultView, let location = chatModel.locationProvider.currentLocation() {
-            chatModel.refreshModel(resultImageSize:rootView.compactSize(),queryIntents:[AssistiveChatHostIntent](),parameters: self.chatHost.queryIntentParameters, nearLocation: location)
+        if let location = chatModel.locationProvider.currentLocation() {
+            chatModel.refreshModel(queryIntents:[AssistiveChatHostIntent](),parameters: self.chatHost.queryIntentParameters, nearLocation: location)
         }
 
     }
@@ -389,6 +389,10 @@ extension MessagesViewController {
 
 
 extension MessagesViewController : ChatDetailsViewControllerDelegate {
+    public func detailsViewTargetLocation() -> CLLocation {
+        return chatModel.locationProvider.currentLocation()!
+    }
+    
     public func didTap(textResponse: String) {
         
     }
@@ -464,9 +468,7 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
         }
         
         print("Paramaters did update, requesting new chat model")
-        if let rootView = chatResultView?.rootView as? ChatResultView {
-            chatModel.refreshModel(resultImageSize:rootView.compactSize(),queryIntents: parameters.queryIntents, parameters: chatHost.queryIntentParameters, nearLocation: nearLocation )
-        }
+        chatModel.refreshModel(queryIntents: parameters.queryIntents, parameters: chatHost.queryIntentParameters, nearLocation: nearLocation )
         
         if let chatDetailsViewController = chatDetailsViewController, chatDetailsViewController.model.currentIntent != parameters.queryIntents.last {
             chatDetailsViewController.willUpdateModel()

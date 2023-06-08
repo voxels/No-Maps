@@ -56,10 +56,10 @@ public class ChatResultViewModel : ObservableObject {
     }
     
     public func didTap(chatResult:ChatResult, parameters:AssistiveChatHostQueryParameters) {
-        guard let intent = parameters.queryIntents.last else {
+        guard let _ = parameters.queryIntents.last else {
             return
         }
-        
+        /*
         switch intent.intent {
         case .Unsupported:
             break
@@ -108,6 +108,7 @@ public class ChatResultViewModel : ObservableObject {
         case .ShareResult:
             break
         }
+         */
     }
     
     public func
@@ -343,9 +344,9 @@ public class ChatResultViewModel : ObservableObject {
         }
     }
     
-    public func refreshModel(resultImageSize:CGSize?, queryIntents:[AssistiveChatHostIntent]? = nil, parameters:AssistiveChatHostQueryParameters, nearLocation:CLLocation) {
+    public func refreshModel(queryIntents:[AssistiveChatHostIntent]? = nil, parameters:AssistiveChatHostQueryParameters, nearLocation:CLLocation) {
         guard let queryIntents = queryIntents else {
-            zeroStateModel(resultImageSize: resultImageSize)
+            zeroStateModel()
             return
         }
         
@@ -357,17 +358,17 @@ public class ChatResultViewModel : ObservableObject {
         
         switch queryIntents.count {
         case 0:
-            zeroStateModel(resultImageSize: resultImageSize)
+            zeroStateModel()
         default:
             if let lastIntent = queryIntents.last {
-                model(resultImageSize: resultImageSize, intents: queryIntents, lastIntent:lastIntent, parameters: parameters, placeSearchResponses: lastIntent.placeSearchResponses, nearLocation: nearLocation)
+                model( intents: queryIntents, lastIntent:lastIntent, parameters: parameters, placeSearchResponses: lastIntent.placeSearchResponses, nearLocation: nearLocation)
             } else {
-                zeroStateModel(resultImageSize: resultImageSize)
+                zeroStateModel()
             }
         }
     }
     
-    public func model(resultImageSize:CGSize?, intents:[AssistiveChatHostIntent], lastIntent:AssistiveChatHostIntent, parameters:AssistiveChatHostQueryParameters, placeSearchResponses:[PlaceSearchResponse]? = nil, nearLocation:CLLocation) {
+    public func model( intents:[AssistiveChatHostIntent], lastIntent:AssistiveChatHostIntent, parameters:AssistiveChatHostQueryParameters, placeSearchResponses:[PlaceSearchResponse]? = nil, nearLocation:CLLocation) {
         
         switch lastIntent.intent {
         case .SaveDefault,  .SearchDefault, .RecallDefault, .OpenDefault:
@@ -405,7 +406,7 @@ public class ChatResultViewModel : ObservableObject {
                     var checkResponses = [PlaceSearchResponse]()
                     
                     if let placeResponse = lastIntent.selectedPlaceSearchResponse, let detailsResponse = lastIntent.selectedPlaceSearchDetails, let photosResponses = detailsResponse.photoResponses, let tipsResponses = detailsResponse.tipsResponses {
-                        let results = PlaceResponseFormatter.placeDetailsChatResults(for: placeResponse, details:detailsResponse, photos: photosResponses, tips: tipsResponses, results: [placeResponse], resize:resultImageSize, queryIntents: intents)
+                        let results = PlaceResponseFormatter.placeDetailsChatResults(for: placeResponse, details:detailsResponse, photos: photosResponses, tips: tipsResponses, results: [placeResponse], queryIntents: intents)
                         chatResults.append(contentsOf:results)
                     } else {
                         if let placeResponse = lastIntent.selectedPlaceSearchResponse {
@@ -492,7 +493,7 @@ public class ChatResultViewModel : ObservableObject {
                             }
                             
                             
-                            let results = PlaceResponseFormatter.placeDetailsChatResults(for: response, details:detailsResponse, photos: placePhotosResponses, tips: placeTipsResponses, results: checkResponses, resize:resultImageSize, queryIntents: intents)
+                            let results = PlaceResponseFormatter.placeDetailsChatResults(for: response, details:detailsResponse, photos: placePhotosResponses, tips: placeTipsResponses, results: checkResponses, queryIntents: intents)
                             chatResults.append(contentsOf:results)
                         }
                     }
@@ -509,9 +510,9 @@ public class ChatResultViewModel : ObservableObject {
                 }
             }
         case .SearchPlace:
-            placeQueryModel(resultImageSize: resultImageSize, query: lastIntent.caption, queryIntents: intents, parameters: parameters)
+            placeQueryModel( query: lastIntent.caption, queryIntents: intents, parameters: parameters)
         case .SearchQuery:
-            searchQueryModel(resultImageSize: resultImageSize, query: lastIntent.caption, queryIntents: intents, parameters:parameters, nearLocation:nearLocation )
+            searchQueryModel( query: lastIntent.caption, queryIntents: intents, parameters:parameters, nearLocation:nearLocation )
         default:
             let _ = Task.init {
                 do {
@@ -520,7 +521,7 @@ public class ChatResultViewModel : ObservableObject {
                     var checkResponses = [PlaceSearchResponse]()
                     
                     if let placeResponse = lastIntent.selectedPlaceSearchResponse, let detailsResponse = lastIntent.selectedPlaceSearchDetails, let photosResponses = detailsResponse.photoResponses, let tipsResponses = detailsResponse.tipsResponses {
-                        let results = PlaceResponseFormatter.placeDetailsChatResults(for: placeResponse, details:detailsResponse, photos: photosResponses, tips: tipsResponses, results: [placeResponse], resize:resultImageSize, queryIntents: intents)
+                        let results = PlaceResponseFormatter.placeDetailsChatResults(for: placeResponse, details:detailsResponse, photos: photosResponses, tips: tipsResponses, results: [placeResponse], queryIntents: intents)
                         chatResults.append(contentsOf:results)
                     } else {
                         if lastIntent.placeSearchResponses.count > 0 {
@@ -596,7 +597,7 @@ public class ChatResultViewModel : ObservableObject {
                             }
                             
                             
-                            let results = PlaceResponseFormatter.placeDetailsChatResults(for: response, details:detailsResponse, photos: placePhotosResponses, tips: placeTipsResponses, results: checkResponses, resize:resultImageSize, queryIntents: intents)
+                            let results = PlaceResponseFormatter.placeDetailsChatResults(for: response, details:detailsResponse, photos: placePhotosResponses, tips: placeTipsResponses, results: checkResponses, queryIntents: intents)
                             chatResults.append(contentsOf:results)
                         }
                     }
@@ -616,19 +617,19 @@ public class ChatResultViewModel : ObservableObject {
         }
     }
     
-    public func placeQueryModel(resultImageSize:CGSize?, query:String,  queryIntents:[AssistiveChatHostIntent]?, parameters:AssistiveChatHostQueryParameters ) {
+    public func placeQueryModel( query:String,  queryIntents:[AssistiveChatHostIntent]?, parameters:AssistiveChatHostQueryParameters ) {
         print("Refreshing model with place query parameters:\(String(describing: parameters.queryParameters))")
         
         let _ = Task.init {
             var chatResults = [ChatResult]()
             
-            if let selectedPlaceDetailsResponse = queryIntents?.last?.selectedPlaceSearchDetails {
-                var allResponses = [PlaceDetailsResponse]()
+            if let _ = queryIntents?.last?.selectedPlaceSearchDetails {
+                let allResponses = [PlaceDetailsResponse]()
                 
                 for index in 0..<min(allResponses.count,maxChatResults) {
                     
                     let response = allResponses[index]
-                    let results = PlaceResponseFormatter.placeChatResults(for: response.searchResponse, details:response, resize: resultImageSize)
+                    let results = PlaceResponseFormatter.placeChatResults(for: response.searchResponse, details:response)
                     chatResults.append(contentsOf:results)
                 }
             } else if let selectedPlaceResponse = queryIntents?.last?.selectedPlaceSearchResponse {
@@ -639,7 +640,7 @@ public class ChatResultViewModel : ObservableObject {
                 for index in 0..<min(allResponses.count,maxChatResults) {
                     
                     let response = allResponses[index]
-                    let results = PlaceResponseFormatter.placeChatResults(for: response, resize: resultImageSize)
+                    let results = PlaceResponseFormatter.placeChatResults(for: response)
                     chatResults.append(contentsOf:results)
                 }
             } else if let backupResponses = queryIntents?.last?.placeSearchResponses, backupResponses.count > 0 {
@@ -650,7 +651,7 @@ public class ChatResultViewModel : ObservableObject {
                 for index in 0..<min(allResponses.count,maxChatResults) {
                     
                     let response = allResponses[index]
-                    let results = PlaceResponseFormatter.placeChatResults(for: response, resize: resultImageSize)
+                    let results = PlaceResponseFormatter.placeChatResults(for: response)
                     
                     chatResults.append(contentsOf:results)
                 }
@@ -666,7 +667,7 @@ public class ChatResultViewModel : ObservableObject {
         }
     }
     
-    public func searchQueryModel(resultImageSize:CGSize?, query:String,  queryIntents:[AssistiveChatHostIntent]?, parameters:AssistiveChatHostQueryParameters, nearLocation:CLLocation ) {
+    public func searchQueryModel( query:String,  queryIntents:[AssistiveChatHostIntent]?, parameters:AssistiveChatHostQueryParameters, nearLocation:CLLocation ) {
         print("Refreshing model with search query parameters:\(String(describing: parameters.queryParameters))")
         let _ = Task.init {
             guard let placeSearchResponses = queryIntents?.last?.placeSearchResponses else {
@@ -683,7 +684,7 @@ public class ChatResultViewModel : ObservableObject {
             var chatResults = [ChatResult]()
             for index in 0..<min(allResponses.count,maxChatResults) {
                 let response = allResponses[index]
-                let results = PlaceResponseFormatter.placeChatResults(for: response, resize: resultImageSize, queryIntents: queryIntents)
+                let results = PlaceResponseFormatter.placeChatResults(for: response, queryIntents: queryIntents)
                 chatResults.append(contentsOf:results)
             }
             
@@ -697,7 +698,7 @@ public class ChatResultViewModel : ObservableObject {
         
     }
     
-    public func zeroStateModel(resultImageSize:CGSize?) {
+    public func zeroStateModel() {
         let blendedResults = blendDefaults(with: [])
         DispatchQueue.main.async { [unowned self] in
             self.results.removeAll()
