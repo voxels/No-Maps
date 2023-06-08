@@ -123,7 +123,7 @@ public class ChatResultViewModel : ObservableObject {
             do {
                 try await detailIntent(intent: lastIntent, parameters: parameters, nearLocation:nearLocation)
             } catch {
-                print(error.localizedDescription)
+                print(error)
             }
         }
     }
@@ -139,11 +139,6 @@ public class ChatResultViewModel : ObservableObject {
         if let placeResponse = intent.selectedPlaceSearchResponse {
             checkResponses.append(placeResponse)
         } else {
-            if let currentLocation = locationProvider.currentLocation() {
-                let rawAutocompleteQuery = try await placeSearchSession.autocomplete(caption: intent.caption, parameters: parameters.queryParameters, currentLocation: currentLocation.coordinate)
-                let autocompleteResponses = try PlaceResponseFormatter.autocompletePlaceSearchResponses(with: rawAutocompleteQuery)
-                checkResponses.append(contentsOf:autocompleteResponses)
-            }
             let request = placeSearchRequest(parameters: parameters)
             let rawQueryResponse = try await placeSearchSession.query(request:request)
             let placeSearchResponses = try PlaceResponseFormatter.placeSearchResponses(with: rawQueryResponse, nearLocation: nearLocation)
@@ -281,7 +276,7 @@ public class ChatResultViewModel : ObservableObject {
                     }
                 } catch {
                     print("Could not fetch details: catching error and continuing")
-                    print(error.localizedDescription)
+                    print(error)
                     for event in queryParametersHistory {
                         for index in 0..<event.queryIntents.count {
                             let intent = event.queryIntents[index]
@@ -506,7 +501,10 @@ public class ChatResultViewModel : ObservableObject {
                     }
                 }
                 catch {
-                    print(error.localizedDescription)
+                    print(error)
+                    DispatchQueue.main.async { [unowned self] in
+                        self.delegate?.didUpdateModel(for: locationProvider.currentLocation())
+                    }
                 }
             }
         case .SearchPlace:
@@ -611,7 +609,7 @@ public class ChatResultViewModel : ObservableObject {
                     }
                 }
                 catch {
-                    print(error.localizedDescription)
+                    print(error)
                 }
             }
         }

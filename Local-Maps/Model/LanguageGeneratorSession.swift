@@ -66,7 +66,7 @@ open class LanguageGeneratorSession : ObservableObject {
                             let json = try JSONSerialization.jsonObject(with: d)
                             checkedContinuation.resume(returning:json)
                         } catch {
-                            print(error.localizedDescription)
+                            print(error)
                             let returnedString = String(data: d, encoding: String.Encoding.utf8)
                             print(returnedString ?? "")
                             checkedContinuation.resume(throwing:error)
@@ -100,8 +100,7 @@ open class LanguageGeneratorSession : ObservableObject {
                         print("Did not find API Key")
                     }
                 } catch {
-                    
-                    print(error.localizedDescription)
+                    print(error)
                 }
             }
             

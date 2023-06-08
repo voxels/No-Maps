@@ -162,7 +162,10 @@ extension ChatDetailsViewController {
             do {
                 try await self.model.updateModel(parameters: parameters, responseString: responseString, placeSearchResponses: placeSearchResponses, nearLocation: nearLocation)
             } catch {
-                print(error.localizedDescription)
+                print(error)
+                DispatchQueue.main.async { [weak self] in
+                    self?.modelDidUpdate()
+                }
             }
         }
     }
@@ -187,6 +190,7 @@ extension ChatDetailsViewController : ChatDetailsViewModelDelegate {
                     buildSearchQueryResponseContainerView(with: response, placeDetailsResponses: model.placeDetailsResponses, targetLocation: delegate.detailsViewTargetLocation(), parentView:detailsContainerView)
                 }
                 searchQueryResponseViewController?.updateResponseView(with: response, placeDetailsResponses: model.placeDetailsResponses, targetLocation: delegate.detailsViewTargetLocation())
+                searchQueryResponseViewController?.updateMapView(with: model.placeDetailsResponses, targetLocation: delegate.detailsViewTargetLocation())
             }
         default:
             if let response = model.responseString, let selectedPlaceSearchResponse = model.currentIntent.selectedPlaceSearchResponse {

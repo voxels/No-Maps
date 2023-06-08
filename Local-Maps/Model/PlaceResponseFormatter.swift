@@ -132,6 +132,7 @@ open class PlaceResponseFormatter {
 
             }
         }
+        
 
         return retVal
     }
@@ -263,6 +264,7 @@ open class PlaceResponseFormatter {
     }
     
     public class func placeDetailsResponse(with response:Any, for placeSearchResponse:PlaceSearchResponse, placePhotosResponses:[PlacePhotoResponse]? = nil, placeTipsResponses:[PlaceTipsResponse]? = nil) throws ->PlaceDetailsResponse {
+        
         guard let response = response as? NSDictionary else {
             throw PlaceResponseFormatterError.InvalidRawResponseType
         }
@@ -375,6 +377,11 @@ open class PlaceResponseFormatter {
      */
     public class func placePhotoResponses(with response:Any, for placeID:String) throws ->[PlacePhotoResponse] {
         var retVal = [PlacePhotoResponse]()
+        
+        if let response = response as? NSDictionary, response.allKeys.count == 0 {
+            return retVal
+        }
+        
         guard let response = response as? [NSDictionary] else {
             throw PlaceResponseFormatterError.InvalidRawResponseType
         }
@@ -417,6 +424,10 @@ open class PlaceResponseFormatter {
     
     public class func placeTipsResponses( with response:Any, for placeID:String) throws ->[PlaceTipsResponse] {
         var retVal = [PlaceTipsResponse]()
+        
+        if let response = response as? NSDictionary, response.allKeys.count == 0 {
+            return retVal
+        }
         
         guard let response = response as? [NSDictionary] else {
             throw PlaceResponseFormatterError.InvalidRawResponseType

@@ -364,7 +364,7 @@ open class PlaceSearchSession : ObservableObject {
     }
     
     
-    internal func fetch(url:URL, apiKey:String) async throws ->Any {
+    internal func fetch(url:URL, apiKey:String) async throws -> Any {
         print("Requesting URL: \(url)")
         var request = URLRequest(url:url)
         request.setValue(apiKey, forHTTPHeaderField: "Authorization")
@@ -376,7 +376,7 @@ open class PlaceSearchSession : ObservableObject {
                 } else {
                     if let d = data {
                         do {
-                            let json = try JSONSerialization.jsonObject(with: d)
+                            let json = try JSONSerialization.jsonObject(with: d, options: [.fragmentsAllowed])
                             if let checkDict = json as? NSDictionary, let message = checkDict["message"] as? String, message.hasPrefix("Foursquare servers")  {
                                 print("Message from server:")
                                 print(message)
@@ -385,11 +385,10 @@ open class PlaceSearchSession : ObservableObject {
                                 checkedContinuation.resume(returning:json)
                             }
                         } catch {
-                            print(error.localizedDescription)
-                            let returnedString = String(data: d, encoding: String.Encoding.utf8)
-                            print(returnedString ?? "")
-                            checkedContinuation.resume(throwing:error)
-                        }
+                            print(error)
+                            let returnedString = String(data: d, encoding: String.Encoding.utf8) ?? ""
+                            print(returnedString)
+                            checkedContinuation.resume(returning: NSDictionary())                        }
                     }
                 }
             })
@@ -419,8 +418,7 @@ open class PlaceSearchSession : ObservableObject {
                         print("Did not find API Key")
                     }
                 } catch {
-                    
-                    print(error.localizedDescription)
+                    print(error)
                 }
             }
             

@@ -46,7 +46,7 @@ public class ChatDetailsViewModel {
 
         switch lastIntent.intent {
         case .SearchQuery:            
-            try await fetchDetails(for: self.placeSearchResponses)
+            try await fetchDetails(for: self.placeSearchResponses, nearLocation: nearLocation)
         default:
             break
         }
@@ -56,7 +56,7 @@ public class ChatDetailsViewModel {
         }
     }
     
-    internal func fetchDetails(for responses:[PlaceSearchResponse]) async throws {
+    internal func fetchDetails(for responses:[PlaceSearchResponse], nearLocation:CLLocation) async throws {
         placeDetailsResponses = try await withThrowingTaskGroup(of: PlaceDetailsResponse.self, returning: [PlaceDetailsResponse].self) { [weak self] taskGroup in
             guard let strongSelf = self else {
                 return [PlaceDetailsResponse]()
@@ -83,6 +83,12 @@ public class ChatDetailsViewModel {
             for try await value in taskGroup {
                 allResponses.append(value)
             }
+            
+            allResponses = allResponses.sorted(by: { firstResponse, checkResponse in
+                let firstLocation = CLLocation(latitude: firstResponse.searchResponse.latitude, longitude: firstResponse.searchResponse.longitude)
+                let checkLocation = CLLocation(latitude: checkResponse.searchResponse.latitude, longitude: checkResponse.searchResponse.longitude)
+                return firstLocation.distance(from: nearLocation) < checkLocation.distance(from: nearLocation)
+            })
             return allResponses
         }
     }

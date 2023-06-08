@@ -93,7 +93,7 @@ open class MessagesViewController: MSMessagesAppViewController {
                             try await self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true, nearLocation: location)
                         }
                     } catch {
-                        print(error.localizedDescription)
+                        print(error)
                     }
                 }
             }
@@ -106,7 +106,7 @@ open class MessagesViewController: MSMessagesAppViewController {
                             try await self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true, nearLocation: location)
                         }
                     } catch {
-                        print(error.localizedDescription)
+                        print(error)
                     }
                 }
             }
@@ -257,7 +257,7 @@ extension MessagesViewController {
                             }
                         }
                     } catch {
-                        print(error .localizedDescription)
+                        print(error)
                     }
                 }
             case .SearchPlace:
@@ -274,7 +274,7 @@ extension MessagesViewController {
                                 }
                             }
                         } catch {
-                            print(error .localizedDescription)
+                            print(error)
                         }
                     }
                 }
@@ -295,7 +295,7 @@ extension MessagesViewController {
                                 }
                             }
                         } catch {
-                            print(error .localizedDescription)
+                            print(error)
                         }
                     }
                 } else {
@@ -456,7 +456,7 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
         do {
             try add(caption: caption, subcaption: subcaption, image:image, mediaFileURL: mediaFileURL, imageTitle: imageTitle, imageSubtitle: imageSubtitle, trailingCaption: trailingCaption, trailingSubcaption: trailingSubcaption, to: activeConversation)
         } catch {
-            print(error.localizedDescription)
+            print(error)
         }
     }
     
@@ -509,7 +509,7 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
                         send(caption:description, subcaption:nil, image:image, mediaFileURL:nil, imageTitle:nil, imageSubtitle:nil, trailingCaption:nil, trailingSubcaption:nil)
                         
                     } catch {
-                        print(error .localizedDescription)
+                        print(error)
                     }
                 }
 

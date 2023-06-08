@@ -12,6 +12,7 @@ open class SearchQueryResponseViewController : UIViewController {
     internal var collectionView: UICollectionView! = nil
     internal var textView = UILabel(frame:.zero)
     internal var mapView = MKMapView(frame: .zero)
+    internal var mapViewAnnotations = [MKAnnotation]()
     internal var model:SearchQueryResponseViewModel
     
     var dataSource: UICollectionViewDiffableDataSource<Section, PlaceDetailsResponse>! = nil
@@ -72,6 +73,8 @@ open class SearchQueryResponseViewController : UIViewController {
     }
 
     public func updateMapView(with placeDetailsResponses:[PlaceDetailsResponse], targetLocation:CLLocation) {
+        mapView.removeAnnotations(mapViewAnnotations)
+        mapViewAnnotations.removeAll()
         mapView.isScrollEnabled = true
         mapView.isPitchEnabled = false
         mapView.isZoomEnabled = true
@@ -87,6 +90,7 @@ open class SearchQueryResponseViewController : UIViewController {
             pin.title = "\(index + 1)"
             pin.coordinate = CLLocationCoordinate2D(latitude: response.searchResponse.latitude, longitude: response.searchResponse.longitude)
             mapView.addAnnotation(pin)
+            mapViewAnnotations.append(pin)
         }
     }
     
@@ -127,9 +131,10 @@ extension SearchQueryResponseViewController {
     
     private func configureDataSource() {
         
-        let cellRegistration = UICollectionView.CellRegistration<SearchQueryResponseCollectionViewCell, PlaceDetailsResponse> { (cell, indexPath, item) in
+        let cellRegistration = UICollectionView.CellRegistration<SearchQueryResponseCollectionViewCell, PlaceDetailsResponse> { [weak self] (cell, indexPath, item) in
             cell.placeDetailsResponse = item
-            cell.updateView(with: item, index: indexPath.item)
+            let index = self?.model.placeDetailsResponses.firstIndex(of: item) ?? indexPath.row
+            cell.updateView(with: item, index:index)
         }
         
         dataSource = UICollectionViewDiffableDataSource<Section, PlaceDetailsResponse>(collectionView: collectionView) {

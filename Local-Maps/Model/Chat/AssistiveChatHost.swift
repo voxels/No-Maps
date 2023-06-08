@@ -274,7 +274,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
                 return nil
             }
         } catch {
-            print(error.localizedDescription)
+            print(error)
             return nil
         }
     }
