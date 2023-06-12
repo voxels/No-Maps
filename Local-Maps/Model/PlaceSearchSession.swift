@@ -371,7 +371,7 @@ open class PlaceSearchSession : ObservableObject {
         let responseAny:Any = try await withCheckedThrowingContinuation({checkedContinuation in
             let dataTask = searchSession?.dataTask(with: request, completionHandler: { data, response, error in
                 if let e = error {
-                    print(e.localizedDescription)
+                    print(e)
                     checkedContinuation.resume(throwing:e)
                 } else {
                     if let d = data {
@@ -432,18 +432,8 @@ open class PlaceSearchSession : ObservableObject {
                     }
                 }
                 
-                /*
-                operation.queryCompletionBlock = { (result, error) in
-                    if self.foursquareApiKey == "" {
-                        checkedContinuation.resume(with: .success(false))
-                    } else {
-                        checkedContinuation.resume(with: .success(true))
-                    }
-                }
-                 */
-                
                 operation.queuePriority = .veryHigh
-                operation.qualityOfService = .userInteractive
+                operation.qualityOfService = .userInitiated
   
                 keysContainer.publicCloudDatabase.add(operation)
             }
@@ -456,7 +446,7 @@ open class PlaceSearchSession : ObservableObject {
         if foundApiKey {
             switch PlaceSearchService(rawValue:service) {
             case .foursquare:
-                return configuredSession(for: service, key: self.foursquareApiKey)
+                return configuredSession()
             default:
                 throw PlaceSearchSessionError.ServiceNotFound
             }
@@ -467,9 +457,7 @@ open class PlaceSearchSession : ObservableObject {
 }
 
 private extension PlaceSearchSession {
-    func configuredSession(for service:String, key:String)->URLSession {
-        print("Beginning Place Search Session for \(service) with key \(key)")
-        
+    func configuredSession()->URLSession {
         let sessionConfiguration = URLSessionConfiguration.default
         let session = URLSession(configuration: sessionConfiguration)
         return session

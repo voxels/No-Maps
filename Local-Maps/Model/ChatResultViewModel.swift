@@ -55,62 +55,6 @@ public class ChatResultViewModel : ObservableObject {
         try await applyQuery(caption: queryCaption!, parameters: parameters, history: queryParametersHistory, nearLocation:nearLocation)
     }
     
-    public func didTap(chatResult:ChatResult, parameters:AssistiveChatHostQueryParameters) {
-        guard let _ = parameters.queryIntents.last else {
-            return
-        }
-        /*
-        switch intent.intent {
-        case .Unsupported:
-            break
-        case .SaveDefault:
-            break
-        case .SearchDefault:
-            break
-        case .RecallDefault:
-            break
-        case .TellDefault:
-            break
-        case .OpenDefault:
-            break
-        case .SearchQuery:
-            break
-        case .TellQuery:
-            break
-        case .SavePlace:
-            break
-        case .SearchPlace:
-            break
-        case .RecallPlace:
-            break
-        case .TellPlace:
-            break
-        case .PlaceDetailsDirections:
-            break
-        case .PlaceDetailsPhotos:
-            break
-        case .PlaceDetailsTips:
-            break
-        case .PlaceDetailsInstagram:
-            break
-        case .PlaceDetailsOpenHours:
-            break
-        case .PlaceDetailsBusyHours:
-            break
-        case .PlaceDetailsPopularity:
-            break
-        case .PlaceDetailsCost:
-            break
-        case .PlaceDetailsMenu:
-            break
-        case .PlaceDetailsPhone:
-            break
-        case .ShareResult:
-            break
-        }
-         */
-    }
-    
     public func
     applyQuery(caption:String, parameters:AssistiveChatHostQueryParameters, history:[AssistiveChatHostQueryParameters], nearLocation:CLLocation) async throws {
         print("Applying query: \(caption)")
@@ -162,10 +106,6 @@ public class ChatResultViewModel : ObservableObject {
         
         var checkCaption = intent.caption.lowercased()
         switch intent.intent {
-        case .Unsupported:
-            break
-        case .SaveDefault, .SearchDefault, .RecallDefault, .TellDefault, .OpenDefault:
-            break
         case .SearchQuery:
             if checkCaption.hasPrefix("where can i find") {
                 checkCaption = String(checkCaption.dropFirst(16))
@@ -174,35 +114,7 @@ public class ChatResultViewModel : ObservableObject {
             if checkCaption.hasPrefix("tell me about") {
                 checkCaption = String(checkCaption.dropFirst(13))
             }
-        case .SavePlace:
-            break
-        case .SearchPlace:
-            break
-        case .RecallPlace:
-            break
-        case .TellPlace:
-            break
-        case .PlaceDetailsDirections:
-            break
-        case .PlaceDetailsPhotos:
-            break
-        case .PlaceDetailsTips:
-            break
-        case .PlaceDetailsInstagram:
-            break
-        case .PlaceDetailsOpenHours:
-            break
-        case .PlaceDetailsBusyHours:
-            break
-        case .PlaceDetailsPopularity:
-            break
-        case .PlaceDetailsCost:
-            break
-        case .PlaceDetailsMenu:
-            break
-        case .PlaceDetailsPhone:
-            break
-        case .ShareResult:
+        default:
             break
         }
         

@@ -11,7 +11,7 @@ open class SearchQueryResponseCollectionViewCell : UICollectionViewCell {
     public var placeDetailsResponse:PlaceDetailsResponse?
     
     internal var textLabel:UILabel = UILabel(frame:.zero)
-    internal var textLabelEdgeInsets = UIEdgeInsets(top: 8, left: 20.0, bottom: -8, right: -20.0)
+    internal var textLabelEdgeInsets = UIEdgeInsets(top: 8, left: 28.0, bottom: -8, right: -20.0)
     internal var indexLabel:UILabel = UILabel(frame:.zero)
 
     override public init(frame: CGRect) {

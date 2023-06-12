@@ -70,7 +70,7 @@ extension LocationProvider : CLLocationManagerDelegate {
     
     public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("Location Manager did fail with error:")
-        print(error.localizedDescription)
+        print(error)
     }
 
 }

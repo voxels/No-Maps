@@ -58,7 +58,7 @@ open class LanguageGeneratorSession : ObservableObject {
         let responseAny:Any = try await withCheckedThrowingContinuation({checkedContinuation in
             let dataTask = searchSession?.dataTask(with: urlRequest, completionHandler: { data, response, error in
                 if let e = error {
-                    print(e.localizedDescription)
+                    print(e)
                     checkedContinuation.resume(throwing:e)
                 } else {
                     if let d = data {

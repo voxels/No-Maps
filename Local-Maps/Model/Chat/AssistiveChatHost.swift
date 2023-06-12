@@ -180,38 +180,10 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
                 return .PlaceDetailsMenu
             } else if caption.starts(with: "When is") && caption.hasSuffix("open?") {
                 return .PlaceDetailsOpenHours
+            } else if caption.starts(with: "Share the") {
+                return .ShareResult
             }
             
-            if let chatResult = chatResult, let placeResponse = chatResult.placeResponse, let detailsResponse = chatResult.placeDetailsResponse {
-                switch chatResult.title {
-                case placeResponse.address, placeResponse.formattedAddress, placeResponse.addressExtended:
-                    return .ShareResult
-                default:
-                    if let tel = detailsResponse.tel, chatResult.title == tel {
-                        return .ShareResult
-                    }
-                    if let website = detailsResponse.website, chatResult.title == website {
-                        return .ShareResult
-                    }
-                    if let description = detailsResponse.description, chatResult.title == description {
-                        return .ShareResult
-                    }
-                    if let hours = detailsResponse.hours, chatResult.title == hours {
-                        return .ShareResult
-                    }
-                    if let price = detailsResponse.price, chatResult.title == "\(price)" {
-                        return .ShareResult
-                    }
-                }
-            }
-            
-            if let chatResult = chatResult, let _ = chatResult.placeResponse, let tipsResponses = chatResult.placeDetailsResponse?.tipsResponses {
-                for response in tipsResponses {
-                    if chatResult.title == response.text {
-                        return .ShareResult
-                    }
-                }
-            }
             return .Unsupported
         }
     }

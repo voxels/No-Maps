@@ -36,16 +36,16 @@ struct ChatResultViewHorizontalStack : View  {
                 LazyHStack {
                     ForEach(model.results) { result in
                         Text(result.title)
-                            .font(.system(.body))
+                            .font(.system(.headline))
                             .foregroundColor(Color(UIColor.lightText))
+                            .padding(8)
                             .lineLimit(3)
                             .multilineTextAlignment(.center)
                             .truncationMode(.tail)
                             .fixedSize(horizontal: false, vertical: true)
-                            .padding(8)
-                            .background(in: Capsule(style: .circular)).backgroundStyle(result.backgroundColor)
-                            .frame(maxWidth:UIScreen.main.bounds.size.width * 2.0 / 3.0, minHeight:80, maxHeight:.infinity)
+                            .frame(maxWidth:UIScreen.main.bounds.size.width * 2.0 / 3.0, minHeight:64, maxHeight:.infinity)
                             .padding(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                            .background(in: Capsule(style: .circular)).backgroundStyle(result.backgroundColor)
                             .onTapGesture {
                             chatHost.didTap(chatResult: result)
                         }.id(result)
