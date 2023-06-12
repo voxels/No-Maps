@@ -58,8 +58,14 @@
       launchAutomaticallySubstyle = "2">
       <RemoteRunnable
          runnableDebuggingMode = "1"
-         BundleIdentifier = "com.apple.MobileSMS"
-         RemotePath = "/Applications/MobileSMS.app">
+         BundleIdentifier = "com.apple.MobileSMS">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "1E16D16829C1F56400B2559E"
+            BuildableName = "Local Maps MessagesExtension.appex"
+            BlueprintName = "Local Maps MessagesExtension"
+            ReferencedContainer = "container:Local Maps.xcodeproj">
+         </BuildableReference>
       </RemoteRunnable>
       <MacroExpansion>
          <BuildableReference
@@ -79,16 +85,17 @@
       debugDocumentVersioning = "YES"
       askForAppToLaunch = "Yes"
       launchAutomaticallySubstyle = "2">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
+      <RemoteRunnable
+         runnableDebuggingMode = "1"
+         BundleIdentifier = "com.apple.MobileSMS">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "1E16D15F29C1F56300B2559E"
-            BuildableName = "Local Maps.app"
-            BlueprintName = "Local Maps"
+            BlueprintIdentifier = "1E16D16829C1F56400B2559E"
+            BuildableName = "Local Maps MessagesExtension.appex"
+            BlueprintName = "Local Maps MessagesExtension"
             ReferencedContainer = "container:Local Maps.xcodeproj">
          </BuildableReference>
-      </BuildableProductRunnable>
+      </RemoteRunnable>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

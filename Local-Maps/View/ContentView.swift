@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var messagesViewHeight:CGFloat = 253
     @State private var chatHost:AssistiveChatHost = AssistiveChatHost()
     @StateObject private var chatModel =  ChatResultViewModel()
 
@@ -17,7 +16,7 @@ struct ContentView: View {
             GeometryReader { geometry in
                 ZStack {
                     Rectangle().ignoresSafeArea(.all)
-                    ChatResultView(chatHostingDelegate:chatHost, chatHost: self.chatHost, messagesViewHeight: $messagesViewHeight, model: chatModel)
+                    ChatResultView(chatHost: self.chatHost, model: chatModel)
                 }
             }
         }

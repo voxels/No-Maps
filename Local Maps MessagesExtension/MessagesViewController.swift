@@ -24,7 +24,6 @@ open class MessagesViewController: MSMessagesAppViewController {
     var chatDetailsContainerView:UIView?
     var chatDetailsViewController:ChatDetailsViewController?
     var chatResultView:UIHostingController<ChatResultView>?
-    private var messagesViewHeight:CGFloat = 253
     private var chatHost = AssistiveChatHost()
     private var session = MSSession()
     private var chatModel = ChatResultViewModel()
@@ -33,7 +32,7 @@ open class MessagesViewController: MSMessagesAppViewController {
         super.viewDidLoad()
         
         chatHost = AssistiveChatHost(delegate:self)
-        let resultView = ChatResultView(chatHostingDelegate:chatHost, chatHost: self.chatHost, messagesViewHeight:.constant(messagesViewHeight), model: self.chatModel)
+        let resultView = ChatResultView(chatHost: self.chatHost, model: self.chatModel)
         chatResultView = UIHostingController(rootView: resultView)
         addChild(chatResultView!)
         view.addSubview(chatResultView!.view)
@@ -48,7 +47,7 @@ open class MessagesViewController: MSMessagesAppViewController {
         chatDetailsContainerView?.translatesAutoresizingMaskIntoConstraints = false
         view.insertSubview(chatDetailsContainerView!, belowSubview: chatResultView!.view)
         chatDetailsContainerView?.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
-        chatDetailsContainerView?.bottomAnchor.constraint(equalTo: chatResultView!.view.safeAreaLayoutGuide.topAnchor).isActive = true
+        chatDetailsContainerView?.bottomAnchor.constraint(equalTo: chatResultView!.view.topAnchor).isActive = true
         chatDetailsContainerView?.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
         chatDetailsContainerView?.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
     }
