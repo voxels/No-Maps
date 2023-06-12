@@ -67,11 +67,11 @@ open class ChatDetailsViewController : UIViewController {
     }
 
     
-    private func buildTextDescriptionResponseContainerView(with responseString:String, placeSearchResponse:PlaceSearchResponse, parentView:UIView) {
+    private func buildTextDescriptionResponseContainerView(with responseString:String, placeSearchResponse:PlaceSearchResponse, nearLocation:CLLocation, parentView:UIView) {
 
         buildResponseContainerView(parentView: parentView)
         
-        textDescriptionResponseViewController = TextDescriptionResponseViewController(responseString: responseString, targetLocation:CLLocation(latitude: placeSearchResponse.latitude, longitude: placeSearchResponse.longitude), placeName: placeSearchResponse.name)
+        textDescriptionResponseViewController = TextDescriptionResponseViewController(responseString: responseString, nearLocation: nearLocation, targetLocation:CLLocation(latitude: placeSearchResponse.latitude, longitude: placeSearchResponse.longitude), placeName: placeSearchResponse.name)
         responseContainerView.addSubview(textDescriptionResponseViewController!.view)
         addChild(textDescriptionResponseViewController!)
         textDescriptionResponseViewController!.didMove(toParent: self)
@@ -195,7 +195,7 @@ extension ChatDetailsViewController : ChatDetailsViewModelDelegate {
         default:
             if let response = model.responseString, let selectedPlaceSearchResponse = model.currentIntent.selectedPlaceSearchResponse {
                 if !detailsContainerView.subviews.contains(responseContainerView) {
-                    buildTextDescriptionResponseContainerView(with: response, placeSearchResponse: selectedPlaceSearchResponse, parentView:detailsContainerView)
+                    buildTextDescriptionResponseContainerView(with: response, placeSearchResponse: selectedPlaceSearchResponse, nearLocation: delegate.detailsViewTargetLocation(), parentView:detailsContainerView)
                 }
                 textDescriptionResponseViewController?.updateResponseView(with: response)
             }

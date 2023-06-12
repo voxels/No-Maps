@@ -17,7 +17,7 @@ struct ChatResultView : View {
             if let location = model.locationProvider.currentLocation() {
                 model.refreshModel( queryIntents: chatHost.queryIntentParameters.queryIntents, parameters: chatHost.queryIntentParameters, nearLocation:location)
             }
-        }
+        }.padding(8)
     }
 }
 
@@ -35,12 +35,24 @@ struct ChatResultViewHorizontalStack : View  {
             ScrollView(.horizontal) {
                 LazyHStack {
                     ForEach(model.results) { result in
-                        Text(result.title).multilineTextAlignment(.center).font(.system(.body)).foregroundColor(Color(UIColor.lightText)).padding(8).truncationMode(.tail).background(in: Capsule(style: .circular)).backgroundStyle(result.backgroundColor).onTapGesture {
+                        Text(result.title)
+                            .font(.system(.body))
+                            .foregroundColor(Color(UIColor.lightText))
+                            .lineLimit(3)
+                            .multilineTextAlignment(.center)
+                            .truncationMode(.tail)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(8)
+                            .background(in: Capsule(style: .circular)).backgroundStyle(result.backgroundColor)
+                            .frame(maxWidth:UIScreen.main.bounds.size.width * 2.0 / 3.0, minHeight:80, maxHeight:.infinity)
+                            .padding(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                            .onTapGesture {
                             chatHost.didTap(chatResult: result)
                         }.id(result)
                     }
-                }.padding(8.0)
-            }.onChange(of: model.results, perform: { newValue in
+                }
+            }
+            .onChange(of: model.results, perform: { newValue in
                 if let first = firstChatResult {
                     value.scrollTo(first, anchor:.leading)
                 }
