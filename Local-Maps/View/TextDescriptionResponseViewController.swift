@@ -9,7 +9,7 @@ import UIKit
 import MapKit
 import CoreLocation
 
-open class TextResponseViewController : UIViewController {
+open class TextDescriptionResponseViewController : UIViewController {
     public var responseString:String
     private var scrollView = UIScrollView(frame: .zero)
     private var textView = UITextView(frame: .zero)

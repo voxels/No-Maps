@@ -23,7 +23,7 @@ open class ChatDetailsViewController : UIViewController {
     public var model:ChatDetailsViewModel
     private var detailsContainerView = UIView(frame:.zero)
     private var responseContainerView = UIView(frame:.zero)
-    private var textResponseViewController:TextResponseViewController?
+    private var textResponseViewController:TextDescriptionResponseViewController?
     private var searchResponseViewController:SearchResponseViewController?
     private var searchQueryResponseViewController:SearchQueryResponseViewController?
     public init(parameters:AssistiveChatHostQueryParameters) {
@@ -71,7 +71,7 @@ open class ChatDetailsViewController : UIViewController {
 
         buildResponseContainerView(parentView: parentView)
         
-        textResponseViewController = TextResponseViewController(responseString: responseString, targetLocation:CLLocation(latitude: placeSearchResponse.latitude, longitude: placeSearchResponse.longitude), placeName: placeSearchResponse.name)
+        textResponseViewController = TextDescriptionResponseViewController(responseString: responseString, targetLocation:CLLocation(latitude: placeSearchResponse.latitude, longitude: placeSearchResponse.longitude), placeName: placeSearchResponse.name)
         responseContainerView.addSubview(textResponseViewController!.view)
         addChild(textResponseViewController!)
         textResponseViewController!.didMove(toParent: self)
