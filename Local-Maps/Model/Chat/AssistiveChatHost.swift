@@ -8,6 +8,7 @@
 import UIKit
 import NaturalLanguage
 import CoreLocation
+import CoreML
 
 public struct AssistiveChatHostIntent : Equatable {
     public let uuid = UUID()
@@ -31,14 +32,14 @@ public protocol AssistiveChatHostMessagesDelegate : AnyObject {
 
 open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObject {
     
-    public enum Intent {
+    public enum Intent : String {
         case Unsupported
         case SearchDefault
         case TellDefault
         case SearchQuery
         case TellPlace
-        case PlaceDetails
         case ShareResult
+        case PlaceDetails
     }
     
     weak private var delegate:AssistiveChatHostMessagesDelegate?
@@ -83,9 +84,24 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
     }
     
     
-    public func determineIntent(for caption:String, parameters:[String:Any]?, chatResult:ChatResult? = nil, lastIntent:AssistiveChatHostIntent?)->Intent
+    public func determineIntent(for caption:String) throws -> Intent
     {
-        return .Unsupported
+        if caption == "Where can I find" {
+            return .SearchDefault
+        }
+        
+        if caption == "Tell me about" {
+            return .TellDefault
+        }
+        
+        let mlModel = try LocalMapsQueryClassifier(configuration: MLModelConfiguration()).model
+        let predictor = try NLModel(mlModel: mlModel)
+        if let label = predictor.predictedLabel(for: caption), let intent = Intent(rawValue: label) {
+            print(label)
+            return intent
+        } else {
+            return .Unsupported
+        }
     }
     
     public func refreshParameters(for query:String, intent:AssistiveChatHostIntent) async throws {

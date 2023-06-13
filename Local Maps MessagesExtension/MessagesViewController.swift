@@ -324,9 +324,10 @@ extension MessagesViewController : ChatDetailsViewControllerDelegate {
     
     public func didRequestSearch(for query: String) {
         let _ = Task.init {
-            let newIntent = AssistiveChatHostIntent(caption: query, intent: chatHost.determineIntent(for: query, parameters: nil, lastIntent: chatModel.lastIntent), selectedPlaceSearchResponse:nil, selectedPlaceSearchDetails:nil, placeSearchResponses:[PlaceSearchResponse]())
+            let intent = try chatHost.determineIntent(for: query)
+            let newIntent = AssistiveChatHostIntent(caption: query, intent:intent, selectedPlaceSearchResponse:nil, selectedPlaceSearchDetails:nil, placeSearchResponses:[PlaceSearchResponse]())
             try await self.chatHost.refreshParameters(for: query, intent:newIntent)
-            let checkIntentWithParameters = chatHost.determineIntent(for: query, parameters: chatHost.queryIntentParameters.queryParameters, lastIntent: newIntent)
+            let checkIntentWithParameters = try chatHost.determineIntent(for: query)
             if newIntent.intent == checkIntentWithParameters {
                 chatHost.appendIntentParameters(intent: newIntent)
             } else {
@@ -346,10 +347,10 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
     public func didTap(chatResult: ChatResult, selectedPlaceSearchResponse:PlaceSearchResponse?, selectedPlaceSearchDetails:PlaceDetailsResponse?, intentHistory:[AssistiveChatHostIntent]? = nil) {
         let _ = Task.init {
             let caption = chatResult.title
-
-            let newIntent = AssistiveChatHostIntent(caption: caption, intent: chatHost.determineIntent(for: caption, parameters: nil, chatResult: chatResult, lastIntent: intentHistory?.last), selectedPlaceSearchResponse: selectedPlaceSearchResponse, selectedPlaceSearchDetails: selectedPlaceSearchDetails, placeSearchResponses: [PlaceSearchResponse]())
+            let intent = try chatHost.determineIntent(for: caption)
+            let newIntent = AssistiveChatHostIntent(caption: caption, intent: intent, selectedPlaceSearchResponse: selectedPlaceSearchResponse, selectedPlaceSearchDetails: selectedPlaceSearchDetails, placeSearchResponses: [PlaceSearchResponse]())
             try await self.chatHost.refreshParameters(for: caption, intent:newIntent)
-            let checkIntentWithParameters = chatHost.determineIntent(for: caption, parameters: chatHost.queryIntentParameters.queryParameters, chatResult: chatResult, lastIntent: newIntent)
+            let checkIntentWithParameters = try chatHost.determineIntent(for: caption)
             if checkIntentWithParameters == newIntent.intent {
                 chatHost.appendIntentParameters(intent: newIntent)
             } else {
