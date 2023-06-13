@@ -110,10 +110,6 @@ public class ChatResultViewModel : ObservableObject {
             if checkCaption.hasPrefix("where can i find") {
                 checkCaption = String(checkCaption.dropFirst(16))
             }
-        case .TellQuery:
-            if checkCaption.hasPrefix("tell me about") {
-                checkCaption = String(checkCaption.dropFirst(13))
-            }
         default:
             break
         }
@@ -278,7 +274,7 @@ public class ChatResultViewModel : ObservableObject {
     public func model( intents:[AssistiveChatHostIntent], lastIntent:AssistiveChatHostIntent, parameters:AssistiveChatHostQueryParameters, placeSearchResponses:[PlaceSearchResponse]? = nil, nearLocation:CLLocation) {
         
         switch lastIntent.intent {
-        case .SaveDefault,  .SearchDefault, .RecallDefault, .OpenDefault:
+        case .SearchDefault:
             var chatResults = [ChatResult]()
             if intents.count > 0 {
                 let searchResult = PlaceResponseFormatter.firstChatResult(queryIntents: intents)
@@ -306,7 +302,7 @@ public class ChatResultViewModel : ObservableObject {
                     
                 }
             }
-        case .TellPlace, .TellQuery:
+        case .TellPlace:
             let _ = Task.init {
                 do {
                     var chatResults = [ChatResult]()
@@ -419,8 +415,6 @@ public class ChatResultViewModel : ObservableObject {
                     }
                 }
             }
-        case .SearchPlace:
-            placeQueryModel( query: lastIntent.caption, queryIntents: intents, parameters: parameters)
         case .SearchQuery:
             searchQueryModel( query: lastIntent.caption, queryIntents: intents, parameters:parameters, nearLocation:nearLocation )
         default:
@@ -624,18 +618,11 @@ public class ChatResultViewModel : ObservableObject {
             var results = chatResults
             var defaults = ChatResultViewModel.modelDefaults
             switch lastIntent{
-            case .SaveDefault:
-                return results
             case .SearchDefault:
                 defaults.remove(at: 0)
                 return defaults
-            case .RecallDefault:
-                return results
             case  .TellDefault:
                 defaults.remove(at: 0)
-                results.append(contentsOf: defaults)
-                return results
-            case .OpenDefault:
                 results.append(contentsOf: defaults)
                 return results
             default:

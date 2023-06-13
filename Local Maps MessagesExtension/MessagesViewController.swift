@@ -227,7 +227,7 @@ extension MessagesViewController {
     @objc public func modelDidUpdate(nearLocation:CLLocation){
         if let lastIntent = chatModel.lastIntent {
             switch lastIntent.intent {
-            case .SearchDefault, .TellDefault, .OpenDefault:
+            case .SearchDefault, .TellDefault:
                 let _ = Task.init {
                         let description = lastIntent.caption
                         DispatchQueue.main.async { [unowned self] in
@@ -254,25 +254,7 @@ extension MessagesViewController {
                         print(error)
                     }
                 }
-            case .SearchPlace:
-                // Open Apple Maps
-                if let placeResponse = lastIntent.selectedPlaceSearchResponse, let details = lastIntent.selectedPlaceSearchDetails {
-                    let _ = Task.init {
-                        do {
-                            let description = try await self.chatHost.placeDescription(searchResponse: placeResponse, detailsResponse: details)
-                            DispatchQueue.main.async { [unowned self] in
-                                do {
-                                    try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description, nearLocation: nearLocation)
-                                } catch{
-                                    print(error)
-                                }
-                            }
-                        } catch {
-                            print(error)
-                        }
-                    }
-                }
-            case .TellPlace, .TellQuery:
+            case .TellPlace:
                 // Open drawer and show description
                 if let placeResponse = lastIntent.selectedPlaceSearchResponse, let details = lastIntent.selectedPlaceSearchDetails {
                     let _ = Task.init {
@@ -364,16 +346,7 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
     public func didTap(chatResult: ChatResult, selectedPlaceSearchResponse:PlaceSearchResponse?, selectedPlaceSearchDetails:PlaceDetailsResponse?, intentHistory:[AssistiveChatHostIntent]? = nil) {
         let _ = Task.init {
             let caption = chatResult.title
-            if let lastIntent = intentHistory?.last?.intent {
-                switch lastIntent{
-                case .TellDefault, .SaveDefault, .RecallDefault, .SearchDefault:
-                    //self.chatHost.resetIntentParameters()
-                    break
-                default:
-                    break
-                }
-            }
-            
+
             let newIntent = AssistiveChatHostIntent(caption: caption, intent: chatHost.determineIntent(for: caption, parameters: nil, chatResult: chatResult, lastIntent: intentHistory?.last), selectedPlaceSearchResponse: selectedPlaceSearchResponse, selectedPlaceSearchDetails: selectedPlaceSearchDetails, placeSearchResponses: [PlaceSearchResponse]())
             try await self.chatHost.refreshParameters(for: caption, intent:newIntent)
             let checkIntentWithParameters = chatHost.determineIntent(for: caption, parameters: chatHost.queryIntentParameters.queryParameters, chatResult: chatResult, lastIntent: newIntent)
