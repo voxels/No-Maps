@@ -210,9 +210,13 @@ extension MessagesViewController {
             chatDetailsViewController?.view.bottomAnchor.constraint(equalTo: chatDetailsContainerView!.bottomAnchor).isActive = true
 
             chatDetailsViewController?.didMove(toParent: self)
-            chatDetailsViewController?.update(parameters: queryParameters, responseString: responseString, placeSearchResponses:queryParameters.queryIntents.last!.placeSearchResponses, nearLocation: nearLocation)
+            if let lastIntent = queryParameters.queryIntents.last {
+                chatDetailsViewController?.update(parameters: queryParameters, responseString: responseString, placeSearchResponses:lastIntent.placeSearchResponses, placeDetailsResponses: lastIntent.placeDetailsResponses, nearLocation: nearLocation)
+            }
         } else {
-            chatDetailsViewController?.update(parameters: queryParameters, responseString: responseString, placeSearchResponses:queryParameters.queryIntents.last!.placeSearchResponses, nearLocation: nearLocation)
+            if let lastIntent = queryParameters.queryIntents.last {
+                chatDetailsViewController?.update(parameters: queryParameters, responseString: responseString, placeSearchResponses:lastIntent.placeSearchResponses, placeDetailsResponses: lastIntent.placeDetailsResponses, nearLocation: nearLocation)
+            }
         }
         
         guard chatDetailsViewController != nil else {
@@ -336,7 +340,7 @@ extension MessagesViewController : ChatDetailsViewControllerDelegate {
         let _ = Task.init {
             let intent = try chatHost.determineIntent(for: query)
             let queryParameters = try await chatHost.defaultParameters(for: query)
-            let newIntent = AssistiveChatHostIntent(caption: query, intent:intent, selectedPlaceSearchResponse:nil, selectedPlaceSearchDetails:nil, placeSearchResponses:[PlaceSearchResponse](), queryParameters: queryParameters)
+            let newIntent = AssistiveChatHostIntent(caption: query, intent:intent, selectedPlaceSearchResponse:nil, selectedPlaceSearchDetails:nil, placeSearchResponses:[PlaceSearchResponse](), placeDetailsResponses: nil, queryParameters: queryParameters)
             chatHost.appendIntentParameters(intent: newIntent)
             if let location = chatModel.locationProvider.currentLocation() {
                 try await self.chatHost.receiveMessage(caption: query, isLocalParticipant: true, nearLocation: location)
@@ -347,12 +351,12 @@ extension MessagesViewController : ChatDetailsViewControllerDelegate {
 
 
 extension MessagesViewController : AssistiveChatHostMessagesDelegate {
-    public func didTap(chatResult: ChatResult, selectedPlaceSearchResponse:PlaceSearchResponse?, selectedPlaceSearchDetails:PlaceDetailsResponse?, intentHistory:[AssistiveChatHostIntent]? = nil) {
+    public func didTap(chatResult: ChatResult, selectedPlaceSearchResponse:PlaceSearchResponse?, selectedPlaceSearchDetails:PlaceDetailsResponse?) {
         let _ = Task.init {
             let caption = chatResult.title
             let intent = try chatHost.determineIntent(for: caption)
             let queryParameters = try await chatHost.defaultParameters(for: caption)
-            let newIntent = AssistiveChatHostIntent(caption: caption, intent: intent, selectedPlaceSearchResponse: selectedPlaceSearchResponse, selectedPlaceSearchDetails: selectedPlaceSearchDetails, placeSearchResponses: [PlaceSearchResponse](), queryParameters: queryParameters)
+            let newIntent = AssistiveChatHostIntent(caption: caption, intent: intent, selectedPlaceSearchResponse: selectedPlaceSearchResponse, selectedPlaceSearchDetails: selectedPlaceSearchDetails, placeSearchResponses: [PlaceSearchResponse](), placeDetailsResponses:nil, queryParameters: queryParameters)
             chatHost.appendIntentParameters(intent: newIntent)
             if let location = chatModel.locationProvider.currentLocation() {
                 try await self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true, nearLocation: location)

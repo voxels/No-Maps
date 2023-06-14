@@ -30,7 +30,7 @@ open class ChatDetailsViewController : UIViewController {
         if let lastIntent = parameters.queryIntents.last {
             self.model = ChatDetailsViewModel(queryParameters: parameters,intent:lastIntent, delegate: nil)
         } else {
-            self.model = ChatDetailsViewModel(queryParameters: parameters,intent:AssistiveChatHostIntent(caption: "Where can I find", intent: .SearchDefault, selectedPlaceSearchResponse: nil, selectedPlaceSearchDetails: nil, placeSearchResponses: [PlaceSearchResponse](), queryParameters: nil), delegate: nil)
+            self.model = ChatDetailsViewModel(queryParameters: parameters,intent:AssistiveChatHostIntent(caption: "Where can I find", intent: .SearchDefault, selectedPlaceSearchResponse: nil, selectedPlaceSearchDetails: nil, placeSearchResponses: [PlaceSearchResponse](), placeDetailsResponses: nil, queryParameters: nil), delegate: nil)
         }
         super.init(nibName: nil, bundle: nil)
         self.model.delegate = self
@@ -158,10 +158,10 @@ extension ChatDetailsViewController {
         removeDetailViewController()
     }
     
-    public func update(parameters:AssistiveChatHostQueryParameters, responseString:String? = nil, placeSearchResponses:[PlaceSearchResponse] = [PlaceSearchResponse](), nearLocation:CLLocation ) {
-        let _ = Task.detached(priority: .userInitiated) {
+    public func update(parameters:AssistiveChatHostQueryParameters, responseString:String? = nil, placeSearchResponses:[PlaceSearchResponse] = [PlaceSearchResponse](), placeDetailsResponses:[PlaceDetailsResponse]?, nearLocation:CLLocation ) {
+        let _ = Task {
             do {
-                try await self.model.updateModel(parameters: parameters, responseString: responseString, placeSearchResponses: placeSearchResponses, nearLocation: nearLocation)
+                try await self.model.updateModel(parameters: parameters, responseString: responseString, placeSearchResponses: placeSearchResponses, placeDetailsResponses:placeDetailsResponses, nearLocation: nearLocation)
             } catch {
                 print(error)
                 DispatchQueue.main.async { [weak self] in

@@ -19,14 +19,17 @@ public class AssistiveChatHostIntent : Equatable {
     public var selectedPlaceSearchResponse:PlaceSearchResponse?
     public var selectedPlaceSearchDetails:PlaceDetailsResponse?
     public var placeSearchResponses:[PlaceSearchResponse]
+    
+    public var placeDetailsResponses:[PlaceDetailsResponse]?
     public let queryParameters:[String:Any]?
     
-    public init(caption: String, intent: AssistiveChatHost.Intent, selectedPlaceSearchResponse: PlaceSearchResponse?, selectedPlaceSearchDetails: PlaceDetailsResponse?, placeSearchResponses: [PlaceSearchResponse], queryParameters: [String : Any]?) {
+    public init(caption: String, intent: AssistiveChatHost.Intent, selectedPlaceSearchResponse: PlaceSearchResponse?, selectedPlaceSearchDetails: PlaceDetailsResponse?, placeSearchResponses: [PlaceSearchResponse], placeDetailsResponses:[PlaceDetailsResponse]?, queryParameters: [String : Any]?) {
         self.caption = caption
         self.intent = intent
         self.selectedPlaceSearchResponse = selectedPlaceSearchResponse
         self.selectedPlaceSearchDetails = selectedPlaceSearchDetails
         self.placeSearchResponses = placeSearchResponses
+        self.placeDetailsResponses = placeDetailsResponses
         self.queryParameters = queryParameters
     }
     
@@ -36,7 +39,7 @@ public class AssistiveChatHostIntent : Equatable {
 }
 
 public protocol AssistiveChatHostMessagesDelegate : AnyObject {
-    func didTap(chatResult:ChatResult, selectedPlaceSearchResponse:PlaceSearchResponse?, selectedPlaceSearchDetails:PlaceDetailsResponse?, intentHistory:[AssistiveChatHostIntent]?)
+    func didTap(chatResult:ChatResult, selectedPlaceSearchResponse:PlaceSearchResponse?, selectedPlaceSearchDetails:PlaceDetailsResponse?)
     func addReceivedMessage(caption:String, parameters:AssistiveChatHostQueryParameters, isLocalParticipant:Bool, nearLocation:CLLocation) async throws
     func didUpdateQuery(with parameters:AssistiveChatHostQueryParameters, nearLocation:CLLocation)
     func send(caption:String, subcaption:String?, image:UIImage?, mediaFileURL:URL?, imageTitle:String?, imageSubtitle:String?, trailingCaption:String?, trailingSubcaption:String?)
@@ -91,7 +94,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
     
     public func didTap(chatResult: ChatResult) {
         print("Did tap result:\(chatResult.title) for place:")
-        delegate?.didTap(chatResult: chatResult, selectedPlaceSearchResponse: chatResult.placeResponse, selectedPlaceSearchDetails:chatResult.placeDetailsResponse, intentHistory: queryIntentParameters.queryIntents)
+        delegate?.didTap(chatResult: chatResult, selectedPlaceSearchResponse: chatResult.placeResponse, selectedPlaceSearchDetails:chatResult.placeDetailsResponse)
     }
     
     
