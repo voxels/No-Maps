@@ -281,10 +281,12 @@ public class ChatResultViewModel : ObservableObject {
                 chatResults.append(searchResult)
             }
             let blendedResults = blendDefaults(with: chatResults, queryIntents:intents)
-            DispatchQueue.main.async { [unowned self] in
-                self.results.removeAll()
-                self.results = blendedResults
-                self.delegate?.didUpdateModel(for: locationProvider.currentLocation())
+            DispatchQueue.main.async { [weak self] in
+                guard let strongSelf = self else { return }
+
+                strongSelf.results.removeAll()
+                strongSelf.results = blendedResults
+                strongSelf.delegate?.didUpdateModel(for: strongSelf.locationProvider.currentLocation())
             }
         case .TellDefault:
             let _ = Task.init {
@@ -295,10 +297,12 @@ public class ChatResultViewModel : ObservableObject {
                 }
                 
                 let blendedResults = blendDefaults(with: chatResults, queryIntents:intents)
-                DispatchQueue.main.async { [unowned self] in
-                    self.results.removeAll()
-                    self.results = blendedResults
-                    self.delegate?.didUpdateModel(for: locationProvider.currentLocation())
+                DispatchQueue.main.async { [weak self] in
+                    guard let strongSelf = self else { return }
+
+                    strongSelf.results.removeAll()
+                    strongSelf.results = blendedResults
+                    strongSelf.delegate?.didUpdateModel(for: strongSelf.locationProvider.currentLocation())
                     
                 }
             }
@@ -401,17 +405,21 @@ public class ChatResultViewModel : ObservableObject {
                         }
                     }
                     let blendedResults = blendDefaults(with: chatResults, queryIntents: intents)
-                    DispatchQueue.main.async { [unowned self] in
-                        self.results.removeAll()
-                        self.results = blendedResults
-                        self.delegate?.didUpdateModel(for: locationProvider.currentLocation())
+                    DispatchQueue.main.async { [weak self] in
+                        guard let strongSelf = self else { return }
+
+                        strongSelf.results.removeAll()
+                        strongSelf.results = blendedResults
+                        strongSelf.delegate?.didUpdateModel(for: strongSelf.locationProvider.currentLocation())
                         
                     }
                 }
                 catch {
                     print(error)
-                    DispatchQueue.main.async { [unowned self] in
-                        self.delegate?.didUpdateModel(for: locationProvider.currentLocation())
+                    DispatchQueue.main.async { [weak self] in
+                        guard let strongSelf = self else { return }
+
+                        strongSelf.delegate?.didUpdateModel(for: strongSelf.locationProvider.currentLocation())
                     }
                 }
             }
@@ -507,10 +515,12 @@ public class ChatResultViewModel : ObservableObject {
                     }
                     
                     let blendedResults = blendDefaults(with: chatResults, queryIntents: intents)
-                    DispatchQueue.main.async { [unowned self] in
-                        self.results.removeAll()
-                        self.results = blendedResults
-                        self.delegate?.didUpdateModel(for: locationProvider.currentLocation())
+                    DispatchQueue.main.async { [weak self] in
+                        guard let strongSelf = self else { return }
+
+                        strongSelf.results.removeAll()
+                        strongSelf.results = blendedResults
+                        strongSelf.delegate?.didUpdateModel(for: strongSelf.locationProvider.currentLocation())
                         
                     }
                 }
@@ -562,10 +572,12 @@ public class ChatResultViewModel : ObservableObject {
             }
             
             let blendedResults = blendDefaults(with: chatResults)
-            DispatchQueue.main.async { [unowned self] in
-                self.results.removeAll()
-                self.results = blendedResults
-                self.delegate?.didUpdateModel(for: locationProvider.currentLocation())
+            DispatchQueue.main.async { [weak self] in
+                guard let strongSelf = self else { return }
+
+                strongSelf.results.removeAll()
+                strongSelf.results = blendedResults
+                strongSelf.delegate?.didUpdateModel(for: strongSelf.locationProvider.currentLocation())
                 
             }
         }
@@ -593,10 +605,12 @@ public class ChatResultViewModel : ObservableObject {
             }
             
             let blendedResults = blendDefaults(with: chatResults)
-            DispatchQueue.main.async { [unowned self] in
-                self.results.removeAll()
-                self.results = blendedResults
-                self.delegate?.didUpdateModel(for: locationProvider.currentLocation())
+            DispatchQueue.main.async { [weak self] in
+                guard let strongSelf = self else { return }
+
+                strongSelf.results.removeAll()
+                strongSelf.results = blendedResults
+                strongSelf.delegate?.didUpdateModel(for: strongSelf.locationProvider.currentLocation())
             }
         }
         
@@ -604,9 +618,10 @@ public class ChatResultViewModel : ObservableObject {
     
     public func zeroStateModel() {
         let blendedResults = blendDefaults(with: [])
-        DispatchQueue.main.async { [unowned self] in
-            self.results.removeAll()
-            self.results = blendedResults
+        DispatchQueue.main.async { [weak self] in
+            guard let strongSelf = self else { return }
+            strongSelf.results.removeAll()
+            strongSelf.results = blendedResults
         }
     }
     

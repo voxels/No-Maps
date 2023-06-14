@@ -177,7 +177,10 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
     
     public func receiveMessage(caption:String, isLocalParticipant:Bool, nearLocation:CLLocation ) async throws {
         try await delegate?.addReceivedMessage(caption: caption, parameters: queryIntentParameters, isLocalParticipant: isLocalParticipant, nearLocation: nearLocation)
-        delegate?.didUpdateQuery(with:queryIntentParameters, nearLocation: nearLocation)
+        DispatchQueue.main.async { [weak self] in
+            guard let strongSelf = self else { return }
+            strongSelf.delegate?.didUpdateQuery(with:strongSelf.queryIntentParameters, nearLocation: nearLocation)
+        }
     }
 }
 

@@ -40,13 +40,12 @@ open class SearchResponseViewController : UIViewController {
         searchBarContainerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
         searchBarContainerView.heightAnchor.constraint(equalToConstant:searchBarContainerViewHeight).isActive = true
         
-        searchBarTextField = UISearchTextField(frame: .zero, primaryAction: UIAction(title: "Search", handler: { [unowned self] action in
-            if let text = searchBarTextField?.text {
-                self.delegate?.requestSearch(for: text)
-                
+        searchBarTextField = UISearchTextField(frame: .zero, primaryAction: UIAction(title: "Search", handler: { [weak self] action in
+            if let text = self?.searchBarTextField?.text {
+                self?.delegate?.requestSearch(for: text)
             }
             
-            searchBarTextField?.resignFirstResponder()
+            self?.searchBarTextField?.resignFirstResponder()
         }))
         searchBarTextField?.translatesAutoresizingMaskIntoConstraints = false
         searchBarContainerView.addSubview(searchBarTextField!)

@@ -407,13 +407,15 @@ open class PlaceSearchSession : ObservableObject {
             let operation = CKQueryOperation(query: query)
             operation.desiredKeys = ["value", "service"]
             operation.resultsLimit = 1
-            operation.recordMatchedBlock = { [unowned self] recordId, result in
+            operation.recordMatchedBlock = { [weak self] recordId, result in
+                guard let strongSelf = self else { return }
+
                 do {
                     let record = try result.get()
                     if let apiKey = record["value"] as? String {
                         print("\(String(describing: record["service"]))")
                         print("Found API Key \(apiKey)")
-                        self.foursquareApiKey = apiKey
+                        strongSelf.foursquareApiKey = apiKey
                     } else {
                         print("Did not find API Key")
                     }

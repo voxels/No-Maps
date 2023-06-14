@@ -51,8 +51,9 @@ public class ChatDetailsViewModel {
             break
         }
         
-        DispatchQueue.main.async { [unowned self] in
-            self.delegate?.modelDidUpdate()
+        DispatchQueue.main.async { [weak self] in
+            guard let strongSelf = self else { return }
+            strongSelf.delegate?.modelDidUpdate()
         }
     }
     

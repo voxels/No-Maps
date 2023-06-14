@@ -230,9 +230,10 @@ extension MessagesViewController {
             case .SearchDefault, .TellDefault:
                 let _ = Task.init {
                         let description = lastIntent.caption
-                        DispatchQueue.main.async { [unowned self] in
+                        DispatchQueue.main.async { [weak self] in
                             do {
-                                try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description, nearLocation: nearLocation)
+                                guard let strongSelf = self else { return }
+                                try strongSelf.showDetailsViewController(with: strongSelf.chatHost.queryIntentParameters, responseString: description, nearLocation: nearLocation)
                             } catch{
                                 print(error)
                             }
@@ -243,9 +244,11 @@ extension MessagesViewController {
                 let _ = Task.init {
                     do {
                         let description = try await self.chatHost.searchQueryDescription(nearLocation: nearLocation)
-                        DispatchQueue.main.async { [unowned self] in
+                        DispatchQueue.main.async { [weak self] in
+                            guard let strongSelf = self else { return }
+
                             do {
-                                try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description, nearLocation: nearLocation)
+                                try strongSelf.showDetailsViewController(with: strongSelf.chatHost.queryIntentParameters, responseString: description, nearLocation: nearLocation)
                             } catch{
                                 print(error)
                             }
@@ -260,9 +263,12 @@ extension MessagesViewController {
                     let _ = Task.init {
                         do {
                             let description = try await self.chatHost.placeDescription(searchResponse: placeResponse, detailsResponse: details)
-                            DispatchQueue.main.async { [unowned self] in
+ 
+                            DispatchQueue.main.async { [weak self] in
+                                guard let strongSelf = self else { return }
                                 do {
-                                    try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description, nearLocation: nearLocation)
+
+                                    try strongSelf.showDetailsViewController(with: strongSelf.chatHost.queryIntentParameters, responseString: description, nearLocation: nearLocation)
                                 } catch{
                                     print(error)
                                 }
@@ -274,9 +280,11 @@ extension MessagesViewController {
                 } else {
                     let _ = Task.init {
                             let description = lastIntent.caption
-                            DispatchQueue.main.async { [unowned self] in
+                            DispatchQueue.main.async { [weak self] in
+                                guard let strongSelf = self else { return }
+
                                 do {
-                                    try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description, nearLocation: nearLocation)
+                                    try strongSelf.showDetailsViewController(with: strongSelf.chatHost.queryIntentParameters, responseString: description, nearLocation: nearLocation)
                                 } catch{
                                     print(error)
                                 }
@@ -300,9 +308,11 @@ extension MessagesViewController {
         } else {
             let _ = Task.init {
                     let description = ""
-                    DispatchQueue.main.async { [unowned self] in
+                    DispatchQueue.main.async { [weak self] in
+                        guard let strongSelf = self else { return }
+
                         do {
-                            try self.showDetailsViewController(with: self.chatHost.queryIntentParameters, responseString: description, nearLocation: nearLocation)
+                            try strongSelf.showDetailsViewController(with: strongSelf.chatHost.queryIntentParameters, responseString: description, nearLocation: nearLocation)
                         } catch{
                             print(error)
                         }
@@ -323,18 +333,11 @@ extension MessagesViewController : ChatDetailsViewControllerDelegate {
     }
     
     public func didRequestSearch(for query: String) {
-        let _ = Task.init {
+        let task = Task.init {
             let intent = try chatHost.determineIntent(for: query)
             let newIntent = AssistiveChatHostIntent(caption: query, intent:intent, selectedPlaceSearchResponse:nil, selectedPlaceSearchDetails:nil, placeSearchResponses:[PlaceSearchResponse]())
             try await self.chatHost.refreshParameters(for: query, intent:newIntent)
-            let checkIntentWithParameters = try chatHost.determineIntent(for: query)
-            if newIntent.intent == checkIntentWithParameters {
-                chatHost.appendIntentParameters(intent: newIntent)
-            } else {
-                let revisedIntent = AssistiveChatHostIntent(caption: query, intent: checkIntentWithParameters, selectedPlaceSearchResponse: nil, selectedPlaceSearchDetails: nil, placeSearchResponses: [PlaceSearchResponse]())
-                try await self.chatHost.refreshParameters(for: query, intent:revisedIntent)
-                chatHost.appendIntentParameters(intent: revisedIntent)
-            }
+            chatHost.appendIntentParameters(intent: newIntent)
             if let location = chatModel.locationProvider.currentLocation() {
                 try await self.chatHost.receiveMessage(caption: query, isLocalParticipant: true, nearLocation: location)
             }

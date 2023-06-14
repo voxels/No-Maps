@@ -37,7 +37,7 @@ open class SearchQueryResponseCollectionViewCell : UICollectionViewCell {
         
         indexLabel.translatesAutoresizingMaskIntoConstraints = false
         indexLabel.font = UIFont.boldSystemFont(ofSize: 14.0)
-        indexLabel.textColor = .black
+        indexLabel.textColor = .label
         contentView.addSubview(indexLabel)
         indexLabel.leftAnchor.constraint(equalTo: contentView.leftAnchor, constant: 8).isActive = true
         indexLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor).isActive = true
