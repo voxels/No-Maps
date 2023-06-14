@@ -87,7 +87,7 @@ open class SearchQueryResponseViewController : UIViewController {
         for index in 0..<placeDetailsResponses.count {
             let response = placeDetailsResponses[index]
             let pin = MKPointAnnotation()
-            pin.title = "\(index + 1)"
+            pin.title = "\(response.searchResponse.name)"
             pin.coordinate = CLLocationCoordinate2D(latitude: response.searchResponse.latitude, longitude: response.searchResponse.longitude)
             mapView.addAnnotation(pin)
             mapViewAnnotations.append(pin)

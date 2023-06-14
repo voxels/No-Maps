@@ -10,6 +10,8 @@ import NaturalLanguage
 import CoreLocation
 import CoreML
 
+typealias AssistiveChatHostTaggedWord = [String: [String]]
+
 public struct AssistiveChatHostIntent : Equatable {
     public let uuid = UUID()
     public let caption:String
@@ -39,7 +41,6 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
         case SearchQuery
         case TellPlace
         case ShareResult
-        case PlaceDetails
     }
     
     weak private var delegate:AssistiveChatHostMessagesDelegate?
@@ -50,7 +51,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
     
     public init(delegate:AssistiveChatHostMessagesDelegate? = nil) {
         self.delegate = delegate
-
+        
         _ = Task.init{
             do {
                 try organizeCategoryCodeList()
@@ -70,7 +71,7 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
                 for key in dict.allKeys {
                     if let valueDict = dict[key] as? NSDictionary {
                         if let labelsDict = valueDict["labels"] as? NSDictionary, let englishLabel = labelsDict["en"] as? String, let keyString = key as? String {
-                            categoryCodes[englishLabel] = keyString
+                            categoryCodes[englishLabel.lowercased()] = keyString
                         }
                     }
                 }
@@ -94,69 +95,80 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
             return .TellDefault
         }
         
+        
         let mlModel = try LocalMapsQueryClassifier(configuration: MLModelConfiguration()).model
         let predictor = try NLModel(mlModel: mlModel)
+        var predictedLabel:Intent = .Unsupported
         if let label = predictor.predictedLabel(for: caption), let intent = Intent(rawValue: label) {
-            print(label)
-            return intent
-        } else {
-            return .Unsupported
+            predictedLabel = intent
         }
+        
+        return predictedLabel
     }
     
     public func refreshParameters(for query:String, intent:AssistiveChatHostIntent) async throws {
-        switch intent.intent {
-        case .TellPlace:
-            queryIntentParameters.queryParameters = try await defaultParameters(for: query)
-        case .SearchQuery:
-            var defaultParameters = try await defaultParameters(for: query)
-            if let embeddedParameters = defaultParameters?["parameters"] as? [String:Any] {
-                var revisedParameters = embeddedParameters
-                revisedParameters["sort"] = "distance"
-                revisedParameters["radius"] = 1000
-                revisedParameters["limit"] = 8
-                defaultParameters?["parameters"] = revisedParameters
-            }
-            queryIntentParameters.queryParameters = defaultParameters
-        default:
-            queryIntentParameters.queryParameters = nil
-            break
-        }
-        
-        print("Pre-NAICS code revision parameters")
-        print(queryIntentParameters.queryParameters ?? "")
-        if let parameters = queryIntentParameters.queryParameters?["parameters"] as? [String:Any], let categories = parameters["categories"] as? [NSDictionary]  {
-            var revisedCategories = categories
-            for index in 0..<categories.count {
-                let category = categories[index]
-                let revisedCategory:NSMutableDictionary = category.mutableCopy() as! NSMutableDictionary
-                if let name = category["name"] as? String, let code = categoryCodes[name] {
-                    revisedCategory["naics_code"] = code
-                }
-                revisedCategories[index] = revisedCategory
-            }
-            var revisedParameters = parameters
-            revisedParameters["categories"] = revisedCategories
-            queryIntentParameters.queryParameters?["parameters"] = revisedParameters
-        }
-        print("Revised NAICS code parameters")
-        print(queryIntentParameters.queryParameters ?? "")
+        queryIntentParameters.queryParameters = try await defaultParameters(for: query)
     }
     
     internal func defaultParameters(for query:String) async throws -> [String:Any]? {
-        var rawParameters = try await languageDelegate.fetchSearchQueryParameters(with: query)
-
-        rawParameters = rawParameters.trimmingCharacters(in: .whitespacesAndNewlines)
-        rawParameters = rawParameters.replacingOccurrences(of: "\n", with: "")
-        guard let data = rawParameters.data(using: .utf8) else {
-            print("Raw parameters could not be encoded into json: \(rawParameters)")
+        let emptyParameters =
+                """
+                    {
+                        "query":"",
+                        "parameters":
+                        {
+                             "radius":2000,
+                             "sort":"distance",
+                             "limit":8,
+                        }
+                    }
+                """
+        
+        guard let data = emptyParameters.data(using: .utf8) else {
+            print("Empty parameters could not be encoded into json: \(emptyParameters)")
             return nil
         }
         
         do {
             let json = try JSONSerialization.jsonObject(with: data)
-            if let array = json as? [[String:Any]], let parameterDict = array.first {
-                return parameterDict
+            if let encodedEmptyParameters = json as? [String:Any] {
+                var rawParameters = encodedEmptyParameters
+                
+                let tags = try tags(for: query)
+                
+                if let radius = radius(for: query) {
+                    rawParameters["radius"] = radius
+                }
+                
+                if let minPrice = minPrice(for: query) {
+                    rawParameters["min_price"] = minPrice
+                }
+                
+                if let maxPrice = maxPrice(for: query) {
+                    rawParameters["max_price"] = maxPrice
+                }
+                
+                if let nearLocation = nearLocation(for: query, tags: tags) {
+                    rawParameters["near"] = nearLocation
+                }
+                
+                if let openAt = openAt(for: query) {
+                    rawParameters["open_at"] = openAt
+                }
+                
+                if let openNow = openNow(for: query) {
+                    rawParameters["open_now"] = openNow
+                }
+                
+                if let categories = categories(for: query, tags: tags) {
+                    rawParameters["categories"] = categories
+                }
+                                
+                rawParameters["query"] = parsedQuery(for: query, tags: tags)
+                
+                print("Parsed Default Parameters:")
+                print(rawParameters)
+                return rawParameters
             } else {
                 print("Found non-dictionary object when attemting to refresh parameters:\(json)")
                 return nil
@@ -185,7 +197,6 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
 }
 
 extension AssistiveChatHost {
-    
     public func searchQueryDescription(nearLocation:CLLocation) async throws -> String {
         return try await languageDelegate.searchQueryDescription(nearLocation:nearLocation)
     }
@@ -193,8 +204,178 @@ extension AssistiveChatHost {
     public func placeDescription(searchResponse:PlaceSearchResponse, detailsResponse:PlaceDetailsResponse) async throws ->String {
         return try await languageDelegate.placeDescription(searchResponse: searchResponse, detailsResponse: detailsResponse)
     }
+}
+
+extension AssistiveChatHost {
     
-    public func fetchSearchQueryParameters( with query:String) async throws -> String {
-        return try await languageDelegate.fetchSearchQueryParameters(with: query)
+    internal func tags(for rawQuery:String) throws ->AssistiveChatHostTaggedWord? {
+        var retval:AssistiveChatHostTaggedWord = AssistiveChatHostTaggedWord()
+        let mlModel = try LocalMapsQueryTagger(configuration: MLModelConfiguration()).model
+        let customModel = try NLModel(mlModel: mlModel)
+        let customTagScheme = NLTagScheme("LocalMapsQueryTagger")
+        let customTagger = NLTagger(tagSchemes: [customTagScheme])
+        customTagger.string = rawQuery
+        customTagger.setModels([customModel], forTagScheme: customTagScheme)
+        customTagger.enumerateTags(in: rawQuery.startIndex..<rawQuery.endIndex, unit: .word, scheme: customTagScheme, options: [.omitWhitespace, .omitPunctuation]) { tag, tokenRange in
+            if let tag = tag {
+                let key = String(rawQuery[tokenRange])
+                if retval.keys.contains(key) {
+                    var oldValues = retval[key]
+                    oldValues?.append(tag.rawValue)
+                    if let newValues = oldValues {
+                        retval[key] = newValues
+                    }
+                } else {
+                    retval[key] = [tag.rawValue]
+                }
+                print("\(rawQuery[tokenRange]): \(tag.rawValue)")
+            }
+            return true
+        }
+        
+        let tagger = NLTagger(tagSchemes: [.nameTypeOrLexicalClass])
+        tagger.string = rawQuery
+        
+        let options: NLTagger.Options = [.omitPunctuation, .omitWhitespace, .joinNames]
+        let allowedTags: [NLTag] = [.personalName, .placeName, .organizationName, .noun, .adjective]
+        
+        tagger.enumerateTags(in: rawQuery.startIndex..<rawQuery.endIndex, unit: .word, scheme: .nameTypeOrLexicalClass, options: options) { tag, tokenRange in
+            if let tag = tag, allowedTags.contains(tag) {
+                let key = String(rawQuery[tokenRange])
+                if retval.keys.contains(key) {
+                    var oldValues = retval[key]
+                    oldValues?.append(tag.rawValue)
+                    if let newValues = oldValues {
+                        retval[key] = newValues
+                    }
+                } else {
+                    retval[key] = [tag.rawValue]
+                }
+                print("\(rawQuery[tokenRange]): \(tag.rawValue)")
+            }
+
+            return true
+        }
+
+        
+        if retval.count > 0 {
+            return retval
+        }
+        
+        return nil
+    }
+    
+    internal func parsedQuery(for rawQuery:String, tags:AssistiveChatHostTaggedWord? = nil)->String {
+        guard let tags = tags else { return rawQuery }
+        
+        var revisedQuery = ""
+        var includedWords = Set<String>()
+        
+        for taggedWord in tags.keys {
+            if let taggedValues = tags[taggedWord] {
+                if taggedValues.contains("TASTE"), !includedWords.contains(taggedWord) {
+                    includedWords.insert(taggedWord)
+                    revisedQuery.append(taggedWord)
+                    revisedQuery.append(" ")
+                }
+
+                if taggedValues.contains("CATEGORY"), !includedWords.contains(taggedWord) {
+                    includedWords.insert(taggedWord)
+                    revisedQuery.append(taggedWord)
+                    revisedQuery.append(" ")
+                }
+                
+                if taggedValues.contains("PLACE"), !taggedValues.contains("PlaceName"), !includedWords.contains(taggedWord) {
+                    includedWords.insert(taggedWord)
+                    print(taggedWord)
+                    print(taggedValues)
+                    print(taggedValues.count)
+                    revisedQuery.append(taggedWord)
+                    revisedQuery.append(" ")
+                }
+                
+                if taggedValues.contains("Noun"), !includedWords.contains(taggedWord) {
+                    includedWords.insert(taggedWord)
+                    print(taggedWord)
+                    print(taggedValues)
+                    print(taggedValues.count)
+                    revisedQuery.append(taggedWord)
+                    revisedQuery.append(" ")
+                }
+                
+                if taggedValues.contains("Adjective"), !includedWords.contains(taggedWord) {
+                    includedWords.insert(taggedWord)
+                    print(taggedWord)
+                    print(taggedValues)
+                    print(taggedValues.count)
+                    revisedQuery.append(taggedWord)
+                    revisedQuery.append(" ")
+                }
+            }
+        }
+        print("Revised query")
+        if revisedQuery.count == 0 {
+            revisedQuery = rawQuery
+        }
+        revisedQuery = revisedQuery.trimmingCharacters(in: .whitespaces)
+        print(revisedQuery)
+        return revisedQuery
+    }
+    
+    internal func radius(for rawQuery:String)->Int? {
+        if rawQuery.contains("nearby") || rawQuery.contains("near me") {
+            return 1000
+        }
+        
+        return nil
+    }
+    
+    internal func minPrice(for rawQuery:String)->Int? {
+        if rawQuery.contains("fancy") {
+            return 3
+        }
+
+        if !rawQuery.contains("not expensive") && !rawQuery.contains("not that expensive") && rawQuery.contains("expensive") {
+            return 3
+        }
+        
+        return nil
+    }
+    
+    internal func maxPrice(for rawQuery:String)->Int? {
+        if rawQuery.contains("cheap") {
+            return 2
+        }
+        
+        if rawQuery.contains("not expensive") || rawQuery.contains("not that expensive") {
+            return 3
+        }
+        
+        return nil
+    }
+    
+    internal func nearLocation(for rawQuery:String, tags:AssistiveChatHostTaggedWord? = nil)->String? {
+        return nil
+    }
+    
+    internal func openAt(for rawQuery:String)->String? {
+        return nil
+    }
+    
+    internal func openNow(for rawQuery:String)->Bool? {
+        if rawQuery.contains("open now") {
+            return true
+        }
+        return nil
+    }
+    
+    internal func tastes(for rawQuery:String, tags:AssistiveChatHostTaggedWord? = nil)->[String]? {
+        guard let tags = tags else { return nil }
+        return nil
+    }
+    
+    internal func categories(for rawQuery:String, tags:AssistiveChatHostTaggedWord? = nil)->String? {
+        guard let tags = tags else { return nil }
+        return nil
     }
 }

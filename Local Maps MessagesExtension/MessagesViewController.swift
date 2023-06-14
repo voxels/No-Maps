@@ -333,7 +333,7 @@ extension MessagesViewController : ChatDetailsViewControllerDelegate {
     }
     
     public func didRequestSearch(for query: String) {
-        let task = Task.init {
+        let _ = Task.init {
             let intent = try chatHost.determineIntent(for: query)
             let newIntent = AssistiveChatHostIntent(caption: query, intent:intent, selectedPlaceSearchResponse:nil, selectedPlaceSearchDetails:nil, placeSearchResponses:[PlaceSearchResponse]())
             try await self.chatHost.refreshParameters(for: query, intent:newIntent)
