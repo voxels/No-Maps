@@ -9,6 +9,10 @@ import SwiftUI
 import NaturalLanguage
 import CoreLocation
 
+enum ChatResultViewModelError : Error {
+    case MissingLastIntent
+}
+
 public protocol ChatResultViewModelDelegate : AnyObject {
     func didUpdateModel(for location:CLLocation?)
 }
@@ -25,23 +29,11 @@ public class ChatResultViewModel : ObservableObject {
     public var lastIntent:AssistiveChatHostIntent? {
         return queryParametersHistory.last?.queryIntents.last
     }
-    
-    /*
-     private static let modelDefaults:[ChatResult] = [
-     ChatResult(title: "I like a place", backgroundColor: Color.green, backgroundImageURL: nil, placeResponse: nil, placeDetailsResponse: nil, photoResponse: nil),
-     ChatResult(title: "Where can I find", backgroundColor: Color.green, backgroundImageURL: nil,  placeResponse: nil, placeDetailsResponse: nil, photoResponse: nil),
-     ChatResult(title: "What did I like", backgroundColor: Color.green, backgroundImageURL: nil,  placeResponse: nil, placeDetailsResponse: nil, photoResponse: nil),
-     ChatResult(title: "Tell me about", backgroundColor: Color.green, backgroundImageURL: nil,  placeResponse: nil, placeDetailsResponse: nil, photoResponse: nil),
-     ChatResult(title: "Ask a different question", backgroundColor: Color.red, backgroundImageURL: nil, placeResponse: nil, placeDetailsResponse: nil, photoResponse: nil)
-     ]
-     */
-    
+        
     private static let modelDefaults:[ChatResult] = [
         ChatResult(title: "Where can I find", backgroundColor: Color.green, backgroundImageURL: nil,  placeResponse: nil, placeDetailsResponse: nil),
         ChatResult(title: "Tell me about", backgroundColor: Color.green, backgroundImageURL: nil,  placeResponse: nil, placeDetailsResponse: nil),
     ]
-    
-    
     
     @Published public var results:[ChatResult] = ChatResultViewModel.modelDefaults
     
@@ -52,28 +44,35 @@ public class ChatResultViewModel : ObservableObject {
     public func receiveMessage(caption: String, parameters: AssistiveChatHostQueryParameters, isLocalParticipant: Bool, nearLocation:CLLocation) async throws {
         queryCaption = caption
         queryParametersHistory.append(parameters)
-        try await applyQuery(caption: queryCaption!, parameters: parameters, history: queryParametersHistory, nearLocation:nearLocation)
-    }
-    
-    public func
-    applyQuery(caption:String, parameters:AssistiveChatHostQueryParameters, history:[AssistiveChatHostQueryParameters], nearLocation:CLLocation) async throws {
-        print("Applying query: \(caption)")
-        print("With parameters:")
-        for intent in parameters.queryIntents {
-            print(intent.caption)
-            print(intent.intent)
-        }
-        if let lastParameters = history.last, let lastIntent = lastParameters.queryIntents.last, lastIntent.selectedPlaceSearchResponse == nil {
-            do {
-                try await detailIntent(intent: lastIntent, parameters: parameters, nearLocation:nearLocation)
-            } catch {
-                print(error)
+        if isLocalParticipant {
+            guard let lastIntent = lastIntent else {
+                throw ChatResultViewModelError.MissingLastIntent
             }
+            
+            try await detailIntent(intent: lastIntent, nearLocation: nearLocation)
+        } else {
+            
         }
     }
     
-    public func detailIntent(intent:AssistiveChatHostIntent, parameters:AssistiveChatHostQueryParameters, nearLocation:CLLocation) async throws {
+    public func detailIntent( intent: AssistiveChatHostIntent, nearLocation:CLLocation) async throws {
         
+        switch intent.intent {
+        case .TellDefault, .SearchDefault, .Unsupported:
+            break
+        case .SearchQuery:
+            let request = placeSearchRequest(intent: intent)
+            let rawQueryResponse = try await placeSearchSession.query(request:request)
+            let placeSearchResponses = try PlaceResponseFormatter.placeSearchResponses(with: rawQueryResponse, nearLocation: nearLocation)
+            intent.placeSearchResponses = placeSearchResponses
+        case .TellPlace, .ShareResult:
+            let request = placeSearchRequest(intent: intent)
+            let rawQueryResponse = try await placeSearchSession.query(request:request)
+            let placeSearchResponses = try PlaceResponseFormatter.placeSearchResponses(with: rawQueryResponse, nearLocation: nearLocation)
+            intent.placeSearchResponses = placeSearchResponses
+        }
+        
+        /*
         var checkResponses = [PlaceSearchResponse]()
         
         if intent.intent == .TellDefault || intent.intent == .SearchDefault {
@@ -83,9 +82,6 @@ public class ChatResultViewModel : ObservableObject {
         if let placeResponse = intent.selectedPlaceSearchResponse {
             checkResponses.append(placeResponse)
         } else {
-            let request = placeSearchRequest(parameters: parameters)
-            let rawQueryResponse = try await placeSearchSession.query(request:request)
-            let placeSearchResponses = try PlaceResponseFormatter.placeSearchResponses(with: rawQueryResponse, nearLocation: nearLocation)
             checkResponses.append(contentsOf:placeSearchResponses)
         }
         
@@ -245,6 +241,7 @@ public class ChatResultViewModel : ObservableObject {
             parameters.queryIntents.removeLast()
             parameters.queryIntents.append(newIntent)
         }
+         */
     }
     
     public func refreshModel(queryIntents:[AssistiveChatHostIntent]? = nil, parameters:AssistiveChatHostQueryParameters, nearLocation:CLLocation) {
@@ -307,6 +304,8 @@ public class ChatResultViewModel : ObservableObject {
                 }
             }
         case .TellPlace:
+            break
+            /*
             let _ = Task.init {
                 do {
                     var chatResults = [ChatResult]()
@@ -320,7 +319,7 @@ public class ChatResultViewModel : ObservableObject {
                             checkResponses.append(placeResponse)
                         } else {
                             if let currentLocation = locationProvider.currentLocation() {
-                                let rawAutocompleteQuery = try await placeSearchSession.autocomplete(caption: lastIntent.caption, parameters: parameters.queryParameters, currentLocation: currentLocation.coordinate)
+                                let rawAutocompleteQuery = try await placeSearchSession.autocomplete(caption: lastIntent.caption, parameters: lastIntent.queryParameters, currentLocation: currentLocation.coordinate)
                                 let autocompleteResponses = try PlaceResponseFormatter.autocompletePlaceSearchResponses(with: rawAutocompleteQuery)
                                 checkResponses.append(contentsOf:autocompleteResponses)
                             }
@@ -423,9 +422,12 @@ public class ChatResultViewModel : ObservableObject {
                     }
                 }
             }
+             */
         case .SearchQuery:
             searchQueryModel( query: lastIntent.caption, queryIntents: intents, parameters:parameters, nearLocation:nearLocation )
         default:
+            break
+            /*
             let _ = Task.init {
                 do {
                     
@@ -528,12 +530,11 @@ public class ChatResultViewModel : ObservableObject {
                     print(error)
                 }
             }
+             */
         }
     }
     
     public func placeQueryModel( query:String,  queryIntents:[AssistiveChatHostIntent]?, parameters:AssistiveChatHostQueryParameters ) {
-        print("Refreshing model with place query parameters:\(String(describing: parameters.queryParameters))")
-        
         let _ = Task.init {
             var chatResults = [ChatResult]()
             
@@ -584,7 +585,6 @@ public class ChatResultViewModel : ObservableObject {
     }
     
     public func searchQueryModel( query:String,  queryIntents:[AssistiveChatHostIntent]?, parameters:AssistiveChatHostQueryParameters, nearLocation:CLLocation ) {
-        print("Refreshing model with search query parameters:\(String(describing: parameters.queryParameters))")
         let _ = Task.init {
             guard let placeSearchResponses = queryIntents?.last?.placeSearchResponses else {
                 return
@@ -650,44 +650,19 @@ public class ChatResultViewModel : ObservableObject {
     }
     
     
-    private func placeSearchRequest(parameters:AssistiveChatHostQueryParameters )->PlaceSearchRequest {
+    private func placeSearchRequest(intent:AssistiveChatHostIntent)->PlaceSearchRequest {
         var query = ""
         
-        if let caption = parameters.queryIntents.last?.caption {
-            let tagger = NLTagger(tagSchemes: [.nameTypeOrLexicalClass])
-            tagger.string = caption
-            
-            let options: NLTagger.Options = [.omitPunctuation, .omitWhitespace, .joinNames]
-            let tags: [NLTag] = [.personalName, .placeName, .organizationName, .noun, .adjective]
-            var nameString:String = ""
-            
-            tagger.enumerateTags(in: caption.startIndex..<caption.endIndex, unit: .word, scheme: .nameTypeOrLexicalClass, options: options) { tag, tokenRange in
-                // Get the most likely tag, and print it if it's a named entity.
-                if let tag = tag, tags.contains(tag) {
-                    print("\(caption[tokenRange]): \(tag.rawValue)")
-                    nameString.append("\(caption[tokenRange]) ")
-                }
-                
-                // Get multiple possible tags with their associated confidence scores.
-                let (hypotheses, _) = tagger.tagHypotheses(at: tokenRange.lowerBound, unit: .word, scheme: .nameTypeOrLexicalClass, maximumCount: 1)
-                print(hypotheses)
-                
-                return true
-            }
-            query.append(nameString)
-            query.append(" ")
-        }
-        
         var ll:String? = nil
-        var openNow = false
+        var openNow:Bool? = nil
         var openAt:String? = nil
         var nearLocation:String? = nil
         var minPrice = 1
         var maxPrice = 4
-        var radius = 1000
+        var radius = 2000
         var sort:String? = nil
-        var limit:Int = 10
-        if let rawParameters = parameters.queryParameters?["parameters"] as? NSDictionary {
+        var limit:Int = 8
+        if let rawParameters = intent.queryParameters?["parameters"] as? NSDictionary {
             if let rawMinPrice = rawParameters["min_price"] as? Int, rawMinPrice > 1 {
                 minPrice = rawMinPrice
             }

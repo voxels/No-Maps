@@ -335,8 +335,8 @@ extension MessagesViewController : ChatDetailsViewControllerDelegate {
     public func didRequestSearch(for query: String) {
         let _ = Task.init {
             let intent = try chatHost.determineIntent(for: query)
-            let newIntent = AssistiveChatHostIntent(caption: query, intent:intent, selectedPlaceSearchResponse:nil, selectedPlaceSearchDetails:nil, placeSearchResponses:[PlaceSearchResponse]())
-            try await self.chatHost.refreshParameters(for: query, intent:newIntent)
+            let queryParameters = try await chatHost.defaultParameters(for: query)
+            let newIntent = AssistiveChatHostIntent(caption: query, intent:intent, selectedPlaceSearchResponse:nil, selectedPlaceSearchDetails:nil, placeSearchResponses:[PlaceSearchResponse](), queryParameters: queryParameters)
             chatHost.appendIntentParameters(intent: newIntent)
             if let location = chatModel.locationProvider.currentLocation() {
                 try await self.chatHost.receiveMessage(caption: query, isLocalParticipant: true, nearLocation: location)
@@ -351,16 +351,9 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
         let _ = Task.init {
             let caption = chatResult.title
             let intent = try chatHost.determineIntent(for: caption)
-            let newIntent = AssistiveChatHostIntent(caption: caption, intent: intent, selectedPlaceSearchResponse: selectedPlaceSearchResponse, selectedPlaceSearchDetails: selectedPlaceSearchDetails, placeSearchResponses: [PlaceSearchResponse]())
-            try await self.chatHost.refreshParameters(for: caption, intent:newIntent)
-            let checkIntentWithParameters = try chatHost.determineIntent(for: caption)
-            if checkIntentWithParameters == newIntent.intent {
-                chatHost.appendIntentParameters(intent: newIntent)
-            } else {
-                let revisedIntent = AssistiveChatHostIntent(caption: caption, intent: checkIntentWithParameters, selectedPlaceSearchResponse: nil, selectedPlaceSearchDetails: nil, placeSearchResponses: [PlaceSearchResponse]())
-                try await self.chatHost.refreshParameters(for: caption, intent:revisedIntent)
-                chatHost.appendIntentParameters(intent: revisedIntent)
-            }
+            let queryParameters = try await chatHost.defaultParameters(for: caption)
+            let newIntent = AssistiveChatHostIntent(caption: caption, intent: intent, selectedPlaceSearchResponse: selectedPlaceSearchResponse, selectedPlaceSearchDetails: selectedPlaceSearchDetails, placeSearchResponses: [PlaceSearchResponse](), queryParameters: queryParameters)
+            chatHost.appendIntentParameters(intent: newIntent)
             if let location = chatModel.locationProvider.currentLocation() {
                 try await self.chatHost.receiveMessage(caption: caption, isLocalParticipant: true, nearLocation: location)
             }

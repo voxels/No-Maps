@@ -30,7 +30,7 @@ open class ChatDetailsViewController : UIViewController {
         if let lastIntent = parameters.queryIntents.last {
             self.model = ChatDetailsViewModel(queryParameters: parameters,intent:lastIntent, delegate: nil)
         } else {
-            self.model = ChatDetailsViewModel(queryParameters: parameters,intent:AssistiveChatHostIntent(caption: "Where can I find", intent: .SearchDefault, selectedPlaceSearchResponse: nil, selectedPlaceSearchDetails: nil, placeSearchResponses: [PlaceSearchResponse]()), delegate: nil)
+            self.model = ChatDetailsViewModel(queryParameters: parameters,intent:AssistiveChatHostIntent(caption: "Where can I find", intent: .SearchDefault, selectedPlaceSearchResponse: nil, selectedPlaceSearchDetails: nil, placeSearchResponses: [PlaceSearchResponse](), queryParameters: nil), delegate: nil)
         }
         super.init(nibName: nil, bundle: nil)
         self.model.delegate = self

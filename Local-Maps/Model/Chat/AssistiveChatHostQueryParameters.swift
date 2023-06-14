@@ -10,9 +10,8 @@ import Foundation
 open class AssistiveChatHostQueryParameters : ObservableObject, Equatable {
     public let uuid = UUID()
     public var queryIntents = [AssistiveChatHostIntent]()
-    public var queryParameters:[String:Any]?
     
     public static func == (lhs: AssistiveChatHostQueryParameters, rhs: AssistiveChatHostQueryParameters) -> Bool {
-        lhs.uuid == rhs.uuid && lhs.queryIntents == rhs.queryIntents
+        lhs.uuid == rhs.uuid
     }
 }

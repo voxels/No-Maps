@@ -12,13 +12,23 @@ import CoreML
 
 typealias AssistiveChatHostTaggedWord = [String: [String]]
 
-public struct AssistiveChatHostIntent : Equatable {
+public class AssistiveChatHostIntent : Equatable {
     public let uuid = UUID()
     public let caption:String
     public let intent:AssistiveChatHost.Intent
-    public let selectedPlaceSearchResponse:PlaceSearchResponse?
-    public let selectedPlaceSearchDetails:PlaceDetailsResponse?
-    public let placeSearchResponses:[PlaceSearchResponse]
+    public var selectedPlaceSearchResponse:PlaceSearchResponse?
+    public var selectedPlaceSearchDetails:PlaceDetailsResponse?
+    public var placeSearchResponses:[PlaceSearchResponse]
+    public let queryParameters:[String:Any]?
+    
+    public init(caption: String, intent: AssistiveChatHost.Intent, selectedPlaceSearchResponse: PlaceSearchResponse?, selectedPlaceSearchDetails: PlaceDetailsResponse?, placeSearchResponses: [PlaceSearchResponse], queryParameters: [String : Any]?) {
+        self.caption = caption
+        self.intent = intent
+        self.selectedPlaceSearchResponse = selectedPlaceSearchResponse
+        self.selectedPlaceSearchDetails = selectedPlaceSearchDetails
+        self.placeSearchResponses = placeSearchResponses
+        self.queryParameters = queryParameters
+    }
     
     public static func == (lhs: AssistiveChatHostIntent, rhs: AssistiveChatHostIntent) -> Bool {
         return lhs.uuid == rhs.uuid
@@ -104,10 +114,6 @@ open class AssistiveChatHost : ChatHostingViewControllerDelegate, ObservableObje
         }
         
         return predictedLabel
-    }
-    
-    public func refreshParameters(for query:String, intent:AssistiveChatHostIntent) async throws {
-        queryIntentParameters.queryParameters = try await defaultParameters(for: query)
     }
     
     internal func defaultParameters(for query:String) async throws -> [String:Any]? {
