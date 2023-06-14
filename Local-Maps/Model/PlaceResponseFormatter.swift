@@ -14,10 +14,10 @@ public enum PlaceResponseFormatterError : Error {
 }
 
 open class PlaceResponseFormatter {
-    public class func autocompletePlaceSearchResponses(with response:Any) throws ->[PlaceSearchResponse] {
+    public class func autocompletePlaceSearchResponses(with response:NSDictionary) throws ->[PlaceSearchResponse] {
         var retVal = [PlaceSearchResponse]()
         
-        guard let response = response as? NSDictionary else {
+        guard response.allKeys.count > 0 else {
             throw PlaceResponseFormatterError.InvalidRawResponseType
         }
         
@@ -454,24 +454,6 @@ open class PlaceResponseFormatter {
             retVal.append(response)
         }
         return retVal
-    }
-    
-    public class func firstChatResult(queryIntents:[AssistiveChatHostIntent])->ChatResult {
-        if let lastIntent = queryIntents.last {
-            switch lastIntent.intent {
-            case .SearchDefault:
-                let result = ChatResult(title:"Tell me about", backgroundColor: Color.green, backgroundImageURL: nil, placeResponse: nil, placeDetailsResponse: nil)
-                return result
-            case .TellDefault:
-                let result = ChatResult(title:"Where can I find", backgroundColor: Color.green, backgroundImageURL: nil, placeResponse: nil, placeDetailsResponse: nil)
-                return result
-            default:
-                break
-            }
-        }
-        
-        let result = ChatResult(title:"Ask a different question", backgroundColor: Color.red, backgroundImageURL: nil, placeResponse: nil, placeDetailsResponse: nil)
-        return result
     }
     
     public class func placeDetailsChatResults(for place:PlaceSearchResponse, details:PlaceDetailsResponse, photos:[PlacePhotoResponse], tips:[PlaceTipsResponse],  results:[PlaceSearchResponse] )->[ChatResult] {

@@ -13,6 +13,7 @@ enum ChatResultViewModelError : Error {
     case MissingLastIntent
     case MissingSelectedPlaceSearchResponse
     case MissingSelectedPlaceDetailsResponse
+    case NoAutocompleteResultsFound
 }
 
 public protocol ChatResultViewModelDelegate : AnyObject {
@@ -74,27 +75,29 @@ public class ChatResultViewModel : ObservableObject {
                     intent.placeDetailsResponses = [selectedPlaceDetailsResponse]
                 }
             } else {
-                let request = placeSearchRequest(intent: intent)
-                let rawQueryResponse = try await placeSearchSession.query(request:request)
-                let placeSearchResponses = try PlaceResponseFormatter.placeSearchResponses(with: rawQueryResponse, nearLocation: nearLocation)
+                let autocompleteResponse = try await placeSearchSession.autocomplete(caption: intent.caption, parameters: intent.queryParameters, currentLocation:nearLocation.coordinate)
+                let placeSearchResponses = try PlaceResponseFormatter.autocompletePlaceSearchResponses(with: autocompleteResponse)
                 intent.placeSearchResponses = placeSearchResponses
                 intent.placeDetailsResponses = try await fetchDetails(for: placeSearchResponses, nearLocation: nearLocation)
+                
+                if let detailsResponses = intent.placeDetailsResponses {
+                    if detailsResponses.count >= 1, let firstDetailsResponse = detailsResponses.first {
+                        intent.selectedPlaceSearchResponse = firstDetailsResponse.searchResponse
+                        intent.selectedPlaceSearchDetails = firstDetailsResponse
+                    } else  {
+                        throw ChatResultViewModelError.NoAutocompleteResultsFound
+                    }
+                }
             }
         }
     }
     
     
     
-    public func refreshModel(queryIntents:[AssistiveChatHostIntent]? = nil, parameters:AssistiveChatHostQueryParameters, nearLocation:CLLocation) {
+    public func refreshModel(queryIntents:[AssistiveChatHostIntent]? = nil, nearLocation:CLLocation) {
         guard let queryIntents = queryIntents else {
             zeroStateModel()
             return
-        }
-        
-        print("Refreshing Model with intents")
-        for intent in queryIntents {
-            print(intent.intent)
-            print(intent.caption)
         }
         
         switch queryIntents.count {
@@ -102,22 +105,17 @@ public class ChatResultViewModel : ObservableObject {
             zeroStateModel()
         default:
             if let lastIntent = queryIntents.last {
-                model( intents: queryIntents, lastIntent:lastIntent, parameters: parameters, placeSearchResponses: lastIntent.placeSearchResponses, nearLocation: nearLocation)
+                model(intent:lastIntent, nearLocation: nearLocation)
             } else {
                 zeroStateModel()
             }
         }
     }
     
-    public func model( intents:[AssistiveChatHostIntent], lastIntent:AssistiveChatHostIntent, parameters:AssistiveChatHostQueryParameters, placeSearchResponses:[PlaceSearchResponse]? = nil, nearLocation:CLLocation) {
-        
-        switch lastIntent.intent {
+    public func model(intent:AssistiveChatHostIntent, nearLocation:CLLocation) {
+        switch intent.intent {
         case .SearchDefault:
-            var chatResults = [ChatResult]()
-            if intents.count > 0 {
-                let searchResult = PlaceResponseFormatter.firstChatResult(queryIntents: intents)
-                chatResults.append(searchResult)
-            }
+            let chatResults = [ChatResult]()
             let blendedResults = blendDefaults(with: chatResults)
             DispatchQueue.main.async { [weak self] in
                 guard let strongSelf = self else { return }
@@ -128,12 +126,7 @@ public class ChatResultViewModel : ObservableObject {
             }
         case .TellDefault:
             let _ = Task.init {
-                var chatResults = [ChatResult]()
-                if intents.count > 0 {
-                    let searchResult = PlaceResponseFormatter.firstChatResult(queryIntents: intents)
-                    chatResults.append(searchResult)
-                }
-                
+                let chatResults = [ChatResult]()
                 let blendedResults = blendDefaults(with: chatResults)
                 DispatchQueue.main.async { [weak self] in
                     guard let strongSelf = self else { return }
@@ -146,12 +139,12 @@ public class ChatResultViewModel : ObservableObject {
             }
         case .TellPlace:
             do {
-                try tellQueryModel(intent: lastIntent, nearLocation: nearLocation)
+                try tellQueryModel(intent: intent, nearLocation: nearLocation)
             } catch {
                 print(error)
             }
         case .SearchQuery:
-            searchQueryModel(intent: lastIntent, nearLocation: nearLocation)
+            searchQueryModel(intent: intent, nearLocation: nearLocation)
         default:
             break
         }
@@ -266,7 +259,8 @@ public class ChatResultViewModel : ObservableObject {
             switch intent.intent {
             case .SearchDefault:
                 defaults.remove(at: 0)
-                return defaults
+                results.append(contentsOf: defaults)
+                return results
             case  .TellDefault:
                 defaults.remove(at: 0)
                 results.append(contentsOf: defaults)

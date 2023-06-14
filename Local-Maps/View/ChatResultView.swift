@@ -15,7 +15,7 @@ struct ChatResultView : View {
         ChatResultViewHorizontalStack(chatHost: chatHost, model: model).onAppear {
             model.authorizeLocationProvider()
             if let location = model.locationProvider.currentLocation() {
-                model.refreshModel( queryIntents: chatHost.queryIntentParameters.queryIntents, parameters: chatHost.queryIntentParameters, nearLocation:location)
+                model.refreshModel( queryIntents: chatHost.queryIntentParameters.queryIntents, nearLocation:location)
             }
         }.padding(8)
     }

@@ -127,7 +127,7 @@ open class MessagesViewController: MSMessagesAppViewController {
     
         // Use this to clean up state related to the deleted message.
         if let location = chatModel.locationProvider.currentLocation() {
-            chatModel.refreshModel(queryIntents:[AssistiveChatHostIntent](),parameters: self.chatHost.queryIntentParameters, nearLocation: location)
+            chatModel.refreshModel(queryIntents:[AssistiveChatHostIntent](), nearLocation: location)
         }
 
     }
@@ -385,7 +385,7 @@ extension MessagesViewController : AssistiveChatHostMessagesDelegate {
         }
         
         print("Paramaters did update, requesting new chat model")
-        chatModel.refreshModel(queryIntents: parameters.queryIntents, parameters: chatHost.queryIntentParameters, nearLocation: nearLocation )
+        chatModel.refreshModel(queryIntents: parameters.queryIntents, nearLocation: nearLocation )
         
         if let chatDetailsViewController = chatDetailsViewController, chatDetailsViewController.model.currentIntent != parameters.queryIntents.last {
             chatDetailsViewController.willUpdateModel()

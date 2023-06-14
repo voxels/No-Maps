@@ -229,44 +229,45 @@ open class PlaceSearchSession : ObservableObject {
         return try await fetch(url: url, apiKey: self.foursquareApiKey)
     }
     
-    public func autocomplete(caption:String, parameters:[String:Any]?, currentLocation:CLLocationCoordinate2D) async throws -> Any {
+    public func autocomplete(caption:String, parameters:[String:Any]?, currentLocation:CLLocationCoordinate2D) async throws -> NSDictionary {
         if searchSession == nil {
             searchSession = try await session()
         }
         
-        var ll = ""
+        let ll = "\(currentLocation.latitude),\(currentLocation.longitude)"
         var limit = 10
+        var nameString:String = ""
         
-        if let parameters = parameters, let rawParameters = parameters["parameters"] as? NSDictionary {
-            if let nearLocations = rawParameters["near"] as? [String], nearLocations.count > 0, let firstLocation = nearLocations.first, firstLocation.count > 0 {
-                ll = try await self.ll(near: nearLocations)
-            } else {
-                ll = "\(currentLocation.latitude),\(currentLocation.longitude)"
-            }
-            if let rawLimit = rawParameters["limit"] as? Int {
-                limit = rawLimit
+        if let parameters = parameters, let rawQuery = parameters["query"] as? String {
+            nameString = rawQuery
+        } else {
+            let tagger = NLTagger(tagSchemes: [.nameTypeOrLexicalClass])
+            tagger.string = caption
+
+            let options: NLTagger.Options = [.omitPunctuation, .omitWhitespace, .joinNames]
+            let tags: [NLTag] = [.personalName, .placeName, .organizationName, .noun, .adjective]
+
+
+            tagger.enumerateTags(in: caption.startIndex..<caption.endIndex, unit: .word, scheme: .nameTypeOrLexicalClass, options: options) { tag, tokenRange in
+                // Get the most likely tag, and print it if it's a named entity.
+                if let tag = tag, tags.contains(tag) {
+                    print("\(caption[tokenRange]): \(tag.rawValue)")
+                    nameString.append("\(caption[tokenRange]) ")
+                }
+                    
+                // Get multiple possible tags with their associated confidence scores.
+                let (hypotheses, _) = tagger.tagHypotheses(at: tokenRange.lowerBound, unit: .word, scheme: .nameTypeOrLexicalClass, maximumCount: 1)
+                print(hypotheses)
+                    
+               return true
             }
         }
         
-        let tagger = NLTagger(tagSchemes: [.nameTypeOrLexicalClass])
-        tagger.string = caption
-
-        let options: NLTagger.Options = [.omitPunctuation, .omitWhitespace, .joinNames]
-        let tags: [NLTag] = [.personalName, .placeName, .organizationName, .noun, .adjective]
-        var nameString:String = ""
-
-        tagger.enumerateTags(in: caption.startIndex..<caption.endIndex, unit: .word, scheme: .nameTypeOrLexicalClass, options: options) { tag, tokenRange in
-            // Get the most likely tag, and print it if it's a named entity.
-            if let tag = tag, tags.contains(tag) {
-                print("\(caption[tokenRange]): \(tag.rawValue)")
-                nameString.append("\(caption[tokenRange]) ")
+        if let parameters = parameters, let rawParameters = parameters["parameters"] as? NSDictionary {
+            
+            if let rawLimit = rawParameters["limit"] as? Int {
+                limit = rawLimit
             }
-                
-            // Get multiple possible tags with their associated confidence scores.
-            let (hypotheses, _) = tagger.tagHypotheses(at: tokenRange.lowerBound, unit: .word, scheme: .nameTypeOrLexicalClass, maximumCount: 1)
-            print(hypotheses)
-                
-           return true
         }
         
         var queryComponents = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.autocompleteAPIUrl)")
@@ -295,38 +296,13 @@ open class PlaceSearchSession : ObservableObject {
             throw PlaceSearchSessionError.UnsupportedRequest
         }
         
-        return try await fetch(url: url, apiKey: self.foursquareApiKey)
-    }
-    
-    internal func ll(near locationNames:[String]) async throws ->String {
-        var ll = ""
+        let placeSearchResponse = try await fetch(url: url, apiKey: self.foursquareApiKey)
         
-        var parentLocationLL = ""
-        
-        for locationName in locationNames {
-            var queryComponents = URLComponents(string:"\(PlaceSearchSession.serverUrl)\(PlaceSearchSession.autocompleteAPIUrl)")
-            queryComponents?.queryItems = [URLQueryItem]()
-            let queryUrlItem = URLQueryItem(name: "query", value: locationName)
-            queryComponents?.queryItems?.append(queryUrlItem)
-            if parentLocationLL.count > 0 {
-                let locationQueryItem = URLQueryItem(name: "ll", value: ll)
-                queryComponents?.queryItems?.append(locationQueryItem)
-                
-                let radiusQueryItem = URLQueryItem(name: "radius", value: "1000")
-                queryComponents?.queryItems?.append(radiusQueryItem)
-            }
-            
-            guard let url = queryComponents?.url else {
-                throw PlaceSearchSessionError.UnsupportedRequest
-            }
-            
-            let locationNameAutoComplete = try await fetch(url: url, apiKey: self.foursquareApiKey)
-            let placeSearchResults = try PlaceResponseFormatter.autocompletePlaceSearchResponses(with: locationNameAutoComplete)
-            let coordinate = try location(near: placeSearchResults)
-            parentLocationLL = ll
-            ll = "\(coordinate.latitude),\(coordinate.longitude)"
+        guard let response = placeSearchResponse as? NSDictionary else {
+            return NSDictionary()
         }
-        return ll
+                
+        return response
     }
     
     internal func location(near places:[PlaceSearchResponse]) throws ->CLLocationCoordinate2D {
