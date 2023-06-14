@@ -266,18 +266,64 @@ extension MessagesViewController {
                 if let placeResponse = lastIntent.selectedPlaceSearchResponse, let details = lastIntent.selectedPlaceSearchDetails {
                     let _ = Task.init {
                         do {
-                            let description = try await self.chatHost.placeDescription(searchResponse: placeResponse, detailsResponse: details)
- 
-                            DispatchQueue.main.async { [weak self] in
-                                guard let strongSelf = self else { return }
-                                do {
+                            if let detailedDescription = details.description {
+                                DispatchQueue.main.async { [weak self] in
+                                    guard let strongSelf = self else { return }
+                                    do {
+                                        try strongSelf.showDetailsViewController(with: strongSelf.chatHost.queryIntentParameters, responseString: detailedDescription, nearLocation: nearLocation)
 
-                                    try strongSelf.showDetailsViewController(with: strongSelf.chatHost.queryIntentParameters, responseString: description, nearLocation: nearLocation)
-                                } catch{
-                                    print(error)
+                                    } catch{
+                                        print(error)
+                                    }
                                 }
-                            }
+                            } else if let tipsResponse = details.tipsResponses, tipsResponse.count > 0 {
+                                DispatchQueue.main.async { [weak self] in
+                                    guard let strongSelf = self else { return }
+                                    do {
+                                        try strongSelf.showDetailsViewController(with: strongSelf.chatHost.queryIntentParameters, responseString: "", nearLocation: nearLocation)
+                                        strongSelf.chatDetailsViewController?.showActivityIndicator()
+                                    } catch{
+                                        print(error)
+                                    }
+                                }
+                                
+                                let chatDescription = try await self.chatHost.placeDescription(searchResponse: placeResponse, detailsResponse: details)
+                                DispatchQueue.main.async { [weak self] in
+                                    guard let strongSelf = self else { return }
+                                    strongSelf.chatDetailsViewController?.hideActivityIndicator()
+                                    strongSelf.chatDetailsViewController?.update(parameters: strongSelf.chatHost.queryIntentParameters, responseString: chatDescription, placeSearchResponses:lastIntent.placeSearchResponses, placeDetailsResponses: lastIntent.placeDetailsResponses, nearLocation: nearLocation)
+                                }
+
+                            } else if let tastesResponse = details.tastes, tastesResponse.count > 0 {
+                                DispatchQueue.main.async { [weak self] in
+                                    guard let strongSelf = self else { return }
+                                    do {
+                                        try strongSelf.showDetailsViewController(with: strongSelf.chatHost.queryIntentParameters, responseString: "", nearLocation: nearLocation)
+                                        strongSelf.chatDetailsViewController?.showActivityIndicator()
+                                    } catch{
+                                        print(error)
+                                    }
+                                }
+                                
+                                let chatDescription = try await self.chatHost.placeDescription(searchResponse: placeResponse, detailsResponse: details)
+                                DispatchQueue.main.async { [weak self] in
+                                    guard let strongSelf = self else { return }
+                                    strongSelf.chatDetailsViewController?.hideActivityIndicator()
+                                    strongSelf.chatDetailsViewController?.update(parameters: strongSelf.chatHost.queryIntentParameters, responseString: chatDescription, placeSearchResponses:lastIntent.placeSearchResponses, placeDetailsResponses: lastIntent.placeDetailsResponses, nearLocation: nearLocation)
+                                }
+
+                            } else {
+                                DispatchQueue.main.async { [weak self] in
+                                    guard let strongSelf = self else { return }
+                                    do {
+                                        try strongSelf.showDetailsViewController(with: strongSelf.chatHost.queryIntentParameters, responseString: "\(placeResponse.name)", nearLocation: nearLocation)
+                                        strongSelf.chatDetailsViewController?.showActivityIndicator()
+                                    } catch{
+                                        print(error)
+                                    }
+                                }                            }
                         } catch {
+                            chatDetailsViewController?.hideActivityIndicator()
                             print(error)
                         }
                     }

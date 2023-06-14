@@ -38,7 +38,7 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
         
         if let description = detailsResponse.description {
             retval = description
-            retval.append(" ")
+            retval.append("\n\n")
         }
         
         var tipsSummary = ""
@@ -58,8 +58,6 @@ open class LanguageGenerator : LanguageGeneratorDelegate {
             retval.append(tipsSummary)
         } else {
             var tastesSummary = ""
-            
-            try await Task.sleep(nanoseconds: 2_000_000_000)
             
             if let tastes = detailsResponse.tastes {
                 let summary = try await fetchTastesSummary(with: searchResponse.name, tastes: tastes)

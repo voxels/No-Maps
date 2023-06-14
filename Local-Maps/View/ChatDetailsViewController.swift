@@ -23,6 +23,7 @@ open class ChatDetailsViewController : UIViewController {
     public var model:ChatDetailsViewModel
     private var detailsContainerView = UIView(frame:.zero)
     private var responseContainerView = UIView(frame:.zero)
+    private var activityIndicator = UIActivityIndicatorView(frame:.zero)
     private var textDescriptionResponseViewController:TextDescriptionResponseViewController?
     private var searchResponseViewController:SearchResponseViewController?
     private var searchQueryResponseViewController:SearchQueryResponseViewController?
@@ -169,6 +170,20 @@ extension ChatDetailsViewController {
                 }
             }
         }
+    }
+    
+    public func showActivityIndicator() {
+        activityIndicator.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(activityIndicator)
+        activityIndicator.sizeToFit()
+        activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor).isActive = true
+        activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
+        activityIndicator.startAnimating()
+    }
+    
+    public func hideActivityIndicator() {
+        activityIndicator.stopAnimating()
+        activityIndicator.removeFromSuperview()
     }
 }
 

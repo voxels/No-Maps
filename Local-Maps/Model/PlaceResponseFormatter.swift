@@ -461,15 +461,15 @@ open class PlaceResponseFormatter {
         let usedPhotoIDs = [String]()
         var placeResults = [ChatResult]()
         if let description = details.description {
-            let placeResultDescription = PlaceResponseFormatter.imageChatResult(title:"Share:  \(description)", backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs))
+            let placeResultDescription = PlaceResponseFormatter.imageChatResult(title:"Share:  \(description)", backgroundColor: Color.accentColor, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs))
             placeResults.append(placeResultDescription)
         }
         
-        let placeResultAddress = PlaceResponseFormatter.imageChatResult(title: "Share the address:\n\(details.searchResponse.address)", backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs))
+        let placeResultAddress = PlaceResponseFormatter.imageChatResult(title: "Share the address:\n\(details.searchResponse.address)", backgroundColor: Color.accentColor, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs))
         placeResults.append(placeResultAddress)
         
         if let tel = details.tel {
-            let placeResultTel = PlaceResponseFormatter.imageChatResult(title: "Share the phone number: \(tel)" , backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs))
+            let placeResultTel = PlaceResponseFormatter.imageChatResult(title: "Share the phone number: \(tel)" , backgroundColor: Color.accentColor, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse: PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs))
             placeResults.append(placeResultTel)
         }
         
@@ -488,7 +488,7 @@ open class PlaceResponseFormatter {
                 description = "Price Not Listed"
             }
             
-            let placeResultPrice = PlaceResponseFormatter.imageChatResult(title: description , backgroundColor: Color.black, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs))
+            let placeResultPrice = PlaceResponseFormatter.imageChatResult(title: description , backgroundColor: Color.accentColor, backgroundImageUrl: nil, placeResponse: place, placeDetailsResponse: details, photoResponse:PlaceResponseFormatter.unusedPhoto(in: photos, with: usedPhotoIDs))
             placeResults.append(placeResultPrice)
         }
         

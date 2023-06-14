@@ -37,7 +37,7 @@ struct ChatResultViewHorizontalStack : View  {
                     ForEach(model.results) { result in
                         Text(result.title)
                             .font(.system(.headline))
-                            .foregroundColor(Color(UIColor.lightText))
+                            .foregroundColor(Color(UIColor.label))
                             .padding(8)
                             .lineLimit(3)
                             .multilineTextAlignment(.center)
