@@ -16,10 +16,6 @@ public enum MessagesViewControllerError : Error {
     case ChatDetailsViewControllerNotFound
 }
 
-public protocol ChatHostingViewControllerDelegate : AnyObject {
-    func didTap(chatResult:ChatResult)
-}
-
 open class MessagesViewController: MSMessagesAppViewController {
     var chatDetailsContainerView:UIView?
     var chatDetailsViewController:ChatDetailsViewController?

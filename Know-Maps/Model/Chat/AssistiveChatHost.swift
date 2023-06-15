@@ -12,6 +12,10 @@ import CoreML
 
 typealias AssistiveChatHostTaggedWord = [String: [String]]
 
+public protocol ChatHostingViewControllerDelegate : AnyObject {
+    func didTap(chatResult:ChatResult)
+}
+
 public class AssistiveChatHostIntent : Equatable {
     public let uuid = UUID()
     public let caption:String
