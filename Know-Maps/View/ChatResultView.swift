@@ -6,10 +6,15 @@
 //
 
 import SwiftUI
+import CoreLocation
 
 struct ChatResultView : View {
     @StateObject public var chatHost:AssistiveChatHost
     @StateObject public var model:ChatResultViewModel
+    
+    let locationAuthorizedPublisher = NotificationCenter.default.publisher(for: Notification.Name("LocationProviderAuthorized"))
+    
+    let locationDeniedPublisher = NotificationCenter.default.publisher(for: Notification.Name("LocationProviderDenied"))
     
     var body: some View {
         ChatResultViewHorizontalStack(chatHost: chatHost, model: model).onAppear {
@@ -18,6 +23,18 @@ struct ChatResultView : View {
                 model.refreshModel( queryIntents: chatHost.queryIntentParameters.queryIntents, nearLocation:location)
             }
         }.padding(8)
+            .onReceive(locationAuthorizedPublisher) { output in
+                if let location = model.locationProvider.currentLocation() {
+                    model.refreshModel( queryIntents: chatHost.queryIntentParameters.queryIntents, nearLocation:location)
+                }
+            }
+            .onReceive(locationDeniedPublisher) { output in
+                // Show Alert Message
+            }
+    }
+    
+    func refreshModel(with location:CLLocation) {
+        
     }
 }
 
@@ -47,8 +64,8 @@ struct ChatResultViewHorizontalStack : View  {
                             .padding(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
                             .background(in: Capsule(style: .circular)).backgroundStyle(result.backgroundColor)
                             .onTapGesture {
-                            chatHost.didTap(chatResult: result)
-                        }.id(result)
+                                chatHost.didTap(chatResult: result)
+                            }.id(result)
                     }
                 }
             }

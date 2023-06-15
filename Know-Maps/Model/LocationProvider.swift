@@ -45,19 +45,20 @@ open class LocationProvider : NSObject, ObservableObject  {
 extension LocationProvider : CLLocationManagerDelegate {
     public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch locationManager.authorizationStatus {
+        case .authorizedAlways:
+            fallthrough
         case .authorizedWhenInUse:  // Location services are available.
             print("Location Provider Authorized When in Use")
+            NotificationCenter.default.post(name: Notification.Name("LocationProviderAuthorized"), object: nil)
             break
-            
         case .restricted, .denied:  // Location services currently unavailable.
             print("Location Provider Restricted or Denied")
+            NotificationCenter.default.post(name: Notification.Name("LocationProviderDenied"), object: nil)
             break
-            
         case .notDetermined:        // Authorization not determined yet.
             print("Location Provider Not Determined")
             locationManager.requestWhenInUseAuthorization()
             break
-            
         default:
             break
         }
