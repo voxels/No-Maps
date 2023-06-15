@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "1ED9130A29C716E2002D9172"
-               BuildableName = "Local-Maps.app"
-               BlueprintName = "Local-Maps"
-               ReferencedContainer = "container:Local Maps.xcodeproj">
+               BuildableName = "KnowMaps.app"
+               BlueprintName = "KnowMaps"
+               ReferencedContainer = "container:Know Maps.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -37,7 +37,7 @@
                BlueprintIdentifier = "1ED9131929C716E2002D9172"
                BuildableName = "Local-MapsTests.xctest"
                BlueprintName = "Local-MapsTests"
-               ReferencedContainer = "container:Local Maps.xcodeproj">
+               ReferencedContainer = "container:Know Maps.xcodeproj">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -48,7 +48,7 @@
                BlueprintIdentifier = "1ED9132329C716E2002D9172"
                BuildableName = "Local-MapsUITests.xctest"
                BlueprintName = "Local-MapsUITests"
-               ReferencedContainer = "container:Local Maps.xcodeproj">
+               ReferencedContainer = "container:Know Maps.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -68,9 +68,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1ED9130A29C716E2002D9172"
-            BuildableName = "Local-Maps.app"
-            BlueprintName = "Local-Maps"
-            ReferencedContainer = "container:Local Maps.xcodeproj">
+            BuildableName = "KnowMaps.app"
+            BlueprintName = "KnowMaps"
+            ReferencedContainer = "container:Know Maps.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -85,9 +85,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1ED9130A29C716E2002D9172"
-            BuildableName = "Local-Maps.app"
-            BlueprintName = "Local-Maps"
-            ReferencedContainer = "container:Local Maps.xcodeproj">
+            BuildableName = "KnowMaps.app"
+            BlueprintName = "KnowMaps"
+            ReferencedContainer = "container:Know Maps.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
