@@ -45,12 +45,12 @@
 		1ECCCD5529DC3D930081035C /* TextDescriptionResponseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ECCCD5429DC3D930081035C /* TextDescriptionResponseViewController.swift */; };
 		1ECCCD5629DC3D930081035C /* TextDescriptionResponseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ECCCD5429DC3D930081035C /* TextDescriptionResponseViewController.swift */; };
 		1ED9130E29C716E2002D9172 /* Know_MapsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ED9130D29C716E2002D9172 /* Know_MapsApp.swift */; };
-		1ED9131029C716E2002D9172 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ED9130F29C716E2002D9172 /* ContentView.swift */; };
+		1ED9131029C716E2002D9172 /* ChatContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ED9130F29C716E2002D9172 /* ChatContentView.swift */; };
 		1ED9131229C716E2002D9172 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1ED9131129C716E2002D9172 /* Assets.xcassets */; };
 		1ED9131529C716E2002D9172 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1ED9131429C716E2002D9172 /* Preview Assets.xcassets */; };
 		1ED9133629C72C1C002D9172 /* ChatResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ED9133529C72C1C002D9172 /* ChatResultView.swift */; };
 		1ED9133729C72C1C002D9172 /* ChatResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ED9133529C72C1C002D9172 /* ChatResultView.swift */; };
-		1ED9133A29C72C5E002D9172 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ED9130F29C716E2002D9172 /* ContentView.swift */; };
+		1ED9133A29C72C5E002D9172 /* ChatContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ED9130F29C716E2002D9172 /* ChatContentView.swift */; };
 		1ED9133C29C72C73002D9172 /* ChatResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ED9133B29C72C73002D9172 /* ChatResult.swift */; };
 		1ED9133D29C72C73002D9172 /* ChatResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ED9133B29C72C73002D9172 /* ChatResult.swift */; };
 		1ED9133F29C73DB3002D9172 /* PlaceSearchRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ED9133E29C73DB3002D9172 /* PlaceSearchRequest.swift */; };
@@ -126,7 +126,7 @@
 		1ECCCD5429DC3D930081035C /* TextDescriptionResponseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextDescriptionResponseViewController.swift; sourceTree = "<group>"; };
 		1ED9130B29C716E2002D9172 /* KnowMaps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KnowMaps.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1ED9130D29C716E2002D9172 /* Know_MapsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Know_MapsApp.swift; sourceTree = "<group>"; };
-		1ED9130F29C716E2002D9172 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		1ED9130F29C716E2002D9172 /* ChatContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatContentView.swift; sourceTree = "<group>"; };
 		1ED9131129C716E2002D9172 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1ED9131429C716E2002D9172 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		1ED9133529C72C1C002D9172 /* ChatResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatResultView.swift; sourceTree = "<group>"; };
@@ -268,7 +268,7 @@
 		1ED9133929C72C52002D9172 /* View */ = {
 			isa = PBXGroup;
 			children = (
-				1ED9130F29C716E2002D9172 /* ContentView.swift */,
+				1ED9130F29C716E2002D9172 /* ChatContentView.swift */,
 				1ED9133529C72C1C002D9172 /* ChatResultView.swift */,
 				1ECCCD4E29DC34970081035C /* ChatDetailsViewController.swift */,
 				1ECCCD5429DC3D930081035C /* TextDescriptionResponseViewController.swift */,
@@ -445,7 +445,7 @@
 				1ECCCD4C29DB01330081035C /* LanguageGeneratorRequest.swift in Sources */,
 				1ED9134229C73DCA002D9172 /* PlaceSearchResponse.swift in Sources */,
 				1E3EFC042A2495EE00F48D16 /* SearchQueryResponseCollectionViewCell.swift in Sources */,
-				1ED9133A29C72C5E002D9172 /* ContentView.swift in Sources */,
+				1ED9133A29C72C5E002D9172 /* ChatContentView.swift in Sources */,
 				1ECCCD4329D85A740081035C /* PlaceDetailsResponse.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -461,7 +461,7 @@
 				1E7DAD352A386A1700A58D40 /* LocalMapsQueryClassifier.mlmodel in Sources */,
 				1ECCCD4A29DAFF6E0081035C /* LanguageGeneratorSession.swift in Sources */,
 				1ECCCD3E29D2F1270081035C /* AssistiveChatHostQueryParameters.swift in Sources */,
-				1ED9131029C716E2002D9172 /* ContentView.swift in Sources */,
+				1ED9131029C716E2002D9172 /* ChatContentView.swift in Sources */,
 				1ED9134E29C884CB002D9172 /* PlacePhotoResponse.swift in Sources */,
 				1ED9135429C88B49002D9172 /* PlaceTipsResponse.swift in Sources */,
 				1ED9135129C8865E002D9172 /* PlaceResponseFormatter.swift in Sources */,

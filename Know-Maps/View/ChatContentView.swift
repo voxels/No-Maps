@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ContentView: View {
+struct ChatContentView: View {
     @State private var chatHost:AssistiveChatHost = AssistiveChatHost()
     @StateObject private var chatModel =  ChatResultViewModel()
 
@@ -25,6 +25,6 @@ struct ContentView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        ChatContentView()
     }
 }
