@@ -105,10 +105,15 @@ open class LanguageGeneratorSession : NSObject, ObservableObject {
             throw LanguageGeneratorSessionError.InvalidServerResponse
         }
         
-        var retval = NSMutableDictionary()
+        let retVal = NSMutableDictionary()
         var fullString = ""
 
         for try await line in bytes.lines {
+            print(line)
+            if line == "data: [DONE]" {
+                break
+            }
+            
             guard let d = line.dropFirst(5).data(using: .utf8) else {
                 throw LanguageGeneratorSessionError.InvalidServerResponse
             }
@@ -121,14 +126,13 @@ open class LanguageGeneratorSession : NSObject, ObservableObject {
             
             if let firstChoice = choices.first, let text = firstChoice["text"] as? String {
                 fullString.append(text)
-                fullString.append(" ")
-                delegate.didReceiveStreamingResult(with: text.trimmingCharacters(in: .whitespaces))
+                delegate.didReceiveStreamingResult(with: text)
             }
         }
         
         fullString = fullString.trimmingCharacters(in: .whitespaces)
-        retval["text"] = fullString
-        return retval
+        retVal["text"] = fullString
+        return retVal
     }
         
     

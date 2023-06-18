@@ -232,10 +232,6 @@ extension ChatDetailsViewController : AssistiveChatHostStreamResponseDelegate {
             currentResponse = responseString
         }
         
-        if let firstCharacter = string.first, !firstCharacter.isPunctuation {
-            currentResponse.append(" ")
-        }
-        
         currentResponse.append(string)
         model.updateModelResponse(currentResponse)
     }
