@@ -122,7 +122,7 @@ open class LanguageGeneratorSession : NSObject, ObservableObject {
             if let firstChoice = choices.first, let text = firstChoice["text"] as? String {
                 fullString.append(text)
                 fullString.append(" ")
-                delegate.didReceiveStreamingResult(with: text)
+                delegate.didReceiveStreamingResult(with: text.trimmingCharacters(in: .whitespaces))
             }
         }
         
