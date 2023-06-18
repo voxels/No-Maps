@@ -109,7 +109,6 @@ open class LanguageGeneratorSession : NSObject, ObservableObject {
         var fullString = ""
 
         for try await line in bytes.lines {
-            print(line)
             if line == "data: [DONE]" {
                 break
             }
