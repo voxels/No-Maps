@@ -16,6 +16,10 @@ public protocol ChatHostingViewControllerDelegate : AnyObject {
     func didTap(chatResult:ChatResult)
 }
 
+public protocol AssistiveChatHostStreamResponseDelegate {
+    func didReceiveStreamingResult(with string:String)
+}
+
 public class AssistiveChatHostIntent : Equatable {
     public let uuid = UUID()
     public let caption:String
@@ -214,8 +218,8 @@ extension AssistiveChatHost {
         return try await languageDelegate.searchQueryDescription(nearLocation:nearLocation)
     }
     
-    public func placeDescription(searchResponse:PlaceSearchResponse, detailsResponse:PlaceDetailsResponse) async throws ->String {
-        return try await languageDelegate.placeDescription(searchResponse: searchResponse, detailsResponse: detailsResponse)
+    public func placeDescription(searchResponse:PlaceSearchResponse, detailsResponse:PlaceDetailsResponse, delegate:AssistiveChatHostStreamResponseDelegate) async throws {
+        try await languageDelegate.placeDescription(searchResponse: searchResponse, detailsResponse: detailsResponse, delegate: delegate)
     }
 }
 

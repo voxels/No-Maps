@@ -391,18 +391,10 @@ public class ChatResultViewModel : ObservableObject {
             for index in 0..<(min(responses.count, strongSelf.maxChatResults)) {
                 taskGroup.addTask {
                     let response = responses[index]
-                    
-                    print("Fetching photos for \(response.name)")
-                    let rawPhotosResponse = try await strongSelf.placeSearchSession.photos(for: response.fsqID)
-                    let placePhotosResponses = try PlaceResponseFormatter.placePhotoResponses(with: rawPhotosResponse, for:response.fsqID)
-                    print("Fetching tips for \(response.name)")
-                    let rawTipsResponse = try await strongSelf.placeSearchSession.tips(for: response.fsqID)
-                    let placeTipsResponses = try PlaceResponseFormatter.placeTipsResponses(with: rawTipsResponse, for:response.fsqID)
-                    
                     let request = PlaceDetailsRequest(fsqID: response.fsqID, description: true, tel: true, fax: false, email: false, website: true, socialMedia: true, verified: false, hours: true, hoursPopular: true, rating: true, stats: false, popularity: true, price: true, menu: true, tastes: true, features: false)
                     print("Fetching details for \(response.name)")
                     let rawDetailsResponse = try await strongSelf.placeSearchSession.details(for: request)
-                    let detailsResponse = try PlaceResponseFormatter.placeDetailsResponse(with: rawDetailsResponse, for: response, placePhotosResponses: placePhotosResponses, placeTipsResponses: placeTipsResponses)
+                    let detailsResponse = try PlaceResponseFormatter.placeDetailsResponse(with: rawDetailsResponse, for: response)
                     return detailsResponse
                 }
             }

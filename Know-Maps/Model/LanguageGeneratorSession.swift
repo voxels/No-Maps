@@ -4,16 +4,17 @@ import CloudKit
 public enum LanguageGeneratorSessionError : Error {
     case ServiceNotFound
     case UnsupportedRequest
+    case InvalidServerResponse
 }
 
-open class LanguageGeneratorSession : ObservableObject {
+open class LanguageGeneratorSession : NSObject, ObservableObject {
     private var openaiApiKey = ""
     private var searchSession:URLSession?
     let keysContainer = CKContainer(identifier:"iCloud.com.noisederived.No-Maps.Keys")
     static let serverUrl = "https://api.openai.com/v1/completions"
         
-    init(){
-        
+    override init(){
+        super.init()
     }
     
     init(apiKey: String = "", session: URLSession? = nil) {
@@ -24,14 +25,21 @@ open class LanguageGeneratorSession : ObservableObject {
         }
     }
     
-    public func query(languageGeneratorRequest:LanguageGeneratorRequest) async throws->NSDictionary? {
+    public func query(languageGeneratorRequest:LanguageGeneratorRequest, delegate:AssistiveChatHostStreamResponseDelegate? = nil) async throws->NSDictionary? {
         if searchSession == nil {
             searchSession = try await session()
         }
+        
+        guard let searchSession = searchSession else {
+            throw LanguageGeneratorSessionError.ServiceNotFound
+        }
+        
         let components = URLComponents(string: LanguageGeneratorSession.serverUrl)
+
         guard let url = components?.url else {
             throw LanguageGeneratorSessionError.ServiceNotFound
         }
+        
         var request = URLRequest(url:url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -47,10 +55,18 @@ open class LanguageGeneratorSession : ObservableObject {
             body["user"] = user
         }
         
+        if delegate != nil {
+            body["stream"] = true
+        }
+        
         let jsonData = try JSONSerialization.data(withJSONObject: body)
         request.httpBody = jsonData
         
-        return try await fetch(urlRequest: request, apiKey: self.openaiApiKey) as? NSDictionary
+        if let delegate = delegate {
+            return try await fetchBytes(urlRequest: request, apiKey: self.openaiApiKey, session: searchSession, delegate: delegate)
+        } else {
+            return try await fetch(urlRequest: request, apiKey: self.openaiApiKey) as? NSDictionary
+        }
     }
     
     internal func fetch(urlRequest:URLRequest, apiKey:String) async throws -> Any {
@@ -81,6 +97,40 @@ open class LanguageGeneratorSession : ObservableObject {
         return responseAny
     }
     
+    internal func fetchBytes(urlRequest:URLRequest, apiKey:String, session:URLSession, delegate:AssistiveChatHostStreamResponseDelegate) async throws -> NSDictionary? {
+        print("Requesting URL: \(String(describing: urlRequest.url))")
+        let (bytes, response) = try await session.bytes(for: urlRequest)
+
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw LanguageGeneratorSessionError.InvalidServerResponse
+        }
+        
+        var retval = NSMutableDictionary()
+        var fullString = ""
+
+        for try await line in bytes.lines {
+            guard let d = line.dropFirst(5).data(using: .utf8) else {
+                throw LanguageGeneratorSessionError.InvalidServerResponse
+            }
+            guard let json = try JSONSerialization.jsonObject(with: d) as? NSDictionary else {
+                throw LanguageGeneratorSessionError.InvalidServerResponse
+            }
+            guard let choices = json["choices"] as? [NSDictionary] else {
+                throw LanguageGeneratorSessionError.InvalidServerResponse
+            }
+            
+            if let firstChoice = choices.first, let text = firstChoice["text"] as? String {
+                fullString.append(text)
+                fullString.append(" ")
+                delegate.didReceiveStreamingResult(with: text)
+            }
+        }
+        
+        fullString = fullString.trimmingCharacters(in: .whitespaces)
+        retval["text"] = fullString
+        return retval
+    }
+        
     
     public func session() async throws -> URLSession {
         let task = Task.init { () -> Bool in
@@ -139,4 +189,9 @@ private extension LanguageGeneratorSession {
         let session = URLSession(configuration: sessionConfiguration)
         return session
     }
+}
+
+extension LanguageGeneratorSession : URLSessionTaskDelegate {
+    
+    
 }

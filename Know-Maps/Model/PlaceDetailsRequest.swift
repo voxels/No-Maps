@@ -25,8 +25,8 @@ public struct PlaceDetailsRequest {
     let price:Bool
     let menu:Bool
     let dateClosed:Bool = true
-    let photos:Bool = false
-    let tips:Bool = false
+    let photos:Bool = true
+    let tips:Bool = true
     let tastes:Bool
     let features:Bool
     let storeID:Bool = true

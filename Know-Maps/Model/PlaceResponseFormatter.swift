@@ -270,8 +270,7 @@ open class PlaceResponseFormatter {
         }
         
         let searchResponse = placeSearchResponse
-        let photoResponses = placePhotosResponses
-        let tipsResponses = placeTipsResponses
+        
         var description:String? = nil
         
         if let rawDescription = response["description"] as? String {
@@ -355,6 +354,16 @@ open class PlaceResponseFormatter {
         }
         
         let features:[String]? = nil
+        
+        var photoResponses = placePhotosResponses
+        if photoResponses == nil, let responses = response["photos"] as? [NSDictionary] {
+            photoResponses = try PlaceResponseFormatter.placePhotoResponses(with: responses, for: searchResponse.fsqID)
+        }
+        
+        var tipsResponses = placeTipsResponses
+        if tipsResponses == nil, let responses = response["tips"] as? [NSDictionary] {
+            tipsResponses = try PlaceResponseFormatter.placeTipsResponses(with: responses, for: searchResponse.fsqID)
+        }
         
         return PlaceDetailsResponse(searchResponse: searchResponse, photoResponses: photoResponses, tipsResponses: tipsResponses, description: description, tel: tel, fax: fax, email: email, website: website, socialMedia: socialMedia, verified: verified, hours: hours, openNow: openNow, hoursPopular: hoursPopular, rating: rating, stats: stats, popularity: popularity, price: price, menu: menu, dateClosed: dateClosed, tastes: tastes, features: features)
         

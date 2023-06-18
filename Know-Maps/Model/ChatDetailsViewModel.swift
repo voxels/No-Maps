@@ -44,8 +44,14 @@ public class ChatDetailsViewModel {
         self.placeDetailsResponses = placeDetailsResponses ?? [PlaceDetailsResponse]()
         
         DispatchQueue.main.async { [weak self] in
-            guard let strongSelf = self else { return }
-            strongSelf.delegate?.modelDidUpdate()
+            self?.delegate?.modelDidUpdate()
         }
-    }    
+    }
+    
+    public func updateModelResponse(_ string:String) {
+        responseString = string
+        DispatchQueue.main.async { [weak self] in
+            self?.delegate?.modelDidUpdate()
+        }
+    }
 }

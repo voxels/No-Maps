@@ -276,38 +276,28 @@ extension MessagesViewController {
                                 DispatchQueue.main.async { [weak self] in
                                     guard let strongSelf = self else { return }
                                     do {
-                                        try strongSelf.showDetailsViewController(with: strongSelf.chatHost.queryIntentParameters, responseString: "", nearLocation: nearLocation)
-                                        strongSelf.chatDetailsViewController?.showActivityIndicator()
+                                        try strongSelf.showDetailsViewController(with: strongSelf.chatHost.queryIntentParameters, responseString: "\(placeResponse.name) is", nearLocation: nearLocation)
                                     } catch{
                                         print(error)
                                     }
                                 }
                                 
-                                let chatDescription = try await self.chatHost.placeDescription(searchResponse: placeResponse, detailsResponse: details)
-                                DispatchQueue.main.async { [weak self] in
-                                    guard let strongSelf = self else { return }
-                                    strongSelf.chatDetailsViewController?.hideActivityIndicator()
-                                    strongSelf.chatDetailsViewController?.update(parameters: strongSelf.chatHost.queryIntentParameters, responseString: chatDescription, placeSearchResponses:lastIntent.placeSearchResponses, placeDetailsResponses: lastIntent.placeDetailsResponses, nearLocation: nearLocation)
+                                if let chatDetailsViewController = chatDetailsViewController {
+                                    try await self.chatHost.placeDescription(searchResponse: placeResponse, detailsResponse: details, delegate: chatDetailsViewController)
                                 }
-
                             } else if let tastesResponse = details.tastes, tastesResponse.count > 0 {
                                 DispatchQueue.main.async { [weak self] in
                                     guard let strongSelf = self else { return }
                                     do {
-                                        try strongSelf.showDetailsViewController(with: strongSelf.chatHost.queryIntentParameters, responseString: "", nearLocation: nearLocation)
-                                        strongSelf.chatDetailsViewController?.showActivityIndicator()
+                                        try strongSelf.showDetailsViewController(with: strongSelf.chatHost.queryIntentParameters, responseString: "\(placeResponse.name) is", nearLocation: nearLocation)
                                     } catch{
                                         print(error)
                                     }
                                 }
                                 
-                                let chatDescription = try await self.chatHost.placeDescription(searchResponse: placeResponse, detailsResponse: details)
-                                DispatchQueue.main.async { [weak self] in
-                                    guard let strongSelf = self else { return }
-                                    strongSelf.chatDetailsViewController?.hideActivityIndicator()
-                                    strongSelf.chatDetailsViewController?.update(parameters: strongSelf.chatHost.queryIntentParameters, responseString: chatDescription, placeSearchResponses:lastIntent.placeSearchResponses, placeDetailsResponses: lastIntent.placeDetailsResponses, nearLocation: nearLocation)
+                                if let chatDetailsViewController = chatDetailsViewController {
+                                    try await self.chatHost.placeDescription(searchResponse: placeResponse, detailsResponse: details, delegate: chatDetailsViewController)
                                 }
-
                             } else {
                                 DispatchQueue.main.async { [weak self] in
                                     guard let strongSelf = self else { return }
